@@ -12,6 +12,30 @@ public class TipoAlerta {
     private int id_tipoalerta;
     private String nombre;
     private String descripcion;
+
+    public int getId_tipoalerta() {
+        return id_tipoalerta;
+    }
+
+    public void setId_tipoalerta(int id_tipoalerta) {
+        this.id_tipoalerta = id_tipoalerta;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
     
     
 }

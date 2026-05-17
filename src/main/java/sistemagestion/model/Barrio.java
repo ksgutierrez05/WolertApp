@@ -14,5 +14,45 @@ public class Barrio {
     Comuna comuna;
     private double latitudcentro;
     private double longitudcentro;
+
+    public int getId_barrio() {
+        return id_barrio;
+    }
+
+    public void setId_barrio(int id_barrio) {
+        this.id_barrio = id_barrio;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public Comuna getComuna() {
+        return comuna;
+    }
+
+    public void setComuna(Comuna comuna) {
+        this.comuna = comuna;
+    }
+
+    public double getLatitudcentro() {
+        return latitudcentro;
+    }
+
+    public void setLatitudcentro(double latitudcentro) {
+        this.latitudcentro = latitudcentro;
+    }
+
+    public double getLongitudcentro() {
+        return longitudcentro;
+    }
+
+    public void setLongitudcentro(double longitudcentro) {
+        this.longitudcentro = longitudcentro;
+    }
     
 }

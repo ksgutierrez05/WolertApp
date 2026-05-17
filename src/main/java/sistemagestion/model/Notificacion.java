@@ -18,6 +18,70 @@ public class Notificacion {
     private String correodestinatario;
     private boolean enviada;
     private LocalDateTime fechahora;
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+
+    public Policia getPolicia() {
+        return policia;
+    }
+
+    public void setPolicia(Policia policia) {
+        this.policia = policia;
+    }
+
+    public Alerta getAlerta() {
+        return alerta;
+    }
+
+    public void setAlerta(Alerta alerta) {
+        this.alerta = alerta;
+    }
+
+    public int getId_notificacion() {
+        return id_notificacion;
+    }
+
+    public void setId_notificacion(int id_notificacion) {
+        this.id_notificacion = id_notificacion;
+    }
+
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public void setMensaje(String mensaje) {
+        this.mensaje = mensaje;
+    }
+
+    public String getCorreodestinatario() {
+        return correodestinatario;
+    }
+
+    public void setCorreodestinatario(String correodestinatario) {
+        this.correodestinatario = correodestinatario;
+    }
+
+    public boolean isEnviada() {
+        return enviada;
+    }
+
+    public void setEnviada(boolean enviada) {
+        this.enviada = enviada;
+    }
+
+    public LocalDateTime getFechahora() {
+        return fechahora;
+    }
+
+    public void setFechahora(LocalDateTime fechahora) {
+        this.fechahora = fechahora;
+    }
     
     
     

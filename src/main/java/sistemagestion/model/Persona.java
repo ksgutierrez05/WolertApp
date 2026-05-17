@@ -19,7 +19,7 @@ public abstract class Persona {
     private String correo;
     private String username;
     private String password;
-    private String estado;
+    EstadoUsuario estado;
 
     public int getId_persona() {
         return id_persona;
@@ -101,13 +101,15 @@ public abstract class Persona {
         this.password = password;
     }
 
-    public String getEstado() {
+    public EstadoUsuario getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoUsuario estado) {
         this.estado = estado;
     }
+
+   
     
     
     
