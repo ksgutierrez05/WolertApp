@@ -15,7 +15,7 @@ public class Suscripcion {
     Usuario usuario;
     Comuna comuna;
     Barrio barrio;
-    private boolean activa;
+    EstadoSuscripcion estado;
     private LocalDateTime fechahoracreacion;
 
     public int getId_suscripcion() {
@@ -50,13 +50,7 @@ public class Suscripcion {
         this.barrio = barrio;
     }
 
-    public boolean isActiva() {
-        return activa;
-    }
-
-    public void setActiva(boolean activa) {
-        this.activa = activa;
-    }
+   
 
     public LocalDateTime getFechahoracreacion() {
         return fechahoracreacion;

@@ -13,10 +13,11 @@ public class Notificacion {
     Usuario usuario;
     Policia policia;
     Alerta alerta;
+    EstadoNotificacion estado;
     private int id_notificacion;
     private String mensaje;
     private String correodestinatario;
-    private boolean enviada;
+    
     private LocalDateTime fechahora;
 
     public Usuario getUsuario() {
@@ -67,13 +68,14 @@ public class Notificacion {
         this.correodestinatario = correodestinatario;
     }
 
-    public boolean isEnviada() {
-        return enviada;
+    public EstadoNotificacion getEstado() {
+        return estado;
     }
 
-    public void setEnviada(boolean enviada) {
-        this.enviada = enviada;
+    public void setEstado(EstadoNotificacion estado) {
+        this.estado = estado;
     }
+
 
     public LocalDateTime getFechahora() {
         return fechahora;
