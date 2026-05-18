@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  */
 public class Alerta {
     
-    private int  id_alerta;
+    private int id_alerta;
     Usuario usuario;
     TipoAlerta tipoalerta;
     Barrio barrio;
@@ -20,8 +20,8 @@ public class Alerta {
     MedioTransporte mediotransporte;
     Direccion direccion;
     EstadoAlerta estado;
-     private LocalDateTime fechaHora;
-    private String  descripcion;
+    private LocalDateTime fechaHora;
+    private String descripcion;
 
     public int getId_alerta() {
         return id_alerta;
