@@ -4,17 +4,19 @@
  */
 package sistemagestion.model;
 
+import java.util.List;
+
 /**
  *
  * @author Maria Cristina
  */
 public class UnidadPolicial {
+
     private int id_unidad;
-    private String codigo;
-    private String tipounidad;
-    private String estado;
-    private String ubicacionactual;
-    Policia policiaresponsable;
+    private String nombre;
+    EstadoUnidadPolicial estado;
+    private Barrio barrio;
+    private List<Policia> policias;
 
     public int getId_unidad() {
         return id_unidad;
@@ -24,44 +26,38 @@ public class UnidadPolicial {
         this.id_unidad = id_unidad;
     }
 
-    public String getCodigo() {
-        return codigo;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
+    
+    
 
-    public String getTipounidad() {
-        return tipounidad;
-    }
-
-    public void setTipounidad(String tipounidad) {
-        this.tipounidad = tipounidad;
-    }
-
-    public String getEstado() {
+    public EstadoUnidadPolicial getEstado() {
         return estado;
     }
 
-    public void setEstado(String estado) {
+    public void setEstado(EstadoUnidadPolicial estado) {
         this.estado = estado;
     }
 
-    public String getUbicacionactual() {
-        return ubicacionactual;
+    public Barrio getBarrio() {
+        return barrio;
     }
 
-    public void setUbicacionactual(String ubicacionactual) {
-        this.ubicacionactual = ubicacionactual;
+    public void setBarrio(Barrio barrio) {
+        this.barrio = barrio;
     }
 
-    public Policia getPoliciaresponsable() {
-        return policiaresponsable;
+    public List<Policia> getPolicias() {
+        return policias;
     }
 
-    public void setPoliciaresponsable(Policia policiaresponsable) {
-        this.policiaresponsable = policiaresponsable;
+    public void setPolicias(List<Policia> policias) {
+        this.policias = policias;
     }
     
 }

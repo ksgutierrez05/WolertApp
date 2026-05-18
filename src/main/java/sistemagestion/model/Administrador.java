@@ -36,11 +36,4 @@ public class Administrador extends Persona {
     public void setRol(RolUsuario rol) {
         this.rol = rol;
     }
-
-    
-    
-    
-    
-    
-    
 }

@@ -11,9 +11,9 @@ package sistemagestion.model;
 public class Policia extends Persona {
     private int id_policia;
     private String placa;
-    EstadoPolicia estadopolicia;
     private String rango;
-    
+    EstadoPolicia estadopolicial;
+    private UnidadPolicial unidadpolicial;
     RolUsuario rol;
 
     public int getId_policia() {
@@ -40,7 +40,22 @@ public class Policia extends Persona {
         this.rango = rango;
     }
 
-   
+    public EstadoPolicia getEstadopolicial() {
+        return estadopolicial;
+    }
+
+    public void setEstadopolicial(EstadoPolicia estadopolicial) {
+        this.estadopolicial = estadopolicial;
+    }
+
+    public UnidadPolicial getUnidadpolicial() {
+        return unidadpolicial;
+    }
+
+    public void setUnidadpolicial(UnidadPolicial unidadpolicial) {
+        this.unidadpolicial = unidadpolicial;
+    }
+
     public RolUsuario getRol() {
         return rol;
     }
@@ -49,14 +64,4 @@ public class Policia extends Persona {
         this.rol = rol;
     }
 
-    public EstadoPolicia getEstadopolicia() {
-        return estadopolicia;
-    }
-
-    public void setEstadopolicia(EstadoPolicia estadopolicia) {
-        this.estadopolicia = estadopolicia;
-    }
-      
-    
-    
 }

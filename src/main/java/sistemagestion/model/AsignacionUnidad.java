@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
  * @author Maria Cristina
  */
 public class AsignacionUnidad {
+
     private int id_asignacion;
-    Alerta alerta;
-    UnidadPolicial unidadpolicial;
-    Policia policia;
+    private Alerta alerta;
+    private UnidadPolicial unidadpolicial;
     private String observacion;
     private LocalDateTime fechahoraasignacion;
 
@@ -41,14 +41,6 @@ public class AsignacionUnidad {
         this.unidadpolicial = unidadpolicial;
     }
 
-    public Policia getPolicia() {
-        return policia;
-    }
-
-    public void setPolicia(Policia policia) {
-        this.policia = policia;
-    }
-
     public String getObservacion() {
         return observacion;
     }
@@ -64,7 +56,5 @@ public class AsignacionUnidad {
     public void setFechahoraasignacion(LocalDateTime fechahoraasignacion) {
         this.fechahoraasignacion = fechahoraasignacion;
     }
-    
-    
     
 }

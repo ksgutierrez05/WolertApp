@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
 public class Suscripcion {
     private int id_suscripcion;
     Usuario usuario;
+    Alerta alerta;
+    TipoAlerta tipoalerta;
     Comuna comuna;
     Barrio barrio;
     EstadoSuscripcion estado;
-    private LocalDateTime fechahoracreacion;
+    
 
     public int getId_suscripcion() {
         return id_suscripcion;
@@ -50,14 +52,31 @@ public class Suscripcion {
         this.barrio = barrio;
     }
 
+    public Alerta getAlerta() {
+        return alerta;
+    }
+
+    public void setAlerta(Alerta alerta) {
+        this.alerta = alerta;
+    }
+
+    public TipoAlerta getTipoalerta() {
+        return tipoalerta;
+    }
+
+    public void setTipoalerta(TipoAlerta tipoalerta) {
+        this.tipoalerta = tipoalerta;
+    }
+
+    public EstadoSuscripcion getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoSuscripcion estado) {
+        this.estado = estado;
+    }
+
    
 
-    public LocalDateTime getFechahoracreacion() {
-        return fechahoracreacion;
-    }
-
-    public void setFechahoracreacion(LocalDateTime fechahoracreacion) {
-        this.fechahoracreacion = fechahoracreacion;
-    }
-    
+  
 }
