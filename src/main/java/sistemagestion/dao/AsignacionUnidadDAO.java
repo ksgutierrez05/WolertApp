@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
@@ -21,21 +22,32 @@ import sistemagestion.model.UnidadPolicial;
  * @author Lenovo
  */
 public class AsignacionUnidadDAO {
-        private Connection con;
+
+    private Connection con;
 
     public AsignacionUnidadDAO() throws SQLException {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(AsignacionUnidad a) {
+    public boolean insertar(
+            int idAlerta,
+            int idUnidad,
+            String observacion,
+            LocalDateTime fechaHora
+    ) {
+
         String sql = "{call pkg_asignaciones_unidad.pr_insertar_asignacion(?, ?, ?, ?)}";
+
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, a.getAlerta().getId_alerta());
-            cs.setInt(2, a.getUnidadpolicial().getId_unidad());
-            cs.setString(3, a.getObservacion());
-            cs.setTimestamp(4, Timestamp.valueOf(a.getFechahoraasignacion()));
+
+            cs.setInt(1, idAlerta);
+            cs.setInt(2, idUnidad);
+            cs.setString(3, observacion);
+            cs.setTimestamp(4, Timestamp.valueOf(fechaHora));
+
             cs.execute();
             return true;
+
         } catch (SQLException e) {
             return false;
         }
@@ -104,20 +116,33 @@ public class AsignacionUnidadDAO {
         AsignacionUnidad a = new AsignacionUnidad();
 
         a.setId_asignacion(rs.getInt("ID_ASIGNACION"));
+        a.setObservacion(rs.getString("OBSERVACION"));
+
+        a.setFechahoraasignacion(
+                rs.getTimestamp("FECHAHORAASIGNACION").toLocalDateTime()
+        );
+
+        a.setUnidadpolicial(mapUnidad(rs));
+        a.setAlerta(mapAlerta(rs));
+
+        return a;
+    }
+
+    private UnidadPolicial mapUnidad(ResultSet rs) throws SQLException {
 
         UnidadPolicial u = new UnidadPolicial();
+
         u.setId_unidad(rs.getInt("ID_UNIDAD"));
         u.setNombre(rs.getString("NOMBRE_UNIDAD"));
-        a.setUnidadpolicial(u);
 
-    
-        Alerta al = new Alerta();
-        al.setId_alerta(rs.getInt("ID_ALERTA"));
-        a.setAlerta(al);
-        a.setObservacion(rs.getString("OBSERVACION"));
-        a.setFechahoraasignacion(
-            rs.getTimestamp("FECHAHORAASIGNACION").toLocalDateTime()
-        );
+        return u;
+    }
+
+    private Alerta mapAlerta(ResultSet rs) throws SQLException {
+
+        Alerta a = new Alerta();
+
+        a.setId_alerta(rs.getInt("ID_ALERTA"));
 
         return a;
     }
