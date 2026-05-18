@@ -11,7 +11,7 @@ package sistemagestion.model;
 public class TipoAlerta {
     private int id_tipoalerta;
     private String nombre;
-    private String descripcion;
+   
 
     public int getId_tipoalerta() {
         return id_tipoalerta;
@@ -29,13 +29,7 @@ public class TipoAlerta {
         this.nombre = nombre;
     }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
+   
     
     
 }
