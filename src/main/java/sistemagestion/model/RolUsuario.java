@@ -8,11 +8,25 @@ package sistemagestion.model;
  *
  * @author Maria Cristina
  */
-public enum RolUsuario {
-    ADMINISTRADOR,
-    ADMINISTRADOR_POLICIA,
-    POLICIA,
-    CIUDADANO
+public class RolUsuario {
+    private int idRol;
+    private String nombre;
 
+    public int getIdRol() {
+        return idRol;
+    }
+
+    public void setIdRol(int idRol) {
+        this.idRol = idRol;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+    
     
 }
