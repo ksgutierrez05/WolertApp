@@ -19,6 +19,7 @@ public abstract class Persona {
     private String correo;
     private String username;
     private String password;
+    Direccion direccion;
     EstadoUsuario estado;
 
     public int getId_persona() {
@@ -107,6 +108,14 @@ public abstract class Persona {
 
     public void setEstado(EstadoUsuario estado) {
         this.estado = estado;
+    }
+
+    public Direccion getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(Direccion direccion) {
+        this.direccion = direccion;
     }
 
    
