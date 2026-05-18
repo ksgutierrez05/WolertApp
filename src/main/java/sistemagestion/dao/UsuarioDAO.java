@@ -6,10 +6,8 @@ package sistemagestion.dao;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,37 +27,58 @@ public class UsuarioDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public void insertar(Usuario u) throws SQLException {
+    public boolean insertar(
+            String primerNombre,
+            String segundoNombre,
+            String primerApellido,
+            String segundoApellido,
+            String identificacion,
+            String telefono,
+            String correo,
+            String username,
+            String password,
+            String estado,
+            int idRol,
+            Integer idBarrio
+    ) {
 
         String sql = "{CALL PKG_USUARIOS.pr_insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
 
             cs.setNull(1, Types.NUMERIC);
-            cs.setString(2, u.getPrimer_nombre());
-            cs.setString(3, u.getSegundo_nombre());
-            cs.setString(4, u.getPrimer_apellido());
-            cs.setString(5, u.getSegundo_apellido());
-            cs.setString(6, u.getIdentificacion());   // cedula
-            cs.setString(7, u.getTelefono());
-            cs.setString(8, u.getCorreo());            // email
-            cs.setString(9, u.getUsername());
-            cs.setString(10, u.getPassword());
-            cs.setString(11, EstadoUsuario.ACTIVO.name()); // activo
-            cs.setInt(12, rolToId(u.getRol())); // id_rol 
 
-            if (u.getDireccion() != null && u.getDireccion().getBarrio() != null) {
-                cs.setInt(13, u.getDireccion().getBarrio().getId_barrio());
+            cs.setString(2, primerNombre);
+            cs.setString(3, segundoNombre);
+            cs.setString(4, primerApellido);
+            cs.setString(5, segundoApellido);
+            cs.setString(6, identificacion);
+            cs.setString(7, telefono);
+            cs.setString(8, correo);
+            cs.setString(9, username);
+            cs.setString(10, password);
+
+            cs.setString(11, estado);
+
+            cs.setInt(12, idRol);
+
+            if (idBarrio != null) {
+                cs.setInt(13, idBarrio);
             } else {
                 cs.setNull(13, Types.NUMERIC);
             }
-            cs.setNull(14, Types.VARCHAR); // calle
-            cs.setNull(15, Types.VARCHAR); // carrera
-            cs.setNull(16, Types.VARCHAR); // etapa
-            cs.setNull(17, Types.VARCHAR); // manzana
-            cs.setNull(18, Types.VARCHAR); // casa
-            cs.execute();
 
+            cs.setNull(14, Types.VARCHAR);
+            cs.setNull(15, Types.VARCHAR);
+            cs.setNull(16, Types.VARCHAR);
+            cs.setNull(17, Types.VARCHAR);
+            cs.setNull(18, Types.VARCHAR);
+
+            cs.execute();
+            return true;
+
+        } catch (SQLException e) {
+            return false;
         }
     }
 
@@ -110,50 +129,71 @@ public class UsuarioDAO {
     }
 
     public Usuario login(String username, String password) throws SQLException {
-        String sql = "SELECT u.ID_USUARIO, u.PRIMER_NOMBRE, u.SEGUNDO_NOMBRE, "
-                + "u.PRIMER_APELLIDO, u.SEGUNDO_APELLIDO, u.CEDULA, u.TELEFONO, "
-                + "u.EMAIL, u.USERNAME, u.PASSWORD, u.ACTIVO, r.NOMBRE AS ROL_NOMBRE "
-                + "FROM USUARIOS u JOIN ROLES_USUARIO r ON u.ID_ROL = r.ID_ROL "
-                + "WHERE u.USERNAME = ? AND u.PASSWORD = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, username);
-            ps.setString(2, password);
-            ResultSet rs = ps.executeQuery();
+
+        String sql = "{call pkg_usuarios.prc_login_usuario(?, ?, ?)}";
+
+        try (CallableStatement cs = con.prepareCall(sql)) {
+
+            cs.setString(1, username);
+            cs.setString(2, password);
+
+            cs.registerOutParameter(3, oracle.jdbc.OracleTypes.CURSOR);
+
+            cs.execute();
+
+            ResultSet rs = (ResultSet) cs.getObject(3);
+
             if (rs.next()) {
                 return mapear(rs);
             }
+
         }
+
         return null;
     }
 
     public Usuario buscarPorId(int id) throws SQLException {
-        String sql = "SELECT u.ID_USUARIO, u.PRIMER_NOMBRE, u.SEGUNDO_NOMBRE, "
-                + "u.PRIMER_APELLIDO, u.SEGUNDO_APELLIDO, u.CEDULA, u.TELEFONO, "
-                + "u.EMAIL, u.USERNAME, u.PASSWORD, u.ACTIVO, r.NOMBRE AS ROL_NOMBRE "
-                + "FROM USUARIOS u JOIN ROLES_USUARIO r ON u.ID_ROL = r.ID_ROL "
-                + "WHERE u.ID_USUARIO = ?";
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
+
+        String sql = "{call pkg_usuarios.prc_consultar_usuario(?, ?)}";
+
+        try (CallableStatement cs = con.prepareCall(sql)) {
+
+            cs.setInt(1, id);
+            cs.registerOutParameter(2, oracle.jdbc.OracleTypes.CURSOR);
+
+            cs.execute();
+
+            ResultSet rs = (ResultSet) cs.getObject(2);
+
             if (rs.next()) {
                 return mapear(rs);
             }
+
         }
+
         return null;
     }
 
     public List<Usuario> listarTodos() throws SQLException {
+
         List<Usuario> lista = new ArrayList<>();
-        String sql = "SELECT u.ID_USUARIO, u.PRIMER_NOMBRE, u.SEGUNDO_NOMBRE, "
-                + "u.PRIMER_APELLIDO, u.SEGUNDO_APELLIDO, u.CEDULA, u.TELEFONO, "
-                + "u.EMAIL, u.USERNAME, u.PASSWORD, u.ACTIVO, r.NOMBRE AS ROL_NOMBRE "
-                + "FROM USUARIOS u JOIN ROLES_USUARIO r ON u.ID_ROL = r.ID_ROL "
-                + "ORDER BY u.PRIMER_APELLIDO";
-        try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+
+        String sql = "{call pkg_usuarios.prc_listar_usuarios(?)}";
+
+        try (CallableStatement cs = con.prepareCall(sql)) {
+
+            cs.registerOutParameter(1, oracle.jdbc.OracleTypes.CURSOR);
+
+            cs.execute();
+
+            ResultSet rs = (ResultSet) cs.getObject(1);
+
             while (rs.next()) {
                 lista.add(mapear(rs));
             }
+
         }
+
         return lista;
     }
 
@@ -170,20 +210,12 @@ public class UsuarioDAO {
         u.setUsername(rs.getString("USERNAME"));
         u.setPassword(rs.getString("PASSWORD"));
         u.setEstado(EstadoUsuario.valueOf(rs.getString("ACTIVO")));
-        u.setRol(RolUsuario.valueOf(rs.getString("ROL_NOMBRE")));
+        RolUsuario r = new RolUsuario();
+        r.setIdRol(rs.getInt("ID_ROL"));
+        r.setNombre(rs.getString("ROL_NOMBRE"));
+
+        u.setRol(r);
         return u;
     }
 
-    private int rolToId(RolUsuario rol) {
-        switch (rol) {
-            case ADMINISTRADOR:
-                return 1;
-            case ADMINISTRADOR_POLICIA:
-                return 2;
-            case POLICIA:
-                return 3;
-            default:
-                return 4; // CIUDADANO
-        }
-    }
 }
