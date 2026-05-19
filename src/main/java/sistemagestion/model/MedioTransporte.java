@@ -11,7 +11,7 @@ package sistemagestion.model;
 public class MedioTransporte {
     private int id_mediotransporte;
     private String nombre;
-    private String descripcion;
+    
 
     public int getId_mediotransporte() {
         return id_mediotransporte;
@@ -28,15 +28,6 @@ public class MedioTransporte {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-    
     
     
 }
