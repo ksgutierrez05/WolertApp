@@ -27,7 +27,9 @@ public class ComunaService {
         Validador.validarObjeto(c);
         Validador.validarCampoVacio(c.getNombre());
 
-        dao.insertar(c);
+        dao.insertar(
+        c.getNombre()
+    );
     }
 
     public Comuna buscarPorId(int id) throws SQLException {

@@ -34,7 +34,13 @@ public class PoliciaService {
 
         Validador.validarEnum(p.getEstadopolicial());
 
-        return policiaDAO.insertar(p);
+        return policiaDAO.insertar(
+            p.getId_policia(),
+            p.getUnidadpolicial().getId_unidad(),
+            p.getPlaca(),
+            p.getRango(),
+            p.getEstadopolicial().name()
+    );
     }
 
     public void actualizar(Policia p)
