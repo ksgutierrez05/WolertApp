@@ -27,7 +27,9 @@ public class TipoAlertaService {
         Validador.validarObjeto(t);
         Validador.validarCampoVacio(t.getNombre());
 
-        return dao.insertar(t);
+        return dao.insertar(
+            t.getNombre()
+    );
     }
 
     public TipoAlerta buscarPorId(int id) {

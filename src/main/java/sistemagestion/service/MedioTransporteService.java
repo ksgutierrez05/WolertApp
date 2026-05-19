@@ -27,7 +27,9 @@ public class MedioTransporteService {
         Validador.validarObjeto(m);
         Validador.validarCampoVacio(m.getNombre());
 
-        return dao.insertar(m);
+        return dao.insertar(
+            m.getNombre()
+      );
     }
 
     public MedioTransporte buscarPorId(int id) {

@@ -28,7 +28,10 @@ public class BarrioService {
         Validador.validarCampoVacio(b.getNombre());
         Validador.validarObjeto(b.getComuna());
 
-        dao.insertar(b);
+         dao.insertar(
+        b.getNombre(),
+        b.getComuna().getId_comuna()
+       );
     }
 
     public void actualizar(Barrio b) throws SQLException {

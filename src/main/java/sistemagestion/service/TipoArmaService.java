@@ -27,7 +27,9 @@ public class TipoArmaService {
         Validador.validarObjeto(t);
         Validador.validarCampoVacio(t.getNombre());
 
-        return dao.insertar(t);
+         return dao.insertar(
+            t.getNombre()
+      );
     }
 
     public TipoArma buscarPorId(int id) {

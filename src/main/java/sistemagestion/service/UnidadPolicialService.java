@@ -29,7 +29,11 @@ public class UnidadPolicialService {
         Validador.validarEnum(u.getEstado());
         Validador.validarObjeto(u.getBarrio());
 
-        return dao.insertar(u);
+       return dao.insertar(
+            u.getNombre(),
+            u.getEstado().name(),
+            u.getBarrio().getId_barrio()
+      );
     }
 
     public UnidadPolicial buscarPorId(int id) {
