@@ -22,25 +22,31 @@ import sistemagestion.model.UnidadPolicial;
  * @author Lenovo
  */
 public class UnidadPolicialDAO {
-      private Connection con;
- 
+
+    private Connection con;
+
     public UnidadPolicialDAO() throws SQLException {
         this.con = ConexionDB.getInstancia().getConexion();
     }
- 
-    public boolean insertar(UnidadPolicial u) {
+
+    public boolean insertar(String nombre, String estado, int idBarrio) {
+
         String sql = "{call pkg_unidades_policiales.pr_insertar_unidad(?, ?, ?)}";
+
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setString(1, u.getNombre());
-            cs.setString(2, u.getEstado().name());
-            cs.setInt(3, u.getBarrio().getId_barrio());
+
+            cs.setString(1, nombre);
+            cs.setString(2, estado);
+            cs.setInt(3, idBarrio);
+
             cs.execute();
             return true;
+
         } catch (SQLException e) {
             return false;
         }
     }
- 
+
     public UnidadPolicial buscarPorId(int id) {
         String sql = "{call pkg_unidades_policiales.pr_consultar_unidad(?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
@@ -49,10 +55,12 @@ public class UnidadPolicialDAO {
             cs.registerOutParameter(3, Types.VARCHAR); // p_estado
             cs.registerOutParameter(4, Types.NUMERIC); // p_id_barrio
             cs.execute();
- 
+
             String nombre = cs.getString(2);
-            if (nombre == null) return null;
- 
+            if (nombre == null) {
+                return null;
+            }
+
             UnidadPolicial u = new UnidadPolicial();
             u.setId_unidad(id);
             u.setNombre(nombre);
@@ -65,7 +73,7 @@ public class UnidadPolicialDAO {
             return null;
         }
     }
- 
+
     public List<UnidadPolicial> listar() {
         List<UnidadPolicial> lista = new ArrayList<>();
         String sql = "{call pkg_unidades_policiales.pr_listar_unidades(?)}";
@@ -77,11 +85,11 @@ public class UnidadPolicialDAO {
                 lista.add(mapear(rs));
             }
         } catch (SQLException e) {
-           
+
         }
         return lista;
     }
- 
+
     public boolean actualizar(UnidadPolicial u) {
         String sql = "{call pkg_unidades_policiales.pr_actualizar_unidad(?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
@@ -95,7 +103,7 @@ public class UnidadPolicialDAO {
             return false;
         }
     }
- 
+
     public boolean eliminar(int id) {
         String sql = "{call pkg_unidades_policiales.pr_eliminar_unidad(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
@@ -106,23 +114,23 @@ public class UnidadPolicialDAO {
             return false;
         }
     }
- 
+
     private UnidadPolicial mapear(ResultSet rs) throws SQLException {
         UnidadPolicial u = new UnidadPolicial();
         u.setId_unidad(rs.getInt("ID_UNIDAD"));
         u.setNombre(rs.getString("NOMBRE"));
         u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
- 
+
         Comuna com = new Comuna();
         com.setId_comuna(rs.getInt("ID_COMUNA"));
         com.setNombre(rs.getString("NOMBRE_COMUNA"));
- 
+
         Barrio b = new Barrio();
         b.setId_barrio(rs.getInt("ID_BARRIO"));
         b.setNombre(rs.getString("NOMBRE_BARRIO"));
         b.setComuna(com);
- 
+
         u.setBarrio(b);
         return u;
-    }  
+    }
 }
