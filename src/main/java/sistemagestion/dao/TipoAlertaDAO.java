@@ -25,12 +25,14 @@ public class TipoAlertaDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(TipoAlerta t) {
-        String sql = "{ call pkg_tipos_alerta.pr_insertar_tipo_alerta(?) }";
+    public boolean insertar(String nombre) {
+
+        String sql = "{call pkg_tipos_alerta.pr_insertar_tipo_alerta(?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
 
-            cs.setString(1, t.getNombre());
+            cs.setString(1, nombre);
+
             cs.execute();
             return true;
 
@@ -51,7 +53,9 @@ public class TipoAlertaDAO {
 
             String nombre = cs.getString(2);
 
-            if (nombre == null) return null;
+            if (nombre == null) {
+                return null;
+            }
 
             TipoAlerta t = new TipoAlerta();
             t.setId_tipoalerta(id);

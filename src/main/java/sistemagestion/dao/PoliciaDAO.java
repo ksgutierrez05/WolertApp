@@ -24,26 +24,31 @@ import sistemagestion.model.UnidadPolicial;
 public class PoliciaDAO {
 
     private Connection con;
- 
+
     public PoliciaDAO() throws SQLException {
         this.con = ConexionDB.getInstancia().getConexion();
     }
- 
-    public boolean insertar(Policia p) {
+
+    public boolean insertar(int idUsuario, int idUnidad, String placa, String rango, String estado) {
+
         String sql = "{call pkg_policias.pr_insertar_policia(?, ?, ?, ?, ?)}";
+
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, p.getId_policia());                    // id_usuario
-            cs.setInt(2, p.getUnidadpolicial().getId_unidad()); // id_unidad
-            cs.setString(3, p.getPlaca());
-            cs.setString(4, p.getRango());
-            cs.setString(5, p.getEstadopolicial().name());
+
+            cs.setInt(1, idUsuario);
+            cs.setInt(2, idUnidad);
+            cs.setString(3, placa);
+            cs.setString(4, rango);
+            cs.setString(5, estado);
+
             cs.execute();
             return true;
+
         } catch (SQLException e) {
             return false;
         }
     }
- 
+
     public Policia buscarPorId(int idUsuario) {
         String sql = "{call pkg_policias.pr_consultar_policia(?, ?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
@@ -53,10 +58,12 @@ public class PoliciaDAO {
             cs.registerOutParameter(4, Types.VARCHAR);    // p_rango
             cs.registerOutParameter(5, Types.VARCHAR);    // p_estado
             cs.execute();
- 
+
             String placa = cs.getString(3);
-            if (placa == null) return null;
- 
+            if (placa == null) {
+                return null;
+            }
+
             Policia p = new Policia();
             p.setId_policia(idUsuario);
             p.setPlaca(placa);
@@ -70,7 +77,7 @@ public class PoliciaDAO {
             return null;
         }
     }
- 
+
     public List<Policia> listar() {
         List<Policia> lista = new ArrayList<>();
         String sql = "{call pkg_policias.pr_listar_policias(?)}";

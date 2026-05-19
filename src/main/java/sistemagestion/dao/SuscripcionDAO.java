@@ -30,28 +30,17 @@ public class SuscripcionDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(Suscripcion s) {
+    public boolean insertar(int idUsuario, int idTipoAlerta, int idComuna, int idBarrio, String estado) {
 
         String sql = "{call pkg_suscripciones.pr_insertar_suscripcion(?, ?, ?, ?, ?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
 
-            cs.setInt(1, s.getUsuario().getId_usuario());
-            cs.setInt(2, s.getTipoalerta().getId_tipoalerta());
-
-            if (s.getComuna() != null) {
-                cs.setInt(3, s.getComuna().getId_comuna());
-            } else {
-                cs.setNull(3, java.sql.Types.NUMERIC);
-            }
-
-            if (s.getBarrio() != null) {
-                cs.setInt(4, s.getBarrio().getId_barrio());
-            } else {
-                cs.setNull(4, java.sql.Types.NUMERIC);
-            }
-
-            cs.setString(5, s.getEstado().name());
+            cs.setInt(1, idUsuario);
+            cs.setInt(2, idTipoAlerta);
+            cs.setInt(3, idComuna);
+            cs.setInt(4, idBarrio);
+            cs.setString(5, estado);
 
             cs.execute();
             return true;
