@@ -26,14 +26,17 @@ public class MedioTransporteDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
+    public boolean insertar(String nombre) {
 
-    public boolean insertar(MedioTransporte m) {
         String sql = "{call pkg_medios_transporte.pr_insertar_medio(?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setString(1, m.getNombre());
+
+            cs.setString(1, nombre);
+
             cs.execute();
             return true;
+
         } catch (SQLException e) {
             return false;
         }
@@ -61,7 +64,7 @@ public class MedioTransporteDAO {
 
         return null;
     }
-    
+
     public List<MedioTransporte> listar() {
         List<MedioTransporte> lista = new ArrayList<>();
 
