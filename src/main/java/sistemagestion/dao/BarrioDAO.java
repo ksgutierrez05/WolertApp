@@ -26,13 +26,20 @@ public class BarrioDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public void insertar(Barrio b) throws SQLException {
-        String sql = "{CALL pkg_barrios.pr_insertar_barrio(?,?)}";
+    public boolean insertar(String nombre, int idComuna) {
+
+        String sql = "{call pkg_barrios.pr_insertar_barrio(?, ?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setString(1, b.getNombre());
-            cs.setInt(2, b.getComuna().getId_comuna());
+
+            cs.setString(1, nombre);
+            cs.setInt(2, idComuna);
+
             cs.execute();
+            return true;
+
+        } catch (SQLException e) {
+            return false;
         }
     }
 
