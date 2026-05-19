@@ -26,16 +26,23 @@ public class ComunaDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public void insertar(Comuna c) throws SQLException {
+    public boolean insertar(String nombre) {
+
         String sql = "{CALL pkg_comunas.pr_insertar_comuna(?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setString(1, c.getNombre());
+
+            cs.setString(1, nombre);
+
             cs.execute();
+            return true;
+
+        } catch (SQLException e) {
+            return false;
         }
     }
 
-     public Comuna buscarPorId(int id) throws SQLException {
+    public Comuna buscarPorId(int id) throws SQLException {
         String sql = "{? = CALL pkg_comunas.fn_consultar_comuna(?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
@@ -76,7 +83,7 @@ public class ComunaDAO {
 
         return lista;
     }
-    
+
     public void actualizar(Comuna c) throws SQLException {
         String sql = "{CALL pkg_comunas.pr_actualizar_comuna(?,?)}";
 
@@ -87,7 +94,6 @@ public class ComunaDAO {
         }
     }
 
-
     public void eliminar(int id) throws SQLException {
         String sql = "{CALL pkg_comunas.pr_eliminar_comuna(?)}";
 
@@ -96,7 +102,6 @@ public class ComunaDAO {
             cs.execute();
         }
     }
-
 
     private Comuna mapear(ResultSet rs) throws SQLException {
         Comuna c = new Comuna();
