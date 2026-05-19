@@ -11,7 +11,7 @@ package sistemagestion.model;
 public class Comuna {
     private int id_comuna;
     private String nombre;
-    private String descripcion;
+    
 
     public int getId_comuna() {
         return id_comuna;
@@ -28,15 +28,4 @@ public class Comuna {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-    
-    
-    
 }
