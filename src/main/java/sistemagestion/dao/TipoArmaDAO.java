@@ -26,13 +26,14 @@ public class TipoArmaDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(TipoArma t) {
+    public boolean insertar(String nombre) {
 
-        String sql = "{ call pkg_tipos_arma.pr_insertar_tipo_arma(?) }";
+        String sql = "{call pkg_tipos_arma.pr_insertar_tipo_arma(?)}";
 
         try (CallableStatement cs = con.prepareCall(sql)) {
 
-            cs.setString(1, t.getNombre());
+            cs.setString(1, nombre);
+
             cs.execute();
             return true;
 
@@ -54,7 +55,9 @@ public class TipoArmaDAO {
 
             String nombre = cs.getString(1);
 
-            if (nombre == null) return null;
+            if (nombre == null) {
+                return null;
+            }
 
             TipoArma t = new TipoArma();
             t.setId_tipoarma(id);
