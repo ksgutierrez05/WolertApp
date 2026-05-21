@@ -5,22 +5,16 @@
 package com.mycompany.wolertappsistemaalertas;
 
 import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.stage.Stage;
+import sistemagestion.view.PruebaFX;
 
 public class WolertAppSistemaAlertas extends Application {
 
     @Override
     public void start(Stage stage) {
 
-        Label texto = new Label("Hola JavaFX");
-
-        Scene scene = new Scene(texto, 400, 200);
-
-        stage.setTitle("WolertApp");
-        stage.setScene(scene);
-        stage.show();
+        PruebaFX view = new PruebaFX();
+        view.mostrar(stage);
     }
 
     public static void main(String[] args) {
