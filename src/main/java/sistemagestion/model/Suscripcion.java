@@ -4,8 +4,6 @@
  */
 package sistemagestion.model;
 
-import java.time.LocalDateTime;
-
 /**
  *
  * @author Maria Cristina
