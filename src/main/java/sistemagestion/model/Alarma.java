@@ -15,6 +15,15 @@ public class Alarma {
     private int latitud;
     private int longitud;
     private int radio_cobertura;
+    EstadoAlarma estado;
+
+    public EstadoAlarma getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoAlarma estado) {
+        this.estado = estado;
+    }
 
     public int getId_alarma() {
         return id_alarma;
