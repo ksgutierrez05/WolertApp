@@ -26,112 +26,103 @@ public class TipoArmaDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
+    // pr_insertar_tipo_arma(nombre)
     public boolean insertar(String nombre) {
-
-        String sql = "{call pkg_tipos_arma.pr_insertar_tipo_arma(?)}";
-
+        String sql = "{call pkg_catalogos.pr_insertar_tipo_arma(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, nombre);
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar tipo arma: " + e.getMessage());
             return false;
         }
     }
 
-    public TipoArma buscarPorId(int id) {
-
-        String sql = "{ ? = call pkg_tipos_arma.fn_consultar_tipo_arma(?) }";
-
+    // pr_actualizar_tipo_arma(nombre_actual, nombre_nuevo)
+    public boolean actualizar(String nombreActual, String nombreNuevo) {
+        String sql = "{call pkg_catalogos.pr_actualizar_tipo_arma(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.registerOutParameter(1, Types.VARCHAR);
-            cs.setInt(2, id);
-
+            cs.setString(1, nombreActual);
+            cs.setString(2, nombreNuevo);
             cs.execute();
-
-            String nombre = cs.getString(1);
-
-            if (nombre == null) {
-                return null;
-            }
-
-            TipoArma t = new TipoArma();
-            t.setId_tipoarma(id);
-            t.setNombre(nombre);
-
-            return t;
-
+            return true;
         } catch (SQLException e) {
-            return null;
+            System.out.println("Error actualizar tipo arma: " + e.getMessage());
+            return false;
         }
     }
 
-    public List<TipoArma> listarTodos() {
-
-        List<TipoArma> lista = new ArrayList<>();
-
-        String sql = "{ call pkg_tipos_arma.pr_listar_tipos_arma(?) }";
-
+    // pr_eliminar_tipo_arma(nombre)
+    public boolean eliminar(String nombre) {
+        String sql = "{call pkg_catalogos.pr_eliminar_tipo_arma(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, nombre);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar tipo arma: " + e.getMessage());
+            return false;
+        }
+    }
 
+    // pr_listar_tipos_arma(cursor OUT) — retorna solo NOMBRE
+    public List<TipoArma> listar() {
+        List<TipoArma> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_listar_tipos_arma(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(1);
-
             while (rs.next()) {
                 lista.add(mapear(rs));
             }
-
         } catch (SQLException e) {
-            return new ArrayList<>();
+            System.out.println("Error listar tipos arma: " + e.getMessage());
         }
-
         return lista;
     }
 
-    public boolean actualizar(TipoArma t) {
-
-        String sql = "{ call pkg_tipos_arma.pr_actualizar_tipo_arma(?, ?) }";
-
+    // pr_buscar_tipo_arma — búsqueda parcial
+    public List<TipoArma> buscar(String texto) {
+        List<TipoArma> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_tipo_arma(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, t.getId_tipoarma());
-            cs.setString(2, t.getNombre());
-
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
-
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar tipo arma: " + e.getMessage());
         }
+        return lista;
     }
 
-    public boolean eliminar(int id) {
-
-        String sql = "{ call pkg_tipos_arma.pr_eliminar_tipo_arma(?) }";
-
+    // pr_buscar_tipo_arma_exacto — coincidencia exacta
+    public List<TipoArma> buscarExacto(String texto) {
+        List<TipoArma> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_tipo_arma_exacto(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
-
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar tipo arma exacto: " + e.getMessage());
         }
+        return lista;
     }
 
+    // cursor retorna solo NOMBRE — sin ID_TIPO_ARMA
     private TipoArma mapear(ResultSet rs) throws SQLException {
-
         TipoArma t = new TipoArma();
-        t.setId_tipoarma(rs.getInt("ID_TIPO_ARMA"));
         t.setNombre(rs.getString("NOMBRE"));
-
         return t;
     }
 }

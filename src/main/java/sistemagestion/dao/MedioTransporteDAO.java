@@ -27,95 +27,94 @@ public class MedioTransporteDAO {
     }
 
     public boolean insertar(String nombre) {
-
-        String sql = "{call pkg_medios_transporte.pr_insertar_medio(?)}";
-
+        String sql = "{call pkg_catalogos.pr_insertar_medio(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, nombre);
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar medio transporte: " + e.getMessage());
             return false;
         }
     }
 
-    public MedioTransporte buscarPorId(int id) {
-        String sql = "{call pkg_medios_transporte.pr_consultar_medio(?, ?)}";
-
+    public boolean actualizar(String nombreActual, String nombreNuevo) {
+        String sql = "{call pkg_catalogos.pr_actualizar_medio(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
-            cs.registerOutParameter(2, OracleTypes.CURSOR);
-
+            cs.setString(1, nombreActual);
+            cs.setString(2, nombreNuevo);
             cs.execute();
-
-            ResultSet rs = (ResultSet) cs.getObject(2);
-
-            if (rs.next()) {
-                return mapear(rs);
-            }
-
+            return true;
         } catch (SQLException e) {
-            return null;
+            System.out.println("Error actualizar medio transporte: " + e.getMessage());
+            return false;
         }
+    }
 
-        return null;
+    public boolean eliminar(String nombre) {
+        String sql = "{call pkg_catalogos.pr_eliminar_medio(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, nombre);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar medio transporte: " + e.getMessage());
+            return false;
+        }
     }
 
     public List<MedioTransporte> listar() {
         List<MedioTransporte> lista = new ArrayList<>();
-
-        String sql = "{call pkg_medios_transporte.pr_listar_medios(?)}";
-
+        String sql = "{call pkg_catalogos.pr_listar_medios(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(1);
-
             while (rs.next()) {
                 lista.add(mapear(rs));
             }
-
         } catch (SQLException e) {
-            return lista;
+            System.out.println("Error listar medios transporte: " + e.getMessage());
         }
-
         return lista;
     }
 
-    public boolean actualizar(MedioTransporte m) {
-        String sql = "{call pkg_medios_transporte.pr_actualizar_medio(?, ?)}";
-
+    public List<MedioTransporte> buscar(String texto) {
+        List<MedioTransporte> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_medio(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, m.getId_mediotransporte());
-            cs.setString(2, m.getNombre());
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar medio transporte: " + e.getMessage());
         }
+        return lista;
     }
 
-    public boolean eliminar(int id) {
-        String sql = "{call pkg_medios_transporte.pr_eliminar_medio(?)}";
-
+    public List<MedioTransporte> buscarExacto(String texto) {
+        List<MedioTransporte> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_medio_exacto(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar medio transporte exacto: " + e.getMessage());
         }
+        return lista;
     }
-
+    
     private MedioTransporte mapear(ResultSet rs) throws SQLException {
         MedioTransporte m = new MedioTransporte();
-        m.setId_mediotransporte(rs.getInt("ID_MEDIO_TRANSPORTE"));
         m.setNombre(rs.getString("NOMBRE"));
         return m;
     }

@@ -8,7 +8,6 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
@@ -29,54 +28,59 @@ public class UnidadPolicialDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(String nombre, String estado, int idBarrio) {
-
-        String sql = "{call pkg_unidades_policiales.pr_insertar_unidad(?, ?, ?)}";
-
+    // pr_insertar_unidad(nombre, estado, nombre_barrio)
+    public boolean insertar(String nombre, String estado, String nombreBarrio) {
+        String sql = "{call pkg_alertas.pr_insertar_unidad(?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, nombre);
             cs.setString(2, estado);
-            cs.setInt(3, idBarrio);
-
+            cs.setString(3, nombreBarrio);
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar unidad: " + e.getMessage());
             return false;
         }
     }
 
-    public UnidadPolicial buscarPorId(int id) {
-        String sql = "{call pkg_unidades_policiales.pr_consultar_unidad(?, ?, ?, ?)}";
+    // pr_actualizar_unidad(nombre_actual, nombre_nuevo, estado, nombre_barrio)
+    public boolean actualizar(
+            String nombreActual,
+            String nombreNuevo,
+            String estado,
+            String nombreBarrio
+    ) {
+        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
-            cs.registerOutParameter(2, Types.VARCHAR); // p_nombre
-            cs.registerOutParameter(3, Types.VARCHAR); // p_estado
-            cs.registerOutParameter(4, Types.NUMERIC); // p_id_barrio
+            cs.setString(1, nombreActual);
+            cs.setString(2, nombreNuevo);
+            cs.setString(3, estado);
+            cs.setString(4, nombreBarrio);
             cs.execute();
-
-            String nombre = cs.getString(2);
-            if (nombre == null) {
-                return null;
-            }
-
-            UnidadPolicial u = new UnidadPolicial();
-            u.setId_unidad(id);
-            u.setNombre(nombre);
-            u.setEstado(EstadoUnidadPolicial.valueOf(cs.getString(3)));
-            Barrio b = new Barrio();
-            b.setId_barrio(cs.getInt(4));
-            u.setBarrio(b);
-            return u;
+            return true;
         } catch (SQLException e) {
-            return null;
+            System.out.println("Error actualizar unidad: " + e.getMessage());
+            return false;
         }
     }
 
+    // pr_eliminar_unidad
+    public boolean eliminar(String nombre) {
+        String sql = "{call pkg_alertas.pr_eliminar_unidad(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, nombre);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar unidad: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // pr_listar_unidades
     public List<UnidadPolicial> listar() {
         List<UnidadPolicial> lista = new ArrayList<>();
-        String sql = "{call pkg_unidades_policiales.pr_listar_unidades(?)}";
+        String sql = "{call pkg_alertas.pr_listar_unidades(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
@@ -85,50 +89,59 @@ public class UnidadPolicialDAO {
                 lista.add(mapear(rs));
             }
         } catch (SQLException e) {
-
+            System.out.println("Error listar unidades: " + e.getMessage());
         }
         return lista;
     }
 
-    public boolean actualizar(UnidadPolicial u) {
-        String sql = "{call pkg_unidades_policiales.pr_actualizar_unidad(?, ?, ?, ?)}";
+    // pr_buscar_unidad — búsqueda parcial por nombre o barrio
+    public List<UnidadPolicial> buscar(String texto) {
+        List<UnidadPolicial> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_buscar_unidad(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, u.getId_unidad());
-            cs.setString(2, u.getNombre());
-            cs.setString(3, u.getEstado().name());
-            cs.setInt(4, u.getBarrio().getId_barrio());
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar unidad: " + e.getMessage());
         }
+        return lista;
     }
 
-    public boolean eliminar(int id) {
-        String sql = "{call pkg_unidades_policiales.pr_eliminar_unidad(?)}";
+    // pr_buscar_unidad_exacto 
+    public List<UnidadPolicial> buscarExacto(String texto) {
+        List<UnidadPolicial> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_buscar_unidad_exacto(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar unidad exacto: " + e.getMessage());
         }
+        return lista;
     }
 
+    // cursor retorna: NOMBRE, ESTADO, BARRIO, COMUNA
     private UnidadPolicial mapear(ResultSet rs) throws SQLException {
         UnidadPolicial u = new UnidadPolicial();
-        u.setId_unidad(rs.getInt("ID_UNIDAD"));
         u.setNombre(rs.getString("NOMBRE"));
         u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
 
-        Comuna com = new Comuna();
-        com.setId_comuna(rs.getInt("ID_COMUNA"));
-        com.setNombre(rs.getString("NOMBRE_COMUNA"));
+        Comuna c = new Comuna();
+        c.setNombre(rs.getString("COMUNA"));
 
         Barrio b = new Barrio();
-        b.setId_barrio(rs.getInt("ID_BARRIO"));
-        b.setNombre(rs.getString("NOMBRE_BARRIO"));
-        b.setComuna(com);
+        b.setNombre(rs.getString("BARRIO"));
+        b.setComuna(c);
 
         u.setBarrio(b);
         return u;

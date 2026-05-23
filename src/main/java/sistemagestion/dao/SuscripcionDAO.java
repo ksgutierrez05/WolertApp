@@ -30,109 +30,112 @@ public class SuscripcionDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(int idUsuario, int idTipoAlerta, int idComuna, int idBarrio, String estado) {
-
-        String sql = "{call pkg_suscripciones.pr_insertar_suscripcion(?, ?, ?, ?, ?)}";
-
+    public boolean insertar(
+            String cedulaUsuario,
+            String tipoAlerta,
+            String nombreComuna,  
+            String nombreBarrio,   
+            String estado
+    ) {
+        String sql = "{call pkg_alertas.pr_insertar_suscripcion(?, ?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, idUsuario);
-            cs.setInt(2, idTipoAlerta);
-            cs.setInt(3, idComuna);
-            cs.setInt(4, idBarrio);
+            cs.setString(1, cedulaUsuario);
+            cs.setString(2, tipoAlerta);
+            cs.setString(3, nombreComuna);
+            cs.setString(4, nombreBarrio);
             cs.setString(5, estado);
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar suscripcion: " + e.getMessage());
             return false;
         }
     }
 
-    public List<Suscripcion> listar() {
-
-        List<Suscripcion> lista = new ArrayList<>();
-        String sql = "{call pkg_suscripciones.pr_listar_suscripciones(?)}";
-
+    public boolean actualizar(
+            int idSuscripcion,
+            String cedulaUsuario,
+            String tipoAlerta,
+            String nombreComuna,   
+            String nombreBarrio,  
+            String estado
+    ) {
+        String sql = "{call pkg_alertas.pr_actualizar_suscripcion(?, ?, ?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setInt(1, idSuscripcion);
+            cs.setString(2, cedulaUsuario);
+            cs.setString(3, tipoAlerta);
+            cs.setString(4, nombreComuna);
+            cs.setString(5, nombreBarrio);
+            cs.setString(6, estado);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error actualizar suscripcion: " + e.getMessage());
+            return false;
+        }
+    }
 
+    public boolean eliminar(int idSuscripcion) {
+        String sql = "{call pkg_alertas.pr_eliminar_suscripcion(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setInt(1, idSuscripcion);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar suscripcion: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+    public List<Suscripcion> listar() {
+        List<Suscripcion> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_suscripciones(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(1);
-
             while (rs.next()) {
                 lista.add(mapear(rs));
             }
-
         } catch (SQLException e) {
-            return lista;
+            System.out.println("Error listar suscripciones: " + e.getMessage());
         }
-
         return lista;
     }
 
+    // vw_suscripciones retorna:
+    // ID_SUSCRIPCION, ESTADO, NOMBRE_USUARIO, CEDULA, TIPO_ALERTA, COMUNA, BARRIO
     private Suscripcion mapear(ResultSet rs) throws SQLException {
-
         Suscripcion s = new Suscripcion();
-
         s.setId_suscripcion(rs.getInt("ID_SUSCRIPCION"));
-        s.setUsuario(mapUsuario(rs));
-        s.setTipoalerta(mapTipoAlerta(rs));
-        s.setComuna(mapComuna(rs));
-        s.setBarrio(mapBarrio(rs));
-        s.setEstado(mapEstado(rs));
-
-        return s;
-    }
-
-    private Usuario mapUsuario(ResultSet rs) throws SQLException {
+        s.setEstado(EstadoSuscripcion.valueOf(rs.getString("ESTADO")));
 
         Usuario u = new Usuario();
-        u.setId_usuario(rs.getInt("ID_USUARIO"));
-
-        return u;
-    }
-
-    private TipoAlerta mapTipoAlerta(ResultSet rs) throws SQLException {
+        u.setPrimer_nombre(rs.getString("NOMBRE_USUARIO"));
+        u.setIdentificacion(rs.getString("CEDULA"));
+        s.setUsuario(u);
 
         TipoAlerta t = new TipoAlerta();
-        t.setId_tipoalerta(rs.getInt("ID_TIPO_ALERTA"));
+        t.setNombre(rs.getString("TIPO_ALERTA"));
+        s.setTipoalerta(t);
 
-        return t;
-    }
-
-    private Comuna mapComuna(ResultSet rs) throws SQLException {
-
-        int id = rs.getInt("ID_COMUNA");
-
-        if (rs.wasNull()) {
-            return null;
+        String nombreComuna = rs.getString("COMUNA");
+        if (nombreComuna != null) {
+            Comuna c = new Comuna();
+            c.setNombre(nombreComuna);
+            s.setComuna(c);
         }
 
-        Comuna c = new Comuna();
-        c.setId_comuna(id);
-
-        return c;
-    }
-
-    private Barrio mapBarrio(ResultSet rs) throws SQLException {
-
-        int id = rs.getInt("ID_BARRIO");
-
-        if (rs.wasNull()) {
-            return null;
+        
+        String nombreBarrio = rs.getString("BARRIO");
+        if (nombreBarrio != null) {
+            Barrio b = new Barrio();
+            b.setNombre(nombreBarrio);
+            s.setBarrio(b);
         }
 
-        Barrio b = new Barrio();
-        b.setId_barrio(id);
-
-        return b;
-    }
-
-    private EstadoSuscripcion mapEstado(ResultSet rs) throws SQLException {
-
-        return EstadoSuscripcion.valueOf(rs.getString("ESTADO"));
+        return s;
     }
 }

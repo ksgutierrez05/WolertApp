@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import oracle.jdbc.OracleTypes;
 import sistemagestion.model.TipoAlerta;
 
 /**
@@ -26,102 +27,99 @@ public class TipoAlertaDAO {
     }
 
     public boolean insertar(String nombre) {
-
-        String sql = "{call pkg_tipos_alerta.pr_insertar_tipo_alerta(?)}";
-
+        String sql = "{call pkg_catalogos.pr_insertar_tipo_alerta(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, nombre);
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar tipo alerta: " + e.getMessage());
             return false;
         }
     }
 
-    public TipoAlerta buscarPorId(int id) {
-        String sql = "{ call pkg_tipos_alerta.pr_consultar_tipo_alerta(?, ?) }";
-
+    public boolean actualizar(String nombreActual, String nombreNuevo) {
+        String sql = "{call pkg_catalogos.pr_actualizar_tipo_alerta(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
-            cs.registerOutParameter(2, Types.VARCHAR);
-
+            cs.setString(1, nombreActual);
+            cs.setString(2, nombreNuevo);
             cs.execute();
-
-            String nombre = cs.getString(2);
-
-            if (nombre == null) {
-                return null;
-            }
-
-            TipoAlerta t = new TipoAlerta();
-            t.setId_tipoalerta(id);
-            t.setNombre(nombre);
-
-            return t;
-
+            return true;
         } catch (SQLException e) {
-            return null;
+            System.out.println("Error actualizar tipo alerta: " + e.getMessage());
+            return false;
         }
     }
 
-    public List<TipoAlerta> listarTodos() {
-        List<TipoAlerta> lista = new ArrayList<>();
-
-        String sql = "{ call pkg_tipos_alerta.pr_listar_tipos_alerta(?) }";
-
+    public boolean eliminar(String nombre) {
+        String sql = "{call pkg_catalogos.pr_eliminar_tipo_alerta(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.registerOutParameter(1, oracle.jdbc.OracleTypes.CURSOR);
+            cs.setString(1, nombre);
             cs.execute();
-
-            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
-                while (rs.next()) {
-                    TipoAlerta t = new TipoAlerta();
-                    t.setId_tipoalerta(rs.getInt("ID_TIPO_ALERTA"));
-                    t.setNombre(rs.getString("NOMBRE"));
-                    lista.add(t);
-                }
-            }
-
+            return true;
         } catch (SQLException e) {
-            return new ArrayList<>();
+            System.out.println("Error eliminar tipo alerta: " + e.getMessage());
+            return false;
         }
+    }
 
+    
+    public List<TipoAlerta> listar() {
+        List<TipoAlerta> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_listar_tipos_alerta(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.registerOutParameter(1, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error listar tipos alerta: " + e.getMessage());
+        }
         return lista;
     }
 
-    public boolean actualizar(TipoAlerta t) {
-        String sql = "{ call pkg_tipos_alerta.pr_actualizar_tipo_alerta(?, ?) }";
-
+  
+    public List<TipoAlerta> buscar(String texto) {
+        List<TipoAlerta> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_tipo_alerta(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, t.getId_tipoalerta());
-            cs.setString(2, t.getNombre());
-
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-            return true;
-
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar tipo alerta: " + e.getMessage());
         }
+        return lista;
     }
 
-    public boolean eliminar(int id) {
-        String sql = "{ call pkg_tipos_alerta.pr_eliminar_tipo_alerta(?) }";
-
+   
+    public List<TipoAlerta> buscarExacto(String texto) {
+        List<TipoAlerta> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_tipo_alerta_exacto(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-
-            return true;
-
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
-            return false;
+            System.out.println("Error buscar tipo alerta exacto: " + e.getMessage());
         }
+        return lista;
+    }
+
+    
+    private TipoAlerta mapear(ResultSet rs) throws SQLException {
+        TipoAlerta t = new TipoAlerta();
+        t.setNombre(rs.getString("NOMBRE"));
+        return t;
     }
 }
