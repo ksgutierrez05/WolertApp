@@ -12,9 +12,9 @@ public class Alarma {
     
     private int  id_alarma;
     private String nombre;
-    private int latitud;
-    private int longitud;
-    private int radio_cobertura;
+    private double latitud;
+    private double longitud;
+    private double radio_cobertura;
     EstadoAlarma estado;
 
     public EstadoAlarma getEstado() {
@@ -41,29 +41,31 @@ public class Alarma {
         this.nombre = nombre;
     }
 
-    public int getLatitud() {
+    public double getLatitud() {
         return latitud;
     }
 
-    public void setLatitud(int latitud) {
+    public void setLatitud(double latitud) {
         this.latitud = latitud;
     }
 
-    public int getLongitud() {
+    public double getLongitud() {
         return longitud;
     }
 
-    public void setLongitud(int longitud) {
+    public void setLongitud(double longitud) {
         this.longitud = longitud;
     }
 
-    public int getRadio_cobertura() {
+    public double getRadio_cobertura() {
         return radio_cobertura;
     }
 
-    public void setRadio_cobertura(int radio_cobertura) {
+    public void setRadio_cobertura(double radio_cobertura) {
         this.radio_cobertura = radio_cobertura;
     }
+
+    
       
     
 }
