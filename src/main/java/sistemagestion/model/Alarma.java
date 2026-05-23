@@ -12,6 +12,7 @@ public class Alarma {
     
     private int  id_alarma;
     private String nombre;
+    Barrio barrio;
     private double latitud;
     private double longitud;
     private double radio_cobertura;
@@ -40,6 +41,16 @@ public class Alarma {
     public void setNombre(String nombre) {
         this.nombre = nombre;
     }
+
+    public Barrio getBarrio() {
+        return barrio;
+    }
+
+    public void setBarrio(Barrio barrio) {
+        this.barrio = barrio;
+    }
+    
+    
 
     public double getLatitud() {
         return latitud;
