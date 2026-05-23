@@ -37,6 +37,14 @@ public class AtencionAlerta {
         this.alerta = alerta;
     }
 
+    public EstadoAtencionAlerta getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoAtencionAlerta estado) {
+        this.estado = estado;
+    }
+
     public LocalDateTime getFechaatencion() {
         return fechaatencion;
     }
