@@ -29,10 +29,12 @@ import sistemagestion.model.Usuario;
  */
 public class AlertaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public AlertaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+       
     }
 
     public boolean insertar(
@@ -53,7 +55,7 @@ public class AlertaDAO {
             String descripcion
     ) {
         String sql = "{call pkg_alertas.pr_insertar_alerta(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, username);
             cs.setString(2, tipoAlerta);
             cs.setString(3, nombreBarrio);
@@ -81,7 +83,7 @@ public class AlertaDAO {
 
     public Alerta buscarPorId(int idAlerta) {
         String sql = "{call pkg_alertas.pr_consultar_alerta(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -96,7 +98,7 @@ public class AlertaDAO {
     public List<Alerta> listar() {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_alertas(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -110,7 +112,7 @@ public class AlertaDAO {
     public List<Alerta> listarPorUsuario(String username) {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_alertas_por_usuario(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, username);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -125,7 +127,7 @@ public class AlertaDAO {
     public List<Alerta> listarPorBarrio(String nombreBarrio) {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_alertas_por_barrio(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreBarrio);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -140,7 +142,7 @@ public class AlertaDAO {
     public List<Alerta> buscarPorTipo(String tipoAlerta) {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_alerta_por_tipo(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, tipoAlerta);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -155,7 +157,7 @@ public class AlertaDAO {
     public List<Alerta> buscarPorTipoExacto(String tipoAlerta) {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_alerta_por_tipo_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, tipoAlerta);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -170,7 +172,7 @@ public class AlertaDAO {
     public List<Alerta> buscarPorDescripcion(String texto) {
         List<Alerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_alerta_por_descripcion(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -184,7 +186,7 @@ public class AlertaDAO {
 
     public boolean actualizarEstado(int idAlerta, String estado) {
         String sql = "{call pkg_alertas.pr_actualizar_estado(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.setString(2, estado);
             cs.execute();
@@ -197,7 +199,7 @@ public class AlertaDAO {
 
     public boolean eliminar(int idAlerta) {
         String sql = "{call pkg_alertas.pr_eliminar_alerta(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.execute();
             return true;
