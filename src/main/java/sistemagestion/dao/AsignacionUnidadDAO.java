@@ -31,47 +31,61 @@ public class AsignacionUnidadDAO {
 
     public boolean insertar(
             int idAlerta,
-            int idUnidad,
+            String nombreUnidad,
             String observacion,
             LocalDateTime fechaHora
     ) {
-
-        String sql = "{call pkg_asignaciones_unidad.pr_insertar_asignacion(?, ?, ?, ?)}";
-
+        String sql = "{call pkg_alertas.pr_insertar_asignacion(?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setInt(1, idAlerta);
-            cs.setInt(2, idUnidad);
+            cs.setString(2, nombreUnidad);
             cs.setString(3, observacion);
             cs.setTimestamp(4, Timestamp.valueOf(fechaHora));
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar asignacion: " + e.getMessage());
             return false;
         }
     }
 
-    public AsignacionUnidad buscarPorId(int idAsignacion) {
-        String sql = "{call pkg_asignaciones_unidad.pr_consultar_asignacion(?, ?)}";
+    public boolean actualizar(
+            int idAsignacion,
+            int idAlerta,
+            String nombreUnidad,
+            String observacion,
+            LocalDateTime fechaHora
+    ) {
+        String sql = "{call pkg_alertas.pr_actualizar_asignacion(?, ?, ?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
             cs.setInt(1, idAsignacion);
-            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.setInt(2, idAlerta);
+            cs.setString(3, nombreUnidad);
+            cs.setString(4, observacion);
+            cs.setTimestamp(5, Timestamp.valueOf(fechaHora));
             cs.execute();
-            ResultSet rs = (ResultSet) cs.getObject(2);
-            if (rs.next()) {
-                return mapear(rs);
-            }
+            return true;
         } catch (SQLException e) {
-            return null;
+            System.out.println("Error actualizar asignacion: " + e.getMessage());
+            return false;
         }
-        return null;
+    }
+
+    public boolean eliminar(int idAsignacion) {
+        String sql = "{call pkg_alertas.pr_eliminar_asignacion(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setInt(1, idAsignacion);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar asignacion: " + e.getMessage());
+            return false;
+        }
     }
 
     public List<AsignacionUnidad> listar() {
         List<AsignacionUnidad> lista = new ArrayList<>();
-        String sql = "{call pkg_asignaciones_unidad.pr_listar_asignaciones(?)}";
+        String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
@@ -80,69 +94,29 @@ public class AsignacionUnidadDAO {
                 lista.add(mapear(rs));
             }
         } catch (SQLException e) {
-            return lista;
+            System.out.println("Error listar asignaciones: " + e.getMessage());
         }
         return lista;
     }
 
-    public boolean actualizar(AsignacionUnidad a) {
-        String sql = "{call pkg_asignaciones_unidad.pr_actualizar_asignacion(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, a.getId_asignacion());
-            cs.setInt(2, a.getAlerta().getId_alerta());
-            cs.setInt(3, a.getUnidadpolicial().getId_unidad());
-            cs.setString(4, a.getObservacion());
-            cs.setTimestamp(5, Timestamp.valueOf(a.getFechahoraasignacion()));
-            cs.execute();
-            return true;
-        } catch (SQLException e) {
-            return false;
-        }
-    }
-
-    public boolean eliminar(int idAsignacion) {
-        String sql = "{call pkg_asignaciones_unidad.pr_eliminar_asignacion(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, idAsignacion);
-            cs.execute();
-            return true;
-        } catch (SQLException e) {
-            return false;
-        }
-    }
-
+    // vw_asignaciones retorna
     private AsignacionUnidad mapear(ResultSet rs) throws SQLException {
-
         AsignacionUnidad a = new AsignacionUnidad();
-
         a.setId_asignacion(rs.getInt("ID_ASIGNACION"));
         a.setObservacion(rs.getString("OBSERVACION"));
-
         a.setFechahoraasignacion(
-                rs.getTimestamp("FECHAHORAASIGNACION").toLocalDateTime()
+            rs.getTimestamp("FECHA").toLocalDateTime()
         );
 
-        a.setUnidadpolicial(mapUnidad(rs));
-        a.setAlerta(mapAlerta(rs));
+        // alerta — la vista retorna estado y descripcion
+        Alerta al = new Alerta();
+        al.setDescripcion(rs.getString("DESCRIPCION_ALERTA"));
+        a.setAlerta(al);
 
-        return a;
-    }
-
-    private UnidadPolicial mapUnidad(ResultSet rs) throws SQLException {
-
+        // unidad — la vista retorna nombre
         UnidadPolicial u = new UnidadPolicial();
-
-        u.setId_unidad(rs.getInt("ID_UNIDAD"));
         u.setNombre(rs.getString("NOMBRE_UNIDAD"));
-
-        return u;
-    }
-
-    private Alerta mapAlerta(ResultSet rs) throws SQLException {
-
-        Alerta a = new Alerta();
-
-        a.setId_alerta(rs.getInt("ID_ALERTA"));
+        a.setUnidadpolicial(u);
 
         return a;
     }

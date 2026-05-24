@@ -8,9 +8,9 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import oracle.jdbc.OracleTypes;
 import sistemagestion.model.EstadoUsuario;
 import sistemagestion.model.RolUsuario;
 import sistemagestion.model.Usuario;
@@ -28,175 +28,193 @@ public class UsuarioDAO {
     }
 
     public boolean insertar(
-            String primerNombre,
-            String segundoNombre,
-            String primerApellido,
-            String segundoApellido,
-            String identificacion,
-            String telefono,
-            String correo,
-            String username,
-            String password,
-            String estado,
-            int idRol,
-            Integer idBarrio
+            String primerNombre, String segundoNombre,
+            String primerApellido, String segundoApellido,
+            String cedula, String telefono,
+            String correo, String username,
+            String password, String nombreRol,
+            String nombreBarrio, String calle,
+            String carrera, String etapa,
+            String manzana, String casa
     ) {
-
-        String sql = "{CALL PKG_USUARIOS.pr_insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-
+        String sql = "{call pkg_usuarios.pr_insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setNull(1, Types.NUMERIC);
-
-            cs.setString(2, primerNombre);
-            cs.setString(3, segundoNombre);
-            cs.setString(4, primerApellido);
-            cs.setString(5, segundoApellido);
-            cs.setString(6, identificacion);
-            cs.setString(7, telefono);
-            cs.setString(8, correo);
-            cs.setString(9, username);
-            cs.setString(10, password);
-
-            cs.setString(11, estado);
-
-            cs.setInt(12, idRol);
-
-            if (idBarrio != null) {
-                cs.setInt(13, idBarrio);
-            } else {
-                cs.setNull(13, Types.NUMERIC);
-            }
-
-            cs.setNull(14, Types.VARCHAR);
-            cs.setNull(15, Types.VARCHAR);
-            cs.setNull(16, Types.VARCHAR);
-            cs.setNull(17, Types.VARCHAR);
-            cs.setNull(18, Types.VARCHAR);
+            cs.setString(1, primerNombre);
+            cs.setString(2, segundoNombre);
+            cs.setString(3, primerApellido);
+            cs.setString(4, segundoApellido);
+            cs.setString(5, cedula);
+            cs.setString(6, telefono);
+            cs.setString(7, correo);
+            cs.setString(8, username);
+            cs.setString(9, password);
+            cs.setString(10, nombreRol);
+            cs.setString(11, nombreBarrio);
+            cs.setString(12, calle);
+            cs.setString(13, carrera);
+            cs.setString(14, etapa);
+            cs.setString(15, manzana);
+            cs.setString(16, casa);
 
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar usuario: " + e.getMessage());
             return false;
         }
     }
 
-    public void actualizar(Usuario u) throws SQLException {
-        String sql = "{CALL PKG_USUARIOS.pr_actualizar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+    public boolean actualizar(
+            String username,
+            String primerNombre, String segundoNombre,
+            String primerApellido, String segundoApellido,
+            String telefono, String correo,
+            String password, String nombreRol,
+            String nombreBarrio, String calle,
+            String carrera, String etapa,
+            String manzana, String casa
+    ) {
+        String sql = "{call pkg_usuarios.pr_actualizar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, u.getId_usuario());
-            cs.setString(2, u.getPrimer_nombre());
-            cs.setString(3, u.getSegundo_nombre());
-            cs.setString(4, u.getPrimer_apellido());
-            cs.setString(5, u.getSegundo_apellido());
-            cs.setString(6, u.getTelefono());
-            cs.setString(7, u.getCorreo());
-            cs.setString(8, u.getUsername());
-            cs.setString(9, u.getPassword());
-            cs.setString(10, u.getEstado().name());
-            cs.setInt(11, 4); // id_rol
-
-            if (u.getDireccion() != null && u.getDireccion().getBarrio() != null) {
-                cs.setInt(12, u.getDireccion().getBarrio().getId_barrio());
-            } else {
-                cs.setNull(12, Types.NUMERIC);
-            }
-
-            cs.setNull(13, Types.VARCHAR); // calle
-            cs.setNull(14, Types.VARCHAR); // carrera
-            cs.setNull(15, Types.VARCHAR); // etapa
-            cs.setNull(16, Types.VARCHAR); // manzana
-            cs.setNull(17, Types.VARCHAR); // casa
+            cs.setString(1, username);
+            cs.setString(2, primerNombre);
+            cs.setString(3, segundoNombre);
+            cs.setString(4, primerApellido);
+            cs.setString(5, segundoApellido);
+            cs.setString(6, telefono);
+            cs.setString(7, correo);
+            cs.setString(8, password);
+            cs.setString(9, nombreRol);
+            cs.setString(10, nombreBarrio);
+            cs.setString(11, calle);
+            cs.setString(12, carrera);
+            cs.setString(13, etapa);
+            cs.setString(14, manzana);
+            cs.setString(15, casa);
             cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error actualizar usuario: " + e.getMessage());
+            return false;
         }
     }
 
-    public void eliminar(int id) throws SQLException {
-        try (CallableStatement cs = con.prepareCall("{CALL PKG_USUARIOS.pr_eliminar_usuario(?)}")) {
-            cs.setInt(1, id);
+    // pr_eliminar_usuario 
+    public boolean eliminar(String cedula) {
+        String sql = "{call pkg_usuarios.pr_eliminar_usuario(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, cedula);
             cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar usuario: " + e.getMessage());
+            return false;
         }
     }
 
-    public boolean existePorCedula(String cedula) throws SQLException {
-        try (CallableStatement cs = con.prepareCall("{? = CALL PKG_USUARIOS.fx_usuario_existe(?)}")) {
-            cs.registerOutParameter(1, Types.NUMERIC);
-            cs.setString(2, cedula);
-            cs.execute();
-            return cs.getInt(1) > 0;
-        }
-    }
-
+    // pr_login_usuario
     public Usuario login(String username, String password) throws SQLException {
-
-        String sql = "{call pkg_usuarios.prc_login_usuario(?, ?, ?)}";
-
+        String sql = "{call pkg_usuarios.pr_login_usuario(?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, username);
             cs.setString(2, password);
-
-            cs.registerOutParameter(3, oracle.jdbc.OracleTypes.CURSOR);
-
+            cs.registerOutParameter(3, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(3);
-
             if (rs.next()) {
                 return mapear(rs);
             }
-
         }
-
         return null;
     }
 
-    public Usuario buscarPorId(int id) throws SQLException {
-
-        String sql = "{call pkg_usuarios.prc_consultar_usuario(?, ?)}";
-
+    // pr_consultar_usuario recibe cedula
+    public Usuario buscarPorCedula(String cedula) throws SQLException {
+        String sql = "{call pkg_usuarios.pr_consultar_usuario(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
-            cs.registerOutParameter(2, oracle.jdbc.OracleTypes.CURSOR);
-
+            cs.setString(1, cedula);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(2);
-
             if (rs.next()) {
-                return mapear(rs);
+                return mapearParcial(rs);
             }
-
         }
-
         return null;
     }
 
+    // pr_listar_usuarios 
     public List<Usuario> listarTodos() throws SQLException {
-
         List<Usuario> lista = new ArrayList<>();
-
-        String sql = "{call pkg_usuarios.prc_listar_usuarios(?)}";
-
+        String sql = "{call pkg_usuarios.pr_listar_usuarios(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.registerOutParameter(1, oracle.jdbc.OracleTypes.CURSOR);
-
+            cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
-
             ResultSet rs = (ResultSet) cs.getObject(1);
-
             while (rs.next()) {
-                lista.add(mapear(rs));
+                lista.add(mapearParcial(rs));
             }
-
         }
-
         return lista;
     }
 
+    // pr_buscar_usuario 
+    public List<Usuario> buscar(String texto) throws SQLException {
+        List<Usuario> lista = new ArrayList<>();
+        String sql = "{call pkg_usuarios.pr_buscar_usuario(?, ?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapearParcial(rs));
+            }
+        }
+        return lista;
+    }
+
+    // pr_buscar_usuario_exacto 
+    public List<Usuario> buscarExacto(String texto) throws SQLException {
+        List<Usuario> lista = new ArrayList<>();
+        String sql = "{call pkg_usuarios.pr_buscar_usuario_exacto(?, ?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapearParcial(rs));
+            }
+        }
+        return lista;
+    }
+
+    public boolean inactivar(String cedula) {
+        String sql = "{call pkg_usuarios.pr_inactivar_usuario(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, cedula);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error inactivar usuario: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean activar(String cedula) {
+        String sql = "{call pkg_usuarios.pr_activar_usuario(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, cedula);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error activar usuario: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Para login 
     private Usuario mapear(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
         u.setId_usuario(rs.getInt("ID_USUARIO"));
@@ -213,9 +231,25 @@ public class UsuarioDAO {
         RolUsuario r = new RolUsuario();
         r.setIdRol(rs.getInt("ID_ROL"));
         r.setNombre(rs.getString("ROL_NOMBRE"));
-
         u.setRol(r);
         return u;
     }
 
+    // Para listar, consultar y buscar
+    private Usuario mapearParcial(ResultSet rs) throws SQLException {
+        Usuario u = new Usuario();
+        u.setPrimer_nombre(rs.getString("PRIMER_NOMBRE"));
+        u.setSegundo_nombre(rs.getString("SEGUNDO_NOMBRE"));
+        u.setPrimer_apellido(rs.getString("PRIMER_APELLIDO"));
+        u.setSegundo_apellido(rs.getString("SEGUNDO_APELLIDO"));
+        u.setIdentificacion(rs.getString("CEDULA"));
+        u.setTelefono(rs.getString("TELEFONO"));
+        u.setCorreo(rs.getString("EMAIL"));
+        u.setUsername(rs.getString("USERNAME"));
+        u.setEstado(EstadoUsuario.valueOf(rs.getString("ACTIVO")));
+        RolUsuario r = new RolUsuario();
+        r.setNombre(rs.getString("ROL"));
+        u.setRol(r);
+        return u;
+    }
 }

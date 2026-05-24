@@ -26,94 +26,117 @@ public class BarrioDAO {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(String nombre, int idComuna) {
-
-        String sql = "{call pkg_barrios.pr_insertar_barrio(?, ?)}";
-
+    public boolean insertar(String nombre, String nombreComuna) {
+        String sql = "{call pkg_catalogos.pr_insertar_barrio(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setString(1, nombre);
-            cs.setInt(2, idComuna);
-
+            cs.setString(2, nombreComuna);
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar barrio: " + e.getMessage());
             return false;
         }
     }
 
-    public void actualizar(Barrio b) throws SQLException {
-        String sql = "{CALL pkg_barrios.pr_actualizar_barrio(?,?)}";
-
+    public boolean actualizar(String nombreActual, String nombreNuevo) {
+        String sql = "{call pkg_catalogos.pr_actualizar_barrio(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, b.getId_barrio());
-            cs.setString(2, b.getNombre());
+            cs.setString(1, nombreActual);
+            cs.setString(2, nombreNuevo);
             cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error actualizar barrio: " + e.getMessage());
+            return false;
         }
     }
 
-    public List<Barrio> listar() throws SQLException {
-        List<Barrio> lista = new ArrayList<>();
-
-        String sql = "{CALL pkg_barrios.pr_listar_barrios(?)}";
-
+    public boolean eliminar(String nombre) {
+        String sql = "{call pkg_catalogos.pr_eliminar_barrio(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, nombre);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error eliminar barrio: " + e.getMessage());
+            return false;
+        }
+    }
 
+    public List<Barrio> listar() {
+        List<Barrio> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_listar_barrios(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
-
-            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
-                while (rs.next()) {
-                    lista.add(mapear(rs));
-                }
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            while (rs.next()) {
+                lista.add(mapear(rs));
             }
+        } catch (SQLException e) {
+            System.out.println("Error listar barrios: " + e.getMessage());
         }
-
         return lista;
     }
 
-    public Barrio buscarPorId(int id) throws SQLException {
-        String sql = "{CALL pkg_barrios.pr_consultar_barrio(?,?)}";
-
+    public List<Barrio> listarPorComuna(String nombreComuna) {
+        List<Barrio> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_barrios_por_comuna(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, id);
-            cs.registerOutParameter(2, oracle.jdbc.OracleTypes.CURSOR);
-
+            cs.setString(1, nombreComuna);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
-
-            try (ResultSet rs = (ResultSet) cs.getObject(2)) {
-                if (rs.next()) {
-                    return mapear(rs);
-                }
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
             }
+        } catch (SQLException e) {
+            System.out.println("Error listar barrios por comuna: " + e.getMessage());
         }
-
-        return null;
+        return lista;
     }
 
-    public void eliminar(int id) throws SQLException {
-        String sql = "{CALL pkg_barrios.pr_eliminar_barrio(?)}";
-
+    public List<Barrio> buscar(String texto) {
+        List<Barrio> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_barrio(?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-            cs.setInt(1, id);
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error buscar barrio: " + e.getMessage());
         }
+        return lista;
+    }
+
+    public List<Barrio> buscarExacto(String texto) {
+        List<Barrio> lista = new ArrayList<>();
+        String sql = "{call pkg_catalogos.pr_buscar_barrio_exacto(?, ?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.setString(1, texto);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error buscar barrio exacto: " + e.getMessage());
+        }
+        return lista;
     }
 
     private Barrio mapear(ResultSet rs) throws SQLException {
         Barrio b = new Barrio();
-        b.setId_barrio(rs.getInt("ID_BARRIO"));
-        b.setNombre(rs.getString("NOMBRE"));
-
+        b.setNombre(rs.getString("BARRIO"));
         Comuna c = new Comuna();
-        c.setId_comuna(rs.getInt("ID_COMUNA"));
-        c.setNombre(rs.getString("NOMBRE_COMUNA"));
-
+        c.setNombre(rs.getString("COMUNA"));
         b.setComuna(c);
-
         return b;
     }
-
 }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * @author Maria Cristina
  */
 public class Alerta {
-    
+
     private int id_alerta;
     Usuario usuario;
     TipoAlerta tipoalerta;
@@ -20,6 +20,9 @@ public class Alerta {
     MedioTransporte mediotransporte;
     Direccion direccion;
     EstadoAlerta estado;
+    Alarma alarma;
+    private double latitud;
+    private double longitud;
     private LocalDateTime fechaHora;
     private String descripcion;
 
@@ -102,10 +105,29 @@ public class Alerta {
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
     }
-    
-    
-    
-    
-    
-    
+
+    public double getLatitud() {
+        return latitud;
+    }
+
+    public void setLatitud(double latitud) {
+        this.latitud = latitud;
+    }
+
+    public double getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(double longitud) {
+        this.longitud = longitud;
+    }
+
+    public Alarma getAlarma() {
+        return alarma;
+    }
+
+    public void setAlarma(Alarma alarma) {
+        this.alarma = alarma;
+    }
+
 }

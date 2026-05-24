@@ -8,10 +8,12 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import oracle.jdbc.OracleTypes;
 import sistemagestion.model.Alerta;
 import sistemagestion.model.EstadoNotificacion;
 import sistemagestion.model.Notificacion;
-import sistemagestion.model.Policia;
 import sistemagestion.model.Usuario;
 
 /**
@@ -20,111 +22,76 @@ import sistemagestion.model.Usuario;
  */
 public class NotificacionDAO {
 
-private Connection con;
+    private Connection con;
 
     public NotificacionDAO() throws SQLException {
         this.con = ConexionDB.getInstancia().getConexion();
     }
 
-    public boolean insertar(
-            int idAlerta,
-            int idUsuario,
-            String mensaje
-    ) {
-
-        String sql = "{call pkg_notificaciones.pr_insertar_notificacion(?, ?, ?)}";
-
+    public boolean insertar(int idAlerta, String cedulaUsuario, String mensaje) {
+        String sql = "{call pkg_alertas.pr_insertar_notificacion(?, ?, ?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setInt(1, idAlerta);
-            cs.setInt(2, idUsuario);
+            cs.setString(2, cedulaUsuario);
             cs.setString(3, mensaje);
-
             cs.execute();
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error insertar notificacion: " + e.getMessage());
             return false;
         }
-    }
-
-    public Notificacion consultar(int idNotificacion) {
-
-        String sql = "{call pkg_notificaciones.pr_consultar_notificacion(?)}";
-
-        try (CallableStatement cs = con.prepareCall(sql)) {
-
-            cs.setInt(1, idNotificacion);
-            cs.registerOutParameter(2, oracle.jdbc.OracleTypes.CURSOR);
-
-            cs.execute();
-
-            ResultSet rs = (ResultSet) cs.getObject(2);
-
-            if (rs.next()) {
-                return mapear(rs);
-            }
-
-        } catch (SQLException e) {
-            return null;
-        }
-
-        return null;
     }
 
     public boolean eliminar(int idNotificacion) {
-
-        String sql = "{call pkg_notificaciones.pr_eliminar_notificacion(?)}";
-
+        String sql = "{call pkg_alertas.pr_eliminar_notificacion(?)}";
         try (CallableStatement cs = con.prepareCall(sql)) {
-
             cs.setInt(1, idNotificacion);
             cs.execute();
-
             return true;
-
         } catch (SQLException e) {
+            System.out.println("Error eliminar notificacion: " + e.getMessage());
             return false;
         }
     }
 
+    public List<Notificacion> listar() {
+        List<Notificacion> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_notificaciones(?)}";
+        try (CallableStatement cs = con.prepareCall(sql)) {
+            cs.registerOutParameter(1, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error listar notificaciones: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    // vw_notificaciones retorna
     private Notificacion mapear(ResultSet rs) throws SQLException {
-
         Notificacion n = new Notificacion();
-
         n.setId_notificacion(rs.getInt("ID_NOTIFICACION"));
         n.setMensaje(rs.getString("MENSAJE"));
-        n.setCorreodestinatario(rs.getString("CORREO_DESTINATARIO"));
-
         n.setFechahora(rs.getTimestamp("FECHA").toLocalDateTime());
+        n.setCorreodestinatario(rs.getString("EMAIL"));
 
-        n.setUsuario(mapUsuario(rs));
-        n.setAlerta(mapAlerta(rs));
-        n.setPolicia(mapPolicia(rs));
-        n.setEstado(mapEstado(rs));
+        // usuario
+        Usuario u = new Usuario();
+        u.setPrimer_nombre(rs.getString("NOMBRE_USUARIO"));
+        u.setCorreo(rs.getString("EMAIL"));
+        n.setUsuario(u);
+
+        // alerta
+        Alerta a = new Alerta();
+        a.setDescripcion(rs.getString("DESCRIPCION_ALERTA"));
+        n.setAlerta(a);
+
+        // estado directo desde el enum
+        n.setEstado(EstadoNotificacion.valueOf(rs.getString("ENVIADA")));
 
         return n;
-    }
-
-    private Usuario mapUsuario(ResultSet rs) throws SQLException {
-        Usuario u = new Usuario();
-        u.setId_usuario(rs.getInt("ID_USUARIO"));
-        return u;
-    }
-
-    private Alerta mapAlerta(ResultSet rs) throws SQLException {
-        Alerta a = new Alerta();
-        a.setId_alerta(rs.getInt("ID_ALERTA"));
-        return a;
-    }
-
-    private Policia mapPolicia(ResultSet rs) throws SQLException {
-        Policia p = new Policia();
-        p.setId_policia(rs.getInt("ID_POLICIA"));
-        return p;
-    }
-
-    private EstadoNotificacion mapEstado(ResultSet rs) throws SQLException {
-        return EstadoNotificacion.valueOf(rs.getString("ESTADO"));
     }
 }
