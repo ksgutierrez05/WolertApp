@@ -25,65 +25,45 @@ public class PoliciaService {
     public boolean insertar(Policia p) {
 
         Validador.validarObjeto(p);
-
         Validador.validarObjeto(p.getUnidadpolicial());
-
         Validador.validarCampoVacio(p.getPlaca());
-
         Validador.validarCampoVacio(p.getRango());
-
         Validador.validarEnum(p.getEstadopolicial());
 
         return policiaDAO.insertar(
-            p.getId_policia(),
-            p.getUnidadpolicial().getId_unidad(),
-            p.getPlaca(),
-            p.getRango(),
-            p.getEstadopolicial().name()
-    );
+                p.getIdentificacion(),
+                p.getUnidadpolicial().getNombre(),
+                p.getPlaca(),
+                p.getRango(),
+                p.getEstadopolicial().name()
+        );
     }
 
-    public void actualizar(Policia p)
-            throws SQLException {
+    public boolean actualizar(Policia p) {
 
         Validador.validarObjeto(p);
-
         Validador.validarObjeto(p.getUnidadpolicial());
-
         Validador.validarCampoVacio(p.getPlaca());
-
         Validador.validarCampoVacio(p.getRango());
-
         Validador.validarEnum(p.getEstadopolicial());
 
-        policiaDAO.actualizar(p);
+        return policiaDAO.actualizar(
+                p.getIdentificacion(),
+                p.getUnidadpolicial().getNombre(),
+                p.getPlaca(),
+                p.getRango(),
+                p.getEstadopolicial().name()
+        );
     }
 
-    public void eliminar(int idUsuario)
-            throws SQLException {
+    public boolean eliminar(String cedulaUsuario) {
 
-        if (idUsuario <= 0) {
+        Validador.validarCampoVacio(cedulaUsuario);
 
-            throw new IllegalArgumentException();
-        }
-
-        policiaDAO.eliminar(idUsuario);
+        return policiaDAO.eliminar(cedulaUsuario);
     }
 
-    public Policia buscarPorId(int idUsuario)
-            throws SQLException {
-
-        if (idUsuario <= 0) {
-
-            throw new IllegalArgumentException();
-        }
-
-        return policiaDAO.buscarPorId(idUsuario);
-    }
-
-    public List<Policia> listar()
-            throws SQLException {
-
+    public List<Policia> listar() {
         return policiaDAO.listar();
     }
 }

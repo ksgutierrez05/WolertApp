@@ -16,10 +16,10 @@ import sistemagestion.util.Validador;
  */
 public class MedioTransporteService {
 
-    private MedioTransporteDAO dao;
+    private MedioTransporteDAO medioDAO;
 
     public MedioTransporteService() throws SQLException {
-        dao = new MedioTransporteDAO();
+        medioDAO = new MedioTransporteDAO();
     }
 
     public boolean insertar(MedioTransporte m) {
@@ -27,22 +27,13 @@ public class MedioTransporteService {
         Validador.validarObjeto(m);
         Validador.validarCampoVacio(m.getNombre());
 
-        return dao.insertar(
-            m.getNombre()
-      );
-    }
-
-    public MedioTransporte buscarPorId(int id) {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        return dao.buscarPorId(id);
+        return medioDAO.insertar(
+                m.getNombre()
+        );
     }
 
     public List<MedioTransporte> listar() {
-        return dao.listar();
+        return medioDAO.listar();
     }
 
     public boolean actualizar(MedioTransporte m) {
@@ -50,15 +41,16 @@ public class MedioTransporteService {
         Validador.validarObjeto(m);
         Validador.validarCampoVacio(m.getNombre());
 
-        return dao.actualizar(m);
+        return medioDAO.actualizar(
+                m.getNombre(),
+                m.getNombre()
+        );
     }
 
-    public boolean eliminar(int id) {
+    public boolean eliminar(String nombre) {
 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
+        Validador.validarCampoVacio(nombre);
 
-        return dao.eliminar(id);
+        return medioDAO.eliminar(nombre);
     }
 }

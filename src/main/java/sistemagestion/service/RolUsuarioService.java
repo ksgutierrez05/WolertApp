@@ -4,6 +4,7 @@
  */
 package sistemagestion.service;
 
+import java.sql.SQLException;
 import java.util.List;
 import sistemagestion.dao.RolUsuarioDAO;
 import sistemagestion.model.RolUsuario;
@@ -17,7 +18,7 @@ public class RolUsuarioService {
 
     private RolUsuarioDAO dao;
 
-    public RolUsuarioService() {
+    public RolUsuarioService() throws SQLException {
         dao = new RolUsuarioDAO();
     }
 
@@ -26,16 +27,9 @@ public class RolUsuarioService {
         Validador.validarObjeto(r);
         Validador.validarCampoVacio(r.getNombre());
 
-        return dao.insertar(r.getIdRol(), r.getNombre());
-    }
-
-    public RolUsuario buscarPorId(int idRol) {
-
-        if (idRol <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        return dao.buscarPorId(idRol);
+        return dao.insertar(
+                r.getNombre()
+        );
     }
 
     public List<RolUsuario> listar() {
@@ -47,15 +41,16 @@ public class RolUsuarioService {
         Validador.validarObjeto(r);
         Validador.validarCampoVacio(r.getNombre());
 
-        return dao.actualizar(r.getIdRol(), r.getNombre());
+        return dao.actualizar(
+                r.getNombre(),
+                r.getNombre()
+        );
     }
 
-    public boolean eliminar(int idRol) {
+    public boolean eliminar(String nombre) {
 
-        if (idRol <= 0) {
-            throw new IllegalArgumentException();
-        }
+        Validador.validarCampoVacio(nombre);
 
-        return dao.eliminar(idRol);
+        return dao.eliminar(nombre);
     }
 }
