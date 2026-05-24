@@ -17,7 +17,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.*;
 import javafx.util.Duration;
-import sistemagestion.model.Barrio;
 import sistemagestion.model.Direccion;
 import sistemagestion.model.EstadoUsuario;
 import sistemagestion.model.RolUsuario;
