@@ -20,6 +20,7 @@ public class Alerta {
     MedioTransporte mediotransporte;
     Direccion direccion;
     EstadoAlerta estado;
+    Alarma alarma;
     private double latitud;
     private double longitud;
     private LocalDateTime fechaHora;
@@ -119,6 +120,14 @@ public class Alerta {
 
     public void setLongitud(double longitud) {
         this.longitud = longitud;
+    }
+
+    public Alarma getAlarma() {
+        return alarma;
+    }
+
+    public void setAlarma(Alarma alarma) {
+        this.alarma = alarma;
     }
 
 }
