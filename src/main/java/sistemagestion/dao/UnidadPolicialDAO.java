@@ -22,16 +22,18 @@ import sistemagestion.model.UnidadPolicial;
  */
 public class UnidadPolicialDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public UnidadPolicialDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+         
     }
 
     // pr_insertar_unidad(nombre, estado, nombre_barrio)
     public boolean insertar(String nombre, String estado, String nombreBarrio) {
         String sql = "{call pkg_alertas.pr_insertar_unidad(?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.setString(2, estado);
             cs.setString(3, nombreBarrio);
@@ -51,7 +53,7 @@ public class UnidadPolicialDAO {
             String nombreBarrio
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
             cs.setString(3, estado);
@@ -67,7 +69,7 @@ public class UnidadPolicialDAO {
     // pr_eliminar_unidad
     public boolean eliminar(String nombre) {
         String sql = "{call pkg_alertas.pr_eliminar_unidad(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -81,7 +83,7 @@ public class UnidadPolicialDAO {
     public List<UnidadPolicial> listar() {
         List<UnidadPolicial> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_unidades(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -98,7 +100,7 @@ public class UnidadPolicialDAO {
     public List<UnidadPolicial> buscar(String texto) {
         List<UnidadPolicial> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_unidad(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -116,7 +118,7 @@ public class UnidadPolicialDAO {
     public List<UnidadPolicial> buscarExacto(String texto) {
         List<UnidadPolicial> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_unidad_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

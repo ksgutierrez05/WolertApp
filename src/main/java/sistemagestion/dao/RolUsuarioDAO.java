@@ -20,15 +20,17 @@ import sistemagestion.model.RolUsuario;
  */
 public class RolUsuarioDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public RolUsuarioDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+         
     }
 
     public boolean insertar(String nombre) {
         String sql = "{call pkg_usuarios.pr_insertar_rol(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -40,7 +42,7 @@ public class RolUsuarioDAO {
 
     public boolean actualizar(String nombreActual, String nombreNuevo) {
         String sql = "{call pkg_usuarios.pr_actualizar_rol(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
             cs.execute();
@@ -53,7 +55,7 @@ public class RolUsuarioDAO {
 
     public boolean eliminar(String nombre) {
         String sql = "{call pkg_usuarios.pr_eliminar_rol(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -66,7 +68,7 @@ public class RolUsuarioDAO {
     public List<RolUsuario> listar() {
         List<RolUsuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_listar_roles(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -82,7 +84,7 @@ public class RolUsuarioDAO {
     public List<RolUsuario> buscar(String texto) {
         List<RolUsuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_rol(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -99,7 +101,7 @@ public class RolUsuarioDAO {
     public List<RolUsuario> buscarExacto(String texto) {
         List<RolUsuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_rol_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
