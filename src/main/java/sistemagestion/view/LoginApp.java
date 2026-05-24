@@ -23,6 +23,13 @@ import sistemagestion.model.EstadoUsuario;
 import sistemagestion.model.RolUsuario;
 import sistemagestion.model.Usuario;
 import sistemagestion.service.UsuarioService;
+import sistemagestion.service.ComunaService;
+import sistemagestion.service.BarrioService;
+import sistemagestion.model.Comuna;
+import sistemagestion.model.Barrio;
+import java.util.List;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class LoginApp {
 
@@ -39,6 +46,8 @@ public class LoginApp {
     private StackPane   overlayPanel;
     private boolean     signUpMode = false;
     private UsuarioService usuarioService;
+    private ComunaService  comunaService;
+    private BarrioService  barrioService;
 
     // ── Campos del login (para limpiar) ───────────────────────────────────────
     private TextField     loginUsername;
@@ -51,17 +60,20 @@ public class LoginApp {
     private TextField     regCedula, regTelefono, regEmail;
     private TextField     regUsername;
     private PasswordField regPassword;
-    private TextField     regBarrio, regCalle, regCarrera;
+    private ComboBox<String> regComuna;
+    private ComboBox<String> regBarrio;
+    private TextField        regCalle, regCarrera;
     private TextField     regEtapa, regManzana, regCasa;
     private Label         regMsg;
 
     // ─────────────────────────────────────────────────────────────────────────
     public Parent getView() {
-        try {
-            usuarioService = new UsuarioService();
-        } catch (SQLException ex) {
-            throw new RuntimeException("Error conectando a la BD: " + ex.getMessage(), ex);
-        }
+        try { usuarioService = new UsuarioService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error iniciando UsuarioService: " + ex.getMessage(), ex); }
+        try { comunaService = new ComunaService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error iniciando ComunaService: " + ex.getMessage(), ex); }
+        try { barrioService = new BarrioService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error iniciando BarrioService: " + ex.getMessage(), ex); }
 
         root = new AnchorPane();
         root.setPrefSize(1000, PANEL_H);
@@ -198,7 +210,50 @@ public class LoginApp {
         regEmail           = modernField("Correo Electrónico");
         regUsername        = modernField("Username");
         regPassword        = modernPassword("Contraseña");
-        regBarrio          = modernField("Barrio");
+        // ComboBox Comuna
+        regComuna = new ComboBox<>();
+        regComuna.setPromptText("Seleccione una comuna");
+        regComuna.setMaxWidth(Double.MAX_VALUE);
+        regComuna.setPrefHeight(50);
+        regComuna.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25;"
+                + "-fx-border-radius: 25; -fx-border-color: transparent;"
+                + "-fx-font-size: 13px;");
+        try {
+            List<Comuna> comunas = comunaService.listar();
+            ObservableList<String> nombresComunas = FXCollections.observableArrayList();
+            for (Comuna c : comunas) nombresComunas.add(c.getNombre());
+            regComuna.setItems(nombresComunas);
+        } catch (Exception ex) { ex.printStackTrace(); }
+
+        // ComboBox Barrio (se llena al seleccionar comuna)
+        regBarrio = new ComboBox<>();
+        regBarrio.setPromptText("Seleccione un barrio");
+        regBarrio.setMaxWidth(Double.MAX_VALUE);
+        regBarrio.setPrefHeight(50);
+        regBarrio.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25;"
+                + "-fx-border-radius: 25; -fx-border-color: transparent;"
+                + "-fx-font-size: 13px;");
+        regBarrio.setDisable(true);
+
+        regComuna.setOnAction(e -> {
+            String comunaSeleccionada = regComuna.getValue();
+            if (comunaSeleccionada == null) return;
+            regBarrio.getItems().clear();
+            regBarrio.setDisable(true);
+            try {
+                List<Barrio> barrios = barrioService.listar();
+                ObservableList<String> nombresBarrios = FXCollections.observableArrayList();
+                for (Barrio b : barrios) {
+                    if (b.getComuna() != null
+                            && comunaSeleccionada.equals(b.getComuna().getNombre())) {
+                        nombresBarrios.add(b.getNombre());
+                    }
+                }
+                regBarrio.setItems(nombresBarrios);
+                regBarrio.setDisable(nombresBarrios.isEmpty());
+            } catch (Exception ex) { ex.printStackTrace(); }
+        });
+
         regCalle           = modernField("Calle");
         regCarrera         = modernField("Carrera");
         regEtapa           = modernField("Etapa");
@@ -217,7 +272,7 @@ public class LoginApp {
             regBarrio.requestFocus();
             animateScroll(scroll, 0.90);
         });
-        chain(regBarrio, regCalle, regCarrera, regEtapa, regManzana, regCasa);
+        chain(regCalle, regCarrera, regEtapa, regManzana, regCasa);
 
         // Botón
         Button btnRegister = new Button("CREAR CUENTA");
@@ -266,7 +321,7 @@ public class LoginApp {
                 sectionTitle("CUENTA"),
                 regUsername, regPassword,
                 sectionTitle("DIRECCIÓN"),
-                regBarrio,
+                regComuna, regBarrio,
                 modernRow(regCalle,  regCarrera),
                 modernRow(regEtapa,  regManzana),
                 regCasa,
@@ -340,8 +395,12 @@ public class LoginApp {
         for (TextField tf : new TextField[]{
             regPrimerNombre, regSegundoNombre, regPrimerApellido, regSegundoApellido,
             regCedula, regTelefono, regEmail, regUsername,
-            regBarrio, regCalle, regCarrera, regEtapa, regManzana, regCasa
+            regCalle, regCarrera, regEtapa, regManzana, regCasa
         }) tf.clear();
+        regComuna.setValue(null);
+        regBarrio.getItems().clear();
+        regBarrio.setValue(null);
+        regBarrio.setDisable(true);
         regPassword.clear();
         regMsg.setText("");
     }
@@ -466,7 +525,7 @@ public class LoginApp {
         u.setRol(rol);
 
         Barrio b = new Barrio();
-        b.setNombre(regBarrio.getText().isBlank() ? null : regBarrio.getText());
+        b.setNombre(regBarrio.getValue() != null ? regBarrio.getValue() : null);
 
         Direccion d = new Direccion();
         d.setBarrio(b);
