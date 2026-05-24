@@ -20,15 +20,17 @@ import sistemagestion.model.MedioTransporte;
  */
 public class MedioTransporteDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public MedioTransporteDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+       
     }
 
     public boolean insertar(String nombre) {
         String sql = "{call pkg_catalogos.pr_insertar_medio(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -40,7 +42,7 @@ public class MedioTransporteDAO {
 
     public boolean actualizar(String nombreActual, String nombreNuevo) {
         String sql = "{call pkg_catalogos.pr_actualizar_medio(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
             cs.execute();
@@ -53,7 +55,7 @@ public class MedioTransporteDAO {
 
     public boolean eliminar(String nombre) {
         String sql = "{call pkg_catalogos.pr_eliminar_medio(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -66,7 +68,7 @@ public class MedioTransporteDAO {
     public List<MedioTransporte> listar() {
         List<MedioTransporte> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_listar_medios(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -82,7 +84,7 @@ public class MedioTransporteDAO {
     public List<MedioTransporte> buscar(String texto) {
         List<MedioTransporte> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_medio(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -99,7 +101,7 @@ public class MedioTransporteDAO {
     public List<MedioTransporte> buscarExacto(String texto) {
         List<MedioTransporte> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_medio_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

@@ -24,10 +24,12 @@ import sistemagestion.model.Usuario;
  */
 public class SuscripcionDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public SuscripcionDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+        
     }
 
     public boolean insertar(
@@ -38,7 +40,7 @@ public class SuscripcionDAO {
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_insertar_suscripcion(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedulaUsuario);
             cs.setString(2, tipoAlerta);
             cs.setString(3, nombreComuna);
@@ -61,7 +63,7 @@ public class SuscripcionDAO {
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_suscripcion(?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idSuscripcion);
             cs.setString(2, cedulaUsuario);
             cs.setString(3, tipoAlerta);
@@ -78,7 +80,7 @@ public class SuscripcionDAO {
 
     public boolean eliminar(int idSuscripcion) {
         String sql = "{call pkg_alertas.pr_eliminar_suscripcion(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idSuscripcion);
             cs.execute();
             return true;
@@ -92,7 +94,7 @@ public class SuscripcionDAO {
     public List<Suscripcion> listar() {
         List<Suscripcion> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_suscripciones(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
