@@ -4,7 +4,6 @@
 
 package com.mycompany.wolertappsistemaalertas;
 
-<<<<<<< HEAD
 
 import sistemagestion.view.LoginApp;
 import javafx.application.Application;
@@ -36,22 +35,6 @@ public class WolertAppSistemaAlertas extends Application {
 
     public static void main(String[] args) {
         launch(args);
-=======
-import javafx.application.Application;
-import javafx.stage.Stage;
-import sistemagestion.view.PruebaFX;
 
-public class WolertAppSistemaAlertas extends Application {
-
-    @Override
-    public void start(Stage stage) {
-
-        PruebaFX view = new PruebaFX();
-        view.mostrar(stage);
-    }
-
-    public static void main(String[] args) {
-        launch();
->>>>>>> origin/develop
     }
 }
