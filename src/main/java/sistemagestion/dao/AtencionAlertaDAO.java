@@ -190,7 +190,7 @@ public class AtencionAlertaDAO {
         AtencionAlerta a = new AtencionAlerta();
         a.setId_atencion(rs.getInt("ID_ATENCION"));
         a.setFechaatencion(rs.getTimestamp("FECHA_ATENCION").toLocalDateTime());
-        a.setEstado(EstadoAtencionAlerta.valueof(rs.getString("ESTADO_FINAL")));
+        a.setEstado(EstadoAtencionAlerta.valueOf(rs.getString("ESTADO_FINAL")));
         a.setDescripcion(rs.getString("DESCRIPCION"));
         a.setObservacion(rs.getString("OBSERVACION"));
 
@@ -202,7 +202,7 @@ public class AtencionAlertaDAO {
         // unidad que atendió
         UnidadPolicial u = new UnidadPolicial();
         u.setNombre(rs.getString("NOMBRE_UNIDAD"));
-        a.setUnidadpolicial(u);
+        a.setUnidad(u);
 
         // opcionales 
         String tipoArma = rs.getString("TIPO_ARMA");
