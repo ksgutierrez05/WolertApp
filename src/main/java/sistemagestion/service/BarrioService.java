@@ -14,12 +14,14 @@ import sistemagestion.util.Validador;
  *
  * @author Maria Cristina
  */
+
+
 public class BarrioService {
 
-    private BarrioDAO dao;
+    private BarrioDAO barrioDAO;
 
     public BarrioService() throws SQLException {
-        dao = new BarrioDAO();
+        barrioDAO = new BarrioDAO();
     }
 
     public void insertar(Barrio b) throws SQLException {
@@ -28,10 +30,10 @@ public class BarrioService {
         Validador.validarCampoVacio(b.getNombre());
         Validador.validarObjeto(b.getComuna());
 
-         dao.insertar(
-        b.getNombre(),
-        b.getComuna().getId_comuna()
-       );
+        barrioDAO.insertar(
+                b.getNombre(),
+                b.getComuna().getNombre()
+        );
     }
 
     public void actualizar(Barrio b) throws SQLException {
@@ -39,28 +41,20 @@ public class BarrioService {
         Validador.validarObjeto(b);
         Validador.validarCampoVacio(b.getNombre());
 
-        dao.actualizar(b);
+        barrioDAO.actualizar(
+                b.getNombre(),
+                b.getNombre()
+        );
     }
 
     public List<Barrio> listar() throws SQLException {
-        return dao.listar();
+        return barrioDAO.listar();
     }
 
-    public Barrio buscarPorId(int id) throws SQLException {
+    public void eliminar(String nombre) throws SQLException {
 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
+        Validador.validarCampoVacio(nombre);
 
-        return dao.buscarPorId(id);
-    }
-
-    public void eliminar(int id) throws SQLException {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        dao.eliminar(id);
+        barrioDAO.eliminar(nombre);
     }
 }

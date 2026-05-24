@@ -22,43 +22,35 @@ public class TipoArmaService {
         dao = new TipoArmaDAO();
     }
 
-    public boolean insertar(TipoArma t) {
+    public void insertar(TipoArma t) throws SQLException {
 
         Validador.validarObjeto(t);
         Validador.validarCampoVacio(t.getNombre());
 
-         return dao.insertar(
-            t.getNombre()
-      );
+        dao.insertar(
+                t.getNombre()
+        );
     }
 
-    public TipoArma buscarPorId(int id) {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        return dao.buscarPorId(id);
-    }
-
-    public List<TipoArma> listarTodos() {
-        return dao.listarTodos();
-    }
-
-    public boolean actualizar(TipoArma t) {
+    public void actualizar(TipoArma t) throws SQLException {
 
         Validador.validarObjeto(t);
         Validador.validarCampoVacio(t.getNombre());
 
-        return dao.actualizar(t);
+        dao.actualizar(
+                t.getNombre(),
+                t.getNombre()
+        );
     }
 
-    public boolean eliminar(int id) {
+    public List<TipoArma> listar() throws SQLException {
+        return dao.listar();
+    }
 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
+    public void eliminar(String nombre) throws SQLException {
 
-        return dao.eliminar(id);
+        Validador.validarCampoVacio(nombre);
+
+        dao.eliminar(nombre);
     }
 }

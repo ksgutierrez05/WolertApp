@@ -22,41 +22,43 @@ public class UnidadPolicialService {
         dao = new UnidadPolicialDAO();
     }
 
-    public boolean insertar(UnidadPolicial u) {
+    public void insertar(UnidadPolicial u) throws SQLException {
 
         Validador.validarObjeto(u);
         Validador.validarCampoVacio(u.getNombre());
         Validador.validarEnum(u.getEstado());
         Validador.validarObjeto(u.getBarrio());
 
-       return dao.insertar(
-            u.getNombre(),
-            u.getEstado().name(),
-            u.getBarrio().getId_barrio()
-      );
+        dao.insertar(
+                u.getNombre(),
+                u.getEstado().name(),
+                u.getBarrio().getNombre()
+        );
     }
 
-    public UnidadPolicial buscarPorId(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
-        return dao.buscarPorId(id);
+    public void actualizar(UnidadPolicial u) throws SQLException {
+
+        Validador.validarObjeto(u);
+        Validador.validarCampoVacio(u.getNombre());
+        Validador.validarEnum(u.getEstado());
+        Validador.validarObjeto(u.getBarrio());
+
+        dao.actualizar(
+                u.getNombre(),
+                u.getNombre(),
+                u.getEstado().name(),
+                u.getBarrio().getNombre()
+        );
     }
 
-    public List<UnidadPolicial> listar() {
+    public List<UnidadPolicial> listar() throws SQLException {
         return dao.listar();
     }
 
-    public boolean actualizar(UnidadPolicial u) {
+    public void eliminar(String nombre) throws SQLException {
 
-        Validador.validarObjeto(u);
-        Validador.validarCampoVacio(u.getNombre());
-        Validador.validarEnum(u.getEstado());
-        Validador.validarObjeto(u.getBarrio());
+        Validador.validarCampoVacio(nombre);
 
-        return dao.actualizar(u);
-    }
-
-    public boolean eliminar(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
-        return dao.eliminar(id);
+        dao.eliminar(nombre);
     }
 }

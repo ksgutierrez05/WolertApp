@@ -16,10 +16,10 @@ import sistemagestion.util.Validador;
  */
 public class ComunaService {
 
-    private ComunaDAO dao;
+    private ComunaDAO comunaDAO;
 
     public ComunaService() throws SQLException {
-        dao = new ComunaDAO();
+        comunaDAO = new ComunaDAO();
     }
 
     public void insertar(Comuna c) throws SQLException {
@@ -27,22 +27,13 @@ public class ComunaService {
         Validador.validarObjeto(c);
         Validador.validarCampoVacio(c.getNombre());
 
-        dao.insertar(
-        c.getNombre()
-    );
-    }
-
-    public Comuna buscarPorId(int id) throws SQLException {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        return dao.buscarPorId(id);
+        comunaDAO.insertar(
+                c.getNombre()
+        );
     }
 
     public List<Comuna> listar() throws SQLException {
-        return dao.listar();
+        return comunaDAO.listar();
     }
 
     public void actualizar(Comuna c) throws SQLException {
@@ -50,15 +41,16 @@ public class ComunaService {
         Validador.validarObjeto(c);
         Validador.validarCampoVacio(c.getNombre());
 
-        dao.actualizar(c);
+        comunaDAO.actualizar(
+                c.getNombre(),
+                c.getNombre()
+        );
     }
 
-    public void eliminar(int id) throws SQLException {
+    public void eliminar(String nombre) throws SQLException {
 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
+        Validador.validarCampoVacio(nombre);
 
-        dao.eliminar(id);
+        comunaDAO.eliminar(nombre);
     }
 }

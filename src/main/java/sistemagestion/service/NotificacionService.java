@@ -5,6 +5,7 @@
 package sistemagestion.service;
 
 import java.sql.SQLException;
+import java.util.List;
 import sistemagestion.dao.NotificacionDAO;
 import sistemagestion.model.Notificacion;
 import sistemagestion.util.Validador;
@@ -15,10 +16,10 @@ import sistemagestion.util.Validador;
  */
 public class NotificacionService {
 
-    private NotificacionDAO dao;
+    private NotificacionDAO notificacionDAO;
 
     public NotificacionService() throws SQLException {
-        dao = new NotificacionDAO();
+        notificacionDAO= new NotificacionDAO();
     }
 
     public boolean insertar(Notificacion n) {
@@ -28,24 +29,23 @@ public class NotificacionService {
         Validador.validarObjeto(n.getAlerta());
         Validador.validarCampoVacio(n.getMensaje());
 
-        return dao.insertar(
+        return notificacionDAO.insertar(
                 n.getAlerta().getId_alerta(),
-                n.getUsuario().getId_usuario(),
+                n.getUsuario().getIdentificacion(),
                 n.getMensaje()
         );
     }
 
-    public Notificacion consultar(int id) {
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-        return dao.consultar(id);
+    public List<Notificacion> listar() {
+        return notificacionDAO.listar();
     }
 
     public boolean eliminar(int id) {
+
         if (id <= 0) {
             throw new IllegalArgumentException();
         }
-        return dao.eliminar(id);
+
+        return notificacionDAO.eliminar(id);
     }
 }

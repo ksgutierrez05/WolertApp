@@ -28,21 +28,12 @@ public class TipoAlertaService {
         Validador.validarCampoVacio(t.getNombre());
 
         return dao.insertar(
-            t.getNombre()
-    );
+                t.getNombre()
+        );
     }
 
-    public TipoAlerta buscarPorId(int id) {
-
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
-
-        return dao.buscarPorId(id);
-    }
-
-    public List<TipoAlerta> listarTodos() {
-        return dao.listarTodos();
+    public List<TipoAlerta> listar() {
+        return dao.listar();
     }
 
     public boolean actualizar(TipoAlerta t) {
@@ -50,15 +41,16 @@ public class TipoAlertaService {
         Validador.validarObjeto(t);
         Validador.validarCampoVacio(t.getNombre());
 
-        return dao.actualizar(t);
+        return dao.actualizar(
+                t.getNombre(),
+                t.getNombre()
+        );
     }
 
-    public boolean eliminar(int id) {
+    public boolean eliminar(String nombre) {
 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
+        Validador.validarCampoVacio(nombre);
 
-        return dao.eliminar(id);
+        return dao.eliminar(nombre);
     }
 }

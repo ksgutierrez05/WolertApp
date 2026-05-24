@@ -30,15 +30,41 @@ public class SuscripcionService {
         Validador.validarEnum(s.getEstado());
 
         return dao.insertar(
-                s.getUsuario().getId_usuario(),
-                s.getTipoalerta().getId_tipoalerta(),
-                s.getComuna() != null ? s.getComuna().getId_comuna() : null,
-                s.getBarrio() != null ? s.getBarrio().getId_barrio() : null,
+                s.getUsuario().getIdentificacion(),
+                s.getTipoalerta().getNombre(),
+                s.getComuna() != null ? s.getComuna().getNombre() : null,
+                s.getBarrio() != null ? s.getBarrio().getNombre() : null,
                 s.getEstado().name()
         );
     }
 
     public List<Suscripcion> listar() {
         return dao.listar();
+    }
+
+    public boolean actualizar(Suscripcion s) {
+
+        Validador.validarObjeto(s);
+        Validador.validarObjeto(s.getUsuario());
+        Validador.validarObjeto(s.getTipoalerta());
+        Validador.validarEnum(s.getEstado());
+
+        return dao.actualizar(
+                s.getId_suscripcion(),
+                s.getUsuario().getIdentificacion(),
+                s.getTipoalerta().getNombre(),
+                s.getComuna() != null ? s.getComuna().getNombre() : null,
+                s.getBarrio() != null ? s.getBarrio().getNombre() : null,
+                s.getEstado().name()
+        );
+    }
+
+    public boolean eliminar(int id) {
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        return dao.eliminar(id);
     }
 }
