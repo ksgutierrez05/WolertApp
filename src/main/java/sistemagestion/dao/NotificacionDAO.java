@@ -22,15 +22,17 @@ import sistemagestion.model.Usuario;
  */
 public class NotificacionDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public NotificacionDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+         
     }
 
     public boolean insertar(int idAlerta, String cedulaUsuario, String mensaje) {
         String sql = "{call pkg_alertas.pr_insertar_notificacion(?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.setString(2, cedulaUsuario);
             cs.setString(3, mensaje);
@@ -44,7 +46,7 @@ public class NotificacionDAO {
 
     public boolean eliminar(int idNotificacion) {
         String sql = "{call pkg_alertas.pr_eliminar_notificacion(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idNotificacion);
             cs.execute();
             return true;
@@ -57,7 +59,7 @@ public class NotificacionDAO {
     public List<Notificacion> listar() {
         List<Notificacion> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_notificaciones(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);

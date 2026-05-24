@@ -19,16 +19,18 @@ import sistemagestion.model.Comuna;
  */
 public class ComunaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public ComunaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+        
     }
 
   
     public boolean insertar(String nombre) {
         String sql = "{call pkg_catalogos.pr_insertar_comuna(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -40,7 +42,7 @@ public class ComunaDAO {
 
     public boolean actualizar(String nombreActual, String nombreNuevo) {
         String sql = "{call pkg_catalogos.pr_actualizar_comuna(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
             cs.execute();
@@ -53,7 +55,7 @@ public class ComunaDAO {
 
     public boolean eliminar(String nombre) {
         String sql = "{call pkg_catalogos.pr_eliminar_comuna(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -66,7 +68,7 @@ public class ComunaDAO {
     public List<Comuna> listar() {
         List<Comuna> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_listar_comunas(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -82,7 +84,7 @@ public class ComunaDAO {
     public List<Comuna> buscar(String texto) {
         List<Comuna> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_comuna(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -99,7 +101,7 @@ public class ComunaDAO {
     public List<Comuna> buscarExacto(String texto) {
         List<Comuna> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_comuna_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

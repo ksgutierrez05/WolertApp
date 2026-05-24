@@ -23,10 +23,12 @@ import sistemagestion.model.UnidadPolicial;
  */
 public class AsignacionUnidadDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public AsignacionUnidadDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+        
     }
 
     public boolean insertar(
@@ -36,7 +38,7 @@ public class AsignacionUnidadDAO {
             LocalDateTime fechaHora
     ) {
         String sql = "{call pkg_alertas.pr_insertar_asignacion(?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.setString(2, nombreUnidad);
             cs.setString(3, observacion);
@@ -57,7 +59,7 @@ public class AsignacionUnidadDAO {
             LocalDateTime fechaHora
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_asignacion(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAsignacion);
             cs.setInt(2, idAlerta);
             cs.setString(3, nombreUnidad);
@@ -73,7 +75,7 @@ public class AsignacionUnidadDAO {
 
     public boolean eliminar(int idAsignacion) {
         String sql = "{call pkg_alertas.pr_eliminar_asignacion(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAsignacion);
             cs.execute();
             return true;
@@ -86,7 +88,7 @@ public class AsignacionUnidadDAO {
     public List<AsignacionUnidad> listar() {
         List<AsignacionUnidad> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
