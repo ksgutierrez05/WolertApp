@@ -4,41 +4,69 @@
  */
 package sistemagestion.view;
 
-import javafx.scene.image.Image;
+import java.sql.SQLException;
 import javafx.animation.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.*;
 import javafx.util.Duration;
+import sistemagestion.model.Barrio;
+import sistemagestion.model.Direccion;
+import sistemagestion.model.EstadoUsuario;
+import sistemagestion.model.RolUsuario;
+import sistemagestion.model.Usuario;
+import sistemagestion.service.UsuarioService;
 
 public class LoginApp {
 
-    private AnchorPane root;
-    private VBox loginForm;
-    private VBox registerForm;
-    private StackPane overlayPanel;
-    private boolean signUpMode = false;
+    // ── Constantes de layout ──────────────────────────────────────────────────
     private static final double PANEL_W = 500;
-    private static final double EXTRA = 40;
     private static final double PANEL_H = 650;
-    private static final double RADIUS = 50;
+    private static final double EXTRA   = 40;
+    private static final double RADIUS  = 50;
 
-    // VIEW PRINCIPAL
+    // ── Estado ────────────────────────────────────────────────────────────────
+    private AnchorPane  root;
+    private VBox        loginForm;
+    private VBox        registerForm;
+    private StackPane   overlayPanel;
+    private boolean     signUpMode = false;
+    private UsuarioService usuarioService;
+
+    // ── Campos del login (para limpiar) ───────────────────────────────────────
+    private TextField     loginUsername;
+    private PasswordField loginPassword;
+    private Label         loginMsg;
+
+    // ── Campos del registro (para limpiar) ────────────────────────────────────
+    private TextField     regPrimerNombre, regSegundoNombre;
+    private TextField     regPrimerApellido, regSegundoApellido;
+    private TextField     regCedula, regTelefono, regEmail;
+    private TextField     regUsername;
+    private PasswordField regPassword;
+    private TextField     regBarrio, regCalle, regCarrera;
+    private TextField     regEtapa, regManzana, regCasa;
+    private Label         regMsg;
+
+    // ─────────────────────────────────────────────────────────────────────────
     public Parent getView() {
+        try {
+            usuarioService = new UsuarioService();
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error conectando a la BD: " + ex.getMessage(), ex);
+        }
 
         root = new AnchorPane();
         root.setPrefSize(1000, PANEL_H);
         root.setStyle("-fx-background-color: white;");
-
-        // Clip para que el panel extra no se vea fuera de la ventana
-        Rectangle rootClip = new Rectangle(1000, PANEL_H);
-        root.setClip(rootClip);
+        root.setClip(new Rectangle(1000, PANEL_H));
 
         loginForm = createLoginForm();
         loginForm.setLayoutX(600);
@@ -52,414 +80,308 @@ public class LoginApp {
         registerForm.setOpacity(0);
 
         overlayPanel = createOverlayPanel();
-        // Posicionamos el panel con el offset negativo para que
-        // el lado izquierdo extra quede oculto fuera de la ventana
         overlayPanel.setLayoutX(-EXTRA);
         overlayPanel.setLayoutY(0);
 
         root.getChildren().addAll(loginForm, registerForm, overlayPanel);
-
         return root;
     }
 
+    // ════════════════════════════════════════════════════════════════════════
     // PANEL AZUL
+    // ════════════════════════════════════════════════════════════════════════
     private StackPane createOverlayPanel() {
-
         double totalW = PANEL_W + EXTRA * 2;
-
-        StackPane panel = new StackPane();
-        panel.setPrefSize(totalW, PANEL_H);
 
         Rectangle bg = new Rectangle(totalW, PANEL_H);
         bg.setArcWidth(RADIUS * 2);
         bg.setArcHeight(RADIUS * 2);
-        bg.setFill(new LinearGradient(
-                0, 0, 1, 1, true,
-                CycleMethod.NO_CYCLE,
+        bg.setFill(new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
                 new Stop(0, Color.web("#16283d")),
-                new Stop(1, Color.web("#223f63"))
-        ));
-
-        VBox content = new VBox(20);
-        content.setAlignment(Pos.CENTER);
-        content.setTranslateY(-30);
+                new Stop(1, Color.web("#223f63"))));
 
         Circle circle = new Circle(55);
         circle.setFill(Color.rgb(255, 255, 255, 0.2));
-        System.out.println(getClass().getResource("/LogoWolertAPP.png"));
-        System.out.println(getClass().getResource("/Resourcess/LogoWolertAPP.png"));
-        System.out.println(
-                getClass().getResource("/Resourcess/LogoWolertAPP.png")
-        );
 
-        Image logo = new Image(
-                getClass()
-                        .getResource("/LogoWolertAPP.png")
-                        .toExternalForm()
-        );
+        Image logo = new Image(getClass().getResource("/LogoWolertAPP.png").toExternalForm());
         ImageView icon = new ImageView(logo);
-
         icon.setFitWidth(220);
         icon.setFitHeight(220);
-
         icon.setPreserveRatio(true);
 
-        StackPane iconPane = new StackPane(circle, icon);
-
         Label title = new Label("WolertApp");
-        title.setStyle("""
-                -fx-font-size: 34px;
-                -fx-font-weight: bold;
-                -fx-text-fill: white;
-                """);
+        title.setStyle("-fx-font-size: 34px; -fx-font-weight: bold; -fx-text-fill: white;");
         VBox.setMargin(title, new Insets(-50, 0, 0, 0));
 
-        Label text = new Label("""
-                Sistema de Alertas Comunitarias
-                
-                Seguridad para tu barrio
-                y notificaciones en tiempo real
-                """);
-        text.setStyle("""
-                -fx-font-size: 15px;
-                -fx-text-fill: white;
-                -fx-text-alignment: center;
-                """);
+        Label text = new Label(
+                "Sistema de Alertas Comunitarias\n\n"
+                + "Seguridad para tu barrio\ny notificaciones en tiempo real");
+        text.setStyle("-fx-font-size: 15px; -fx-text-fill: white; -fx-text-alignment: center;");
         VBox.setMargin(text, new Insets(0, 0, 20, 0));
 
         Button switchBtn = new Button("REGISTRARSE");
         switchBtn.setStyle("""
-                -fx-background-color: white;
-                -fx-border-color: white;
-                -fx-border-width: 2;
-                -fx-text-fill:  #16283d;
-                -fx-font-size: 14px;
-                -fx-font-weight: bold;
-                -fx-background-radius: 30;
-                -fx-border-radius: 30;
-                -fx-padding: 10 35;
-                -fx-cursor: hand;
+                -fx-background-color: white; -fx-border-color: white; -fx-border-width: 2;
+                -fx-text-fill: #16283d; -fx-font-size: 14px; -fx-font-weight: bold;
+                -fx-background-radius: 30; -fx-border-radius: 30;
+                -fx-padding: 10 35; -fx-cursor: hand;
                 """);
-
         switchBtn.setOnAction(e -> {
-            if (!signUpMode) {
-                animateToRegister(switchBtn);
-            } else {
-                animateToLogin(switchBtn);
-            }
+            if (!signUpMode) animateToRegister(switchBtn);
+            else             animateToLogin(switchBtn);
             signUpMode = !signUpMode;
         });
 
-        content.getChildren().addAll(iconPane, title, text, switchBtn);
-        panel.getChildren().addAll(bg, content);
+        VBox content = new VBox(20, new StackPane(circle, icon), title, text, switchBtn);
+        content.setAlignment(Pos.CENTER);
+        content.setTranslateY(-30);
 
+        StackPane panel = new StackPane(bg, content);
+        panel.setPrefSize(totalW, PANEL_H);
         return panel;
     }
 
-    // ANIMACIÓN A REGISTRO 
-    private void animateToRegister(Button switchBtn) {
+    // ════════════════════════════════════════════════════════════════════════
+    // FORMULARIO LOGIN
+    // ════════════════════════════════════════════════════════════════════════
+    private VBox createLoginForm() {
+        loginUsername = createField("👤 Usuario");
+        loginPassword = createPassword("🔒 Contraseña");
+        loginMsg      = new Label();
+        Button btnLogin = createButton("LOGIN");
 
+        loginUsername.setOnAction(e -> loginPassword.requestFocus());
+        loginPassword.setOnAction(e -> btnLogin.fire());
+
+        btnLogin.setOnAction(e -> {
+            if (loginUsername.getText().isBlank() || loginPassword.getText().isBlank()) {
+                setMsg(loginMsg, "Completa todos los campos", false);
+                return;
+            }
+            try {
+                Usuario u = usuarioService.login(
+                        loginUsername.getText().trim(),
+                        loginPassword.getText().trim());
+                if (u != null) {
+                    setMsg(loginMsg, "Bienvenido " + u.getPrimer_nombre(), true);
+                    // TODO: switch por rol cuando los dashboards estén listos
+                } else {
+                    setMsg(loginMsg, "Usuario o contraseña incorrectos", false);
+                }
+            } catch (Exception ex) {
+                setMsg(loginMsg, "Error: " + ex.getMessage(), false);
+                ex.printStackTrace();
+            }
+        });
+
+        Label title = new Label("Iniciar Sesión");
+        title.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #444;");
+
+        VBox form = new VBox(15, title, loginUsername, loginPassword, btnLogin, loginMsg);
+        form.setAlignment(Pos.CENTER);
+        form.setPadding(new Insets(40));
+        form.setPrefWidth(350);
+        return form;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // FORMULARIO REGISTRO
+    // ════════════════════════════════════════════════════════════════════════
+    private VBox createRegisterForm() {
+        // Campos
+        regPrimerNombre    = modernField("Primer Nombre");
+        regSegundoNombre   = modernField("Segundo Nombre");
+        regPrimerApellido  = modernField("Primer Apellido");
+        regSegundoApellido = modernField("Segundo Apellido");
+        regCedula          = modernField("Cédula");
+        regTelefono        = modernField("Teléfono");
+        regEmail           = modernField("Correo Electrónico");
+        regUsername        = modernField("Username");
+        regPassword        = modernPassword("Contraseña");
+        regBarrio          = modernField("Barrio");
+        regCalle           = modernField("Calle");
+        regCarrera         = modernField("Carrera");
+        regEtapa           = modernField("Etapa");
+        regManzana         = modernField("Manzana");
+        regCasa            = modernField("Casa");
+        regMsg             = new Label();
+        regMsg.setStyle("-fx-font-size: 13px;");
+
+        // Scroll automático al pasar de contraseña a dirección
+        ScrollPane scroll = buildScroll();
+
+        // Cadena de foco con Tab/Enter
+        chain(regPrimerNombre, regSegundoNombre, regPrimerApellido, regSegundoApellido,
+              regCedula, regTelefono, regEmail, regUsername);
+        regPassword.setOnAction(e -> {
+            regBarrio.requestFocus();
+            animateScroll(scroll, 0.90);
+        });
+        chain(regBarrio, regCalle, regCarrera, regEtapa, regManzana, regCasa);
+
+        // Botón
+        Button btnRegister = new Button("CREAR CUENTA");
+        btnRegister.setPrefWidth(250);
+        String btnNormal = "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;";
+        String btnHover  = "-fx-background-color: linear-gradient(to right, #0f1c2b, #16283d);"
+                + "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;";
+        btnRegister.setStyle(btnNormal);
+        btnRegister.setOnMouseEntered(e -> btnRegister.setStyle(btnHover));
+        btnRegister.setOnMouseExited(e  -> btnRegister.setStyle(btnNormal));
+        regCasa.setOnAction(e -> btnRegister.fire());
+
+        btnRegister.setOnAction(e -> {
+            if (regPrimerNombre.getText().isBlank() || regPrimerApellido.getText().isBlank()
+                    || regCedula.getText().isBlank() || regUsername.getText().isBlank()
+                    || regPassword.getText().isBlank()) {
+                setMsg(regMsg, "Completa los campos obligatorios", false);
+                return;
+            }
+            try {
+                usuarioService.insertar(buildUsuario());
+                setMsg(regMsg, "Usuario registrado correctamente", true);
+                limpiarRegistro();
+            } catch (Exception ex) {
+                setMsg(regMsg, "Error: " + ex.getMessage(), false);
+                ex.printStackTrace();
+            }
+        });
+
+        // Contenido del formulario
+        Label title    = new Label("Crear Cuenta");
+        title.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #444;");
+        Label subtitle = new Label("Completa la información para registrarte");
+        subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 13px;");
+
+        VBox form = new VBox(14,
+                title, subtitle, new Separator(),
+                sectionTitle("DATOS PERSONALES"),
+                modernRow(regPrimerNombre,   regSegundoNombre),
+                modernRow(regPrimerApellido, regSegundoApellido),
+                modernRow(regCedula,         regTelefono),
+                regEmail,
+                sectionTitle("CUENTA"),
+                regUsername, regPassword,
+                sectionTitle("DIRECCIÓN"),
+                regBarrio,
+                modernRow(regCalle,  regCarrera),
+                modernRow(regEtapa,  regManzana),
+                regCasa,
+                new Separator(),
+                btnRegister, regMsg
+        );
+        form.setPadding(new Insets(40, 30, 60, 30));
+        form.setAlignment(Pos.TOP_CENTER);
+        form.setStyle("-fx-background-color: white;");
+
+        scroll.setContent(form);
+
+        VBox wrapper = new VBox(scroll);
+        wrapper.setAlignment(Pos.CENTER);
+        return wrapper;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // ANIMACIONES
+    // ════════════════════════════════════════════════════════════════════════
+    private void animateToRegister(Button switchBtn) {
+        limpiarRegistro();
         registerForm.setVisible(true);
         registerForm.setManaged(true);
         registerForm.setOpacity(0);
         registerForm.setTranslateX(80);
 
-        FadeTransition fadeOutLogin
-                = new FadeTransition(Duration.millis(250), loginForm);
-        fadeOutLogin.setToValue(0);
-        fadeOutLogin.setInterpolator(Interpolator.EASE_IN);
-        fadeOutLogin.setOnFinished(e -> {
-            loginForm.setVisible(false);
-            loginForm.setManaged(false);
-        });
-
-        TranslateTransition movePanel
-                = new TranslateTransition(Duration.millis(700), overlayPanel);
-        movePanel.setToX(PANEL_W);
-        movePanel.setInterpolator(Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0));
-
-        FadeTransition fadeInRegister
-                = new FadeTransition(Duration.millis(500), registerForm);
-        fadeInRegister.setFromValue(0);
-        fadeInRegister.setToValue(1);
-        fadeInRegister.setDelay(Duration.millis(200));
-
-        TranslateTransition registerSlide
-                = new TranslateTransition(Duration.millis(500), registerForm);
-        registerSlide.setFromX(80);
-        registerSlide.setToX(0);
-        registerSlide.setDelay(Duration.millis(200));
-        registerSlide.setInterpolator(Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0));
-
-        ScaleTransition scaleRegister = createScale(registerForm, 0.97, 1.0);
-        scaleRegister.setDelay(Duration.millis(200));
-
-        // Botón sincronizado con la aparición del formulario
-        FadeTransition fadeOutBtn = new FadeTransition(Duration.millis(150), switchBtn);
-        fadeOutBtn.setToValue(0);
-        //fadeOutBtn.setDelay(Duration.millis(200));
-        fadeOutBtn.setOnFinished(e -> {
-            switchBtn.setText("INICIAR SESIÓN");
-            FadeTransition fadeInBtn = new FadeTransition(Duration.millis(200), switchBtn);
-            fadeInBtn.setFromValue(0);
-            fadeInBtn.setToValue(1);
-            fadeInBtn.play();
-        });
+        FadeTransition fadeOutLogin = fade(loginForm, 1, 0, 250);
+        fadeOutLogin.setOnFinished(e -> { loginForm.setVisible(false); loginForm.setManaged(false); });
 
         new ParallelTransition(
                 fadeOutLogin,
-                movePanel,
-                fadeInRegister,
-                registerSlide,
-                scaleRegister,
-                fadeOutBtn
+                translate(overlayPanel, PANEL_W, 700),
+                fade(registerForm, 0, 1, 500, 200),
+                translate(registerForm, 0, 500, 200),
+                createScale(registerForm, 0.97, 1.0, 200),
+                switchLabel(switchBtn, "INICIAR SESIÓN")
         ).play();
     }
 
-    // ANIMACIÓN A LOGIN 
     private void animateToLogin(Button switchBtn) {
-
+        limpiarLogin();
         loginForm.setVisible(true);
         loginForm.setManaged(true);
         loginForm.setOpacity(0);
         loginForm.setTranslateX(-80);
 
-        FadeTransition fadeOutRegister
-                = new FadeTransition(Duration.millis(250), registerForm);
-        fadeOutRegister.setToValue(0);
-        fadeOutRegister.setInterpolator(Interpolator.EASE_IN);
-        fadeOutRegister.setOnFinished(e -> {
-            registerForm.setVisible(false);
-            registerForm.setManaged(false);
-        });
-
-        TranslateTransition movePanel
-                = new TranslateTransition(Duration.millis(700), overlayPanel);
-        movePanel.setToX(0);
-        movePanel.setInterpolator(Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0));
-
-        FadeTransition fadeInLogin
-                = new FadeTransition(Duration.millis(500), loginForm);
-        fadeInLogin.setFromValue(0);
-        fadeInLogin.setToValue(1);
-        fadeInLogin.setDelay(Duration.millis(200));
-
-        TranslateTransition loginSlide
-                = new TranslateTransition(Duration.millis(500), loginForm);
-        loginSlide.setFromX(-80);
-        loginSlide.setToX(0);
-        loginSlide.setDelay(Duration.millis(200));
-        loginSlide.setInterpolator(Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0));
-
-        ScaleTransition scaleLogin = createScale(loginForm, 0.97, 1.0);
-        scaleLogin.setDelay(Duration.millis(200));
-
-        // Botón sincronizado con la aparición del formulario
-        FadeTransition fadeOutBtn = new FadeTransition(Duration.millis(150), switchBtn);
-        fadeOutBtn.setToValue(0);
-        //fadeOutBtn.setDelay(Duration.millis(200));
-        fadeOutBtn.setOnFinished(e -> {
-            switchBtn.setText("REGISTRARSE");
-            FadeTransition fadeInBtn = new FadeTransition(Duration.millis(200), switchBtn);
-            fadeInBtn.setFromValue(0);
-            fadeInBtn.setToValue(1);
-            fadeInBtn.play();
-        });
+        FadeTransition fadeOutRegister = fade(registerForm, 1, 0, 250);
+        fadeOutRegister.setOnFinished(e -> { registerForm.setVisible(false); registerForm.setManaged(false); });
 
         new ParallelTransition(
                 fadeOutRegister,
-                movePanel,
-                fadeInLogin,
-                loginSlide,
-                scaleLogin,
-                fadeOutBtn
+                translate(overlayPanel, 0, 700),
+                fade(loginForm, 0, 1, 500, 200),
+                translate(loginForm, 0, 500, 200),
+                createScale(loginForm, 0.97, 1.0, 200),
+                switchLabel(switchBtn, "REGISTRARSE")
         ).play();
     }
 
-    // LOGIN
-    private VBox createLoginForm() {
-
-        VBox form = new VBox(15);
-        form.setAlignment(Pos.CENTER);
-        form.setPadding(new Insets(40));
-        form.setPrefWidth(350);
-
-        Label title = new Label("Iniciar Sesión");
-        title.setStyle("""
-                -fx-font-size: 32px;
-                -fx-font-weight: bold;
-                -fx-text-fill: #444;
-                """);
-
-        TextField username = createField("👤 Usuario");
-        PasswordField password = createPassword("🔒 Contraseña");
-        Button btnLogin = createButton("LOGIN");
-        username.setOnAction(e -> password.requestFocus());
-        password.setOnAction(e -> btnLogin.fire());
-        Label lbl = new Label();
-
-        btnLogin.setOnAction(e -> {
-            if (username.getText().isEmpty() || password.getText().isEmpty()) {
-                lbl.setStyle("-fx-text-fill: red;");
-                lbl.setText("Completa todos los campos");
-            } else {
-                lbl.setStyle("-fx-text-fill: green;");
-                lbl.setText("Bienvenido " + username.getText());
-            }
-        });
-
-        form.getChildren().addAll(title, username, password, btnLogin, lbl);
-        return form;
+    // ════════════════════════════════════════════════════════════════════════
+    // LIMPIEZA
+    // ════════════════════════════════════════════════════════════════════════
+    private void limpiarLogin() {
+        loginUsername.clear();
+        loginPassword.clear();
+        loginMsg.setText("");
     }
 
-    // REGISTRO
-    private VBox createRegisterForm() {
-
-        VBox wrapper = new VBox();
-        wrapper.setAlignment(Pos.CENTER);
-
-        ScrollPane scroll = new ScrollPane();
-        scroll.setPrefSize(450, 600);
-        scroll.setFitToWidth(true);
-
-        scroll.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-            scroll.lookupAll(".scroll-bar").forEach(node
-                    -> node.setStyle("-fx-background-color: transparent; -fx-padding: 0; -fx-pref-width: 6;"));
-            scroll.lookupAll(".track").forEach(node
-                    -> node.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"));
-            scroll.lookupAll(".thumb").forEach(node
-                    -> node.setStyle("-fx-background-color: rgba(120,120,120,0.45); -fx-background-radius: 8;"));
-            scroll.lookupAll(".increment-button").forEach(node
-                    -> node.setStyle("-fx-padding: 0; -fx-opacity: 0;"));
-            scroll.lookupAll(".decrement-button").forEach(node
-                    -> node.setStyle("-fx-padding: 0; -fx-opacity: 0;"));
-            scroll.lookupAll(".increment-arrow").forEach(node
-                    -> node.setStyle("-fx-shape: ''; -fx-padding: 0;"));
-            scroll.lookupAll(".decrement-arrow").forEach(node
-                    -> node.setStyle("-fx-shape: ''; -fx-padding: 0;"));
-        });
-
-        scroll.setStyle("""
-                -fx-background-color: white;
-                -fx-background: white;
-                -fx-border-color: transparent;
-                -fx-padding: 0;
-                """);
-
-        VBox form = new VBox(14);
-        form.setPadding(new Insets(40, 30, 60, 30));
-        form.setAlignment(Pos.TOP_CENTER);
-        form.setStyle("-fx-background-color: white;");
-
-        Label title = new Label("Crear Cuenta");
-        title.setStyle("""
-                -fx-font-size: 30px;
-                -fx-font-weight: bold;
-                -fx-text-fill: #444;
-                """);
-
-        Label subtitle = new Label("Completa la información para registrarte");
-        subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 13px;");
-
-        TextField primerNombre = modernField("Primer Nombre");
-        TextField segundoNombre = modernField("Segundo Nombre");
-        TextField primerApellido = modernField("Primer Apellido");
-        TextField segundoApellido = modernField("Segundo Apellido");
-        TextField cedula = modernField("Cédula");
-        TextField telefono = modernField("Teléfono");
-        TextField email = modernField("Correo Electrónico");
-        TextField username = modernField("Username");
-        PasswordField password = modernPassword("Contraseña");
-        TextField idBarrio = modernField("ID Barrio");
-        TextField calle = modernField("Calle");
-        TextField carrera = modernField("Carrera");
-        TextField etapa = modernField("Etapa");
-        TextField manzana = modernField("Manzana");
-        TextField casa = modernField("Casa");
-
-        primerNombre.setOnAction(e -> segundoNombre.requestFocus());
-        segundoNombre.setOnAction(e -> primerApellido.requestFocus());
-        primerApellido.setOnAction(e -> segundoApellido.requestFocus());
-        segundoApellido.setOnAction(e -> cedula.requestFocus());
-        cedula.setOnAction(e -> telefono.requestFocus());
-        telefono.setOnAction(e -> email.requestFocus());
-        email.setOnAction(e -> username.requestFocus());
-        username.setOnAction(e -> password.requestFocus());
-        password.setOnAction(e -> {
-            idBarrio.requestFocus();
-
-            // Baja automáticamente hasta la sección Dirección
-            Timeline scrollAnim = new Timeline(
-                    new KeyFrame(
-                            Duration.millis(300),
-                            new KeyValue(scroll.vvalueProperty(), 0.90)
-                    )
-            );
-            scrollAnim.play();
-        });
-        idBarrio.setOnAction(e -> calle.requestFocus());
-        calle.setOnAction(e -> carrera.requestFocus());
-        carrera.setOnAction(e -> etapa.requestFocus());
-        etapa.setOnAction(e -> manzana.requestFocus());
-        manzana.setOnAction(e -> casa.requestFocus());
-
-        Label lbl = new Label();
-        lbl.setStyle("-fx-font-size: 13px;");
-
-        Button btnRegister = new Button("CREAR CUENTA");
-
-        casa.setOnAction(e -> btnRegister.fire());
-        btnRegister.setPrefWidth(250);
-
-        String btnNormal = """
-                -fx-background-color: linear-gradient(to right, #16283d, #1f3a56);
-                -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;
-                -fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;
-                """;
-        String btnHover = """
-                -fx-background-color: linear-gradient(to right, #0f1c2b, #16283d);
-                -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;
-                -fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;
-                """;
-
-        btnRegister.setStyle(btnNormal);
-        btnRegister.setOnMouseEntered(e -> btnRegister.setStyle(btnHover));
-        btnRegister.setOnMouseExited(e -> btnRegister.setStyle(btnNormal));
-        btnRegister.setOnAction(e -> {
-            if (primerNombre.getText().isEmpty() || primerApellido.getText().isEmpty()
-                    || cedula.getText().isEmpty() || username.getText().isEmpty()
-                    || password.getText().isEmpty()) {
-                lbl.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 13px;");
-                lbl.setText("Completa los campos obligatorios");
-            } else {
-                lbl.setStyle("-fx-text-fill: #27ae60; -fx-font-size: 13px;");
-                lbl.setText("Usuario registrado correctamente");
-            }
-        });
-
-        form.getChildren().addAll(
-                title, subtitle, new Separator(),
-                sectionTitle("DATOS PERSONALES"),
-                modernRow(primerNombre, segundoNombre),
-                modernRow(primerApellido, segundoApellido),
-                modernRow(cedula, telefono), email,
-                sectionTitle("CUENTA"), username, password,
-                sectionTitle("DIRECCIÓN"), idBarrio,
-                modernRow(calle, carrera), modernRow(etapa, manzana),
-                casa, new Separator(), btnRegister, lbl
-        );
-
-        scroll.setContent(form);
-        wrapper.getChildren().add(scroll);
-        return wrapper;
+    private void limpiarRegistro() {
+        for (TextField tf : new TextField[]{
+            regPrimerNombre, regSegundoNombre, regPrimerApellido, regSegundoApellido,
+            regCedula, regTelefono, regEmail, regUsername,
+            regBarrio, regCalle, regCarrera, regEtapa, regManzana, regCasa
+        }) tf.clear();
+        regPassword.clear();
+        regMsg.setText("");
     }
 
-    // HELPERS
+    // ════════════════════════════════════════════════════════════════════════
+    // HELPERS DE UI
+    // ════════════════════════════════════════════════════════════════════════
+    private TextField createField(String prompt) {
+        TextField f = new TextField();
+        f.setPromptText(prompt);
+        f.setMaxWidth(Double.MAX_VALUE);
+        f.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 30;"
+                + "-fx-border-radius: 30; -fx-padding: 14 20; -fx-font-size: 14px;");
+        return f;
+    }
+
+    private PasswordField createPassword(String prompt) {
+        PasswordField f = new PasswordField();
+        f.setPromptText(prompt);
+        f.setMaxWidth(Double.MAX_VALUE);
+        f.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 30;"
+                + "-fx-border-radius: 30; -fx-padding: 14 20; -fx-font-size: 14px;");
+        return f;
+    }
+
+    private Button createButton(String text) {
+        Button btn = new Button(text);
+        btn.setStyle("-fx-background-color: #16283d; -fx-text-fill: white;"
+                + "-fx-font-size: 14px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;");
+        return btn;
+    }
+
     private TextField modernField(String prompt) {
         TextField f = new TextField();
         f.setPromptText(prompt);
         f.setPrefHeight(50);
-        f.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25; -fx-border-radius: 25; -fx-border-color: transparent; -fx-padding: 0 20; -fx-font-size: 13px;");
+        f.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25;"
+                + "-fx-border-radius: 25; -fx-border-color: transparent;"
+                + "-fx-padding: 0 20; -fx-font-size: 13px;");
         return f;
     }
 
@@ -467,7 +389,9 @@ public class LoginApp {
         PasswordField f = new PasswordField();
         f.setPromptText(prompt);
         f.setPrefHeight(50);
-        f.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25; -fx-border-radius: 25; -fx-border-color: transparent; -fx-padding: 0 20; -fx-font-size: 13px;");
+        f.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 25;"
+                + "-fx-border-radius: 25; -fx-border-color: transparent;"
+                + "-fx-padding: 0 20; -fx-font-size: 13px;");
         return f;
     }
 
@@ -477,52 +401,133 @@ public class LoginApp {
         return l;
     }
 
-    private HBox modernRow(javafx.scene.Node a, javafx.scene.Node b) {
-        HBox row = new HBox(12);
+    private HBox modernRow(Node a, Node b) {
+        HBox row = new HBox(12, a, b);
         row.setAlignment(Pos.CENTER);
         HBox.setHgrow(a, Priority.ALWAYS);
         HBox.setHgrow(b, Priority.ALWAYS);
-        row.getChildren().addAll(a, b);
         return row;
     }
 
-    private TextField createField(String prompt) {
-        TextField f = new TextField();
-        f.setPromptText(prompt);
-        f.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 30; -fx-border-radius: 30; -fx-padding: 14 20; -fx-font-size: 14px;");
-        f.setMaxWidth(Double.MAX_VALUE);
-        return f;
+    private ScrollPane buildScroll() {
+        ScrollPane scroll = new ScrollPane();
+        scroll.setPrefSize(450, 600);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: white; -fx-background: white;"
+                + "-fx-border-color: transparent; -fx-padding: 0;");
+        scroll.skinProperty().addListener((obs, ov, nv) -> {
+            scroll.lookupAll(".scroll-bar").forEach(n -> n.setStyle(
+                    "-fx-background-color: transparent; -fx-padding: 0; -fx-pref-width: 6;"));
+            scroll.lookupAll(".track").forEach(n -> n.setStyle(
+                    "-fx-background-color: transparent; -fx-border-color: transparent;"));
+            scroll.lookupAll(".thumb").forEach(n -> n.setStyle(
+                    "-fx-background-color: rgba(120,120,120,0.45); -fx-background-radius: 8;"));
+            scroll.lookupAll(".increment-button, .decrement-button").forEach(n ->
+                    n.setStyle("-fx-padding: 0; -fx-opacity: 0;"));
+            scroll.lookupAll(".increment-arrow, .decrement-arrow").forEach(n ->
+                    n.setStyle("-fx-shape: ''; -fx-padding: 0;"));
+        });
+        return scroll;
     }
 
-    private PasswordField createPassword(String prompt) {
-        PasswordField f = new PasswordField();
-        f.setPromptText(prompt);
-        f.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 30; -fx-border-radius: 30; -fx-padding: 14 20; -fx-font-size: 14px;");
-        f.setMaxWidth(Double.MAX_VALUE);
-        return f;
+    private void setMsg(Label lbl, String msg, boolean ok) {
+        lbl.setStyle("-fx-text-fill: " + (ok ? "#27ae60" : "#e74c3c") + "; -fx-font-size: 13px;");
+        lbl.setText(msg);
     }
 
-    private Button createButton(String text) {
-        Button btn = new Button(text);
-        btn.setStyle("-fx-background-color: #16283d; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 12 40; -fx-cursor: hand;");
-        return btn;
+    /** Encadena campos para que Enter pase al siguiente */
+    private void chain(TextField... fields) {
+        for (int i = 0; i < fields.length - 1; i++) {
+            final TextField next = fields[i + 1];
+            fields[i].setOnAction(e -> next.requestFocus());
+        }
     }
 
-    private ScaleTransition createScale(Node node, double from, double to) {
+    private void animateScroll(ScrollPane scroll, double target) {
+        new Timeline(new KeyFrame(Duration.millis(300),
+                new KeyValue(scroll.vvalueProperty(), target))).play();
+    }
 
-        ScaleTransition scale = new ScaleTransition(
-                Duration.seconds(0.7),
-                node
-        );
+    private Usuario buildUsuario() {
+        Usuario u = new Usuario();
+        u.setPrimer_nombre(regPrimerNombre.getText());
+        u.setSegundo_nombre(regSegundoNombre.getText());
+        u.setPrimer_apellido(regPrimerApellido.getText());
+        u.setSegundo_apellido(regSegundoApellido.getText());
+        u.setIdentificacion(regCedula.getText());
+        u.setTelefono(regTelefono.getText());
+        u.setCorreo(regEmail.getText());
+        u.setUsername(regUsername.getText());
+        u.setPassword(regPassword.getText());
+        u.setEstado(EstadoUsuario.ACTIVO);
 
-        scale.setFromX(from);
-        scale.setFromY(from);
+        RolUsuario rol = new RolUsuario();
+        rol.setNombre("ciudadano");
+        u.setRol(rol);
 
-        scale.setToX(to);
-        scale.setToY(to);
+        Barrio b = new Barrio();
+        b.setNombre(regBarrio.getText().isBlank() ? null : regBarrio.getText());
 
-        scale.setInterpolator(Interpolator.EASE_BOTH);
+        Direccion d = new Direccion();
+        d.setBarrio(b);
+        d.setCalle(regCalle.getText().isBlank()   ? null : regCalle.getText());
+        d.setCarrera(regCarrera.getText().isBlank() ? null : regCarrera.getText());
+        d.setEtapa(regEtapa.getText().isBlank()   ? null : regEtapa.getText());
+        d.setManzana(regManzana.getText().isBlank() ? null : regManzana.getText());
+        d.setCasa(regCasa.getText().isBlank()     ? null : regCasa.getText());
+        u.setDireccion(d);
 
-        return scale;
+        return u;
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // HELPERS DE ANIMACIÓN
+    // ════════════════════════════════════════════════════════════════════════
+    private FadeTransition fade(Node node, double from, double to, int ms) {
+        FadeTransition ft = new FadeTransition(Duration.millis(ms), node);
+        ft.setFromValue(from);
+        ft.setToValue(to);
+        ft.setInterpolator(Interpolator.EASE_IN);
+        return ft;
+    }
+
+    private FadeTransition fade(Node node, double from, double to, int ms, int delayMs) {
+        FadeTransition ft = fade(node, from, to, ms);
+        ft.setDelay(Duration.millis(delayMs));
+        return ft;
+    }
+
+    private TranslateTransition translate(Node node, double toX, int ms) {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(ms), node);
+        tt.setToX(toX);
+        tt.setInterpolator(Interpolator.SPLINE(0.16, 1.0, 0.3, 1.0));
+        return tt;
+    }
+
+    private TranslateTransition translate(Node node, double toX, int ms, int delayMs) {
+        TranslateTransition tt = translate(node, toX, ms);
+        tt.setDelay(Duration.millis(delayMs));
+        return tt;
+    }
+
+    private ScaleTransition createScale(Node node, double from, double to, int delayMs) {
+        ScaleTransition st = new ScaleTransition(Duration.seconds(0.7), node);
+        st.setFromX(from); st.setFromY(from);
+        st.setToX(to);     st.setToY(to);
+        st.setInterpolator(Interpolator.EASE_BOTH);
+        st.setDelay(Duration.millis(delayMs));
+        return st;
+    }
+
+    private FadeTransition switchLabel(Button btn, String newText) {
+        FadeTransition out = new FadeTransition(Duration.millis(150), btn);
+        out.setToValue(0);
+        out.setOnFinished(e -> {
+            btn.setText(newText);
+            FadeTransition in = new FadeTransition(Duration.millis(200), btn);
+            in.setFromValue(0); in.setToValue(1);
+            in.play();
+        });
+        return out;
     }
 }
