@@ -11,10 +11,12 @@ import java.time.LocalDateTime;
  * @author Maria Cristina
  */
 public class AtencionAlerta {
-    
+
+
     private int id_atencion;
     Alerta alerta;
     EstadoAtencionAlerta estado;
+    UnidadPolicial unidad;
     private LocalDateTime fechaatencion;
     private String descripcion;
     TipoArma tipoarma;
@@ -35,6 +37,15 @@ public class AtencionAlerta {
 
     public void setAlerta(Alerta alerta) {
         this.alerta = alerta;
+    }
+
+
+    public EstadoAtencionAlerta getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoAtencionAlerta estado) {
+        this.estado = estado;
     }
 
     public LocalDateTime getFechaatencion() {
@@ -76,12 +87,13 @@ public class AtencionAlerta {
     public void setObservacion(String observacion) {
         this.observacion = observacion;
     }
-    
-    
-    
-    
-    
-    
-    
-    
+
+    public UnidadPolicial getUnidad() {
+        return unidad;
+    }
+
+    public void setUnidad(UnidadPolicial unidad) {
+        this.unidad = unidad;
+    }
+
 }
