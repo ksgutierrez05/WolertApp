@@ -15,12 +15,14 @@ import sistemagestion.util.Validador;
  *
  * @author Maria Cristina
  */
+
+
 public class AsignacionUnidadService {
 
-    private AsignacionUnidadDAO dao;
+    private AsignacionUnidadDAO asignacionDAO;
 
     public AsignacionUnidadService() throws SQLException {
-        dao = new AsignacionUnidadDAO();
+        asignacionDAO = new AsignacionUnidadDAO();
     }
 
     public boolean insertar(AsignacionUnidad a) {
@@ -34,30 +36,49 @@ public class AsignacionUnidadService {
                 ? a.getFechahoraasignacion()
                 : LocalDateTime.now();
 
-        return dao.insertar(
+        return asignacionDAO.insertar(
                 a.getAlerta().getId_alerta(),
-                a.getUnidadpolicial().getId_unidad(),
+                a.getUnidadpolicial().getNombre(),
+                a.getObservacion(),
+                fecha
+        );
+    }
+
+    public boolean actualizar(AsignacionUnidad a) {
+
+        Validador.validarObjeto(a);
+        Validador.validarObjeto(a.getAlerta());
+        Validador.validarObjeto(a.getUnidadpolicial());
+
+        if (a.getId_asignacion() <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        Validador.validarCampoVacio(a.getObservacion());
+
+        LocalDateTime fecha = (a.getFechahoraasignacion() != null)
+                ? a.getFechahoraasignacion()
+                : LocalDateTime.now();
+
+        return asignacionDAO.actualizar(
+                a.getId_asignacion(),
+                a.getAlerta().getId_alerta(),
+                a.getUnidadpolicial().getNombre(),
                 a.getObservacion(),
                 fecha
         );
     }
 
     public List<AsignacionUnidad> listar() {
-        return dao.listar();
-    }
-
-    public AsignacionUnidad buscarPorId(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
-        return dao.buscarPorId(id);
-    }
-
-    public boolean actualizar(AsignacionUnidad a) {
-        Validador.validarObjeto(a);
-        return dao.actualizar(a);
+        return asignacionDAO.listar();
     }
 
     public boolean eliminar(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
-        return dao.eliminar(id);
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        return asignacionDAO.eliminar(id);
     }
 }

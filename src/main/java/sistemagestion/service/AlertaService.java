@@ -5,16 +5,11 @@
 package sistemagestion.service;
 
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.List;
 import sistemagestion.dao.AlertaDAO;
 import sistemagestion.model.Alerta;
 import sistemagestion.util.Validador;
 
-/**
- *
- * @author Maria Cristina
- */
 public class AlertaService {
 
     private AlertaDAO alertaDAO;
@@ -26,31 +21,51 @@ public class AlertaService {
     public boolean insertar(Alerta a) {
 
         Validador.validarObjeto(a);
-        Validador.validarCampoVacio(a.getDescripcion());
+
         Validador.validarObjeto(a.getUsuario());
         Validador.validarObjeto(a.getTipoalerta());
         Validador.validarObjeto(a.getBarrio());
-        Validador.validarEnum(a.getEstado());
 
-        LocalDateTime fecha = (a.getFechaHora() != null)
-                ? a.getFechaHora()
-                : LocalDateTime.now();
+        Validador.validarCampoVacio(a.getDescripcion());
 
         return alertaDAO.insertar(
-                a.getUsuario().getId_usuario(),
-                a.getTipoalerta().getId_tipoalerta(),
-                a.getBarrio().getId_barrio(),
-                a.getTipoarma() != null ? a.getTipoarma().getId_tipoarma() : null,
-                a.getMediotransporte() != null ? a.getMediotransporte().getId_mediotransporte() : null,
-                a.getEstado().name(),
-                a.getDireccion() != null ? a.getDireccion().getSector() : null,
-                a.getDireccion() != null ? a.getDireccion().getManzana() : null,
-                a.getDireccion() != null ? a.getDireccion().getCasa() : null,
-                a.getDireccion() != null ? a.getDireccion().getCalle() : null,
-                a.getDireccion() != null ? a.getDireccion().getCarrera() : null,
-                a.getDireccion() != null ? a.getDireccion().getReferencia() : null,
-                a.getDescripcion(),
-                fecha
+                a.getUsuario().getUsername(),
+                a.getTipoalerta().getNombre(),
+                a.getBarrio().getNombre(),
+                a.getTipoarma() != null
+                ? a.getTipoarma().getNombre()
+                : null,
+                a.getMediotransporte() != null
+                ? a.getMediotransporte().getNombre()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getEtapa()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getSector()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getManzana()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getCasa()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getCalle()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getCarrera()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getReferencia()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getLatitud()
+                : null,
+                a.getDireccion() != null
+                ? a.getDireccion().getLongitud()
+                : null,
+                a.getDescripcion()
         );
     }
 
@@ -59,17 +74,31 @@ public class AlertaService {
     }
 
     public Alerta buscarPorId(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
         return alertaDAO.buscarPorId(id);
     }
 
     public boolean actualizarEstado(int id, String estado) {
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
         Validador.validarCampoVacio(estado);
+
         return alertaDAO.actualizarEstado(id, estado);
     }
 
     public boolean eliminar(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
         return alertaDAO.eliminar(id);
     }
 }

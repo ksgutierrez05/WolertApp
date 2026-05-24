@@ -16,162 +16,102 @@ import sistemagestion.util.Validador;
  */
 public class UsuarioService {
 
-    private UsuarioDAO usuarioDAO;
+    private UsuarioDAO dao;
 
     public UsuarioService() throws SQLException {
-
-        usuarioDAO = new UsuarioDAO();
+        dao = new UsuarioDAO();
     }
 
-   
-    public boolean insertar(Usuario u) {
+    public void insertar(Usuario u) throws SQLException {
 
-        
         Validador.validarObjeto(u);
 
-       
-        Validador.validarCampoVacio(
-                u.getPrimer_nombre());
+        Validador.validarCampoVacio(u.getPrimer_nombre());
+        Validador.validarCampoVacio(u.getPrimer_apellido());
 
-        Validador.validarCampoVacio(
-                u.getPrimer_apellido());
+        Validador.validarIdentificacion(u.getIdentificacion());
+        Validador.validarTelefono(u.getTelefono());
+        Validador.validarCorreo(u.getCorreo());
+        Validador.validarUsername(u.getUsername());
+        Validador.validarPassword(u.getPassword());
 
-        Validador.validarIdentificacion(
-                u.getIdentificacion());
+        Validador.validarEnum(u.getEstado());
+        Validador.validarObjeto(u.getRol());
 
-        Validador.validarTelefono(
-                u.getTelefono());
-
-        Validador.validarCorreo(
-                u.getCorreo());
-
-        Validador.validarUsername(
-                u.getUsername());
-
-        Validador.validarPassword(
-                u.getPassword());
-
-        Validador.validarEnum(
-                u.getEstado());
-
-        Validador.validarObjeto(
-                u.getRol());
-
-        return usuarioDAO.insertar(
-
+        dao.insertar(
                 u.getPrimer_nombre(),
-
                 u.getSegundo_nombre(),
-
                 u.getPrimer_apellido(),
-
                 u.getSegundo_apellido(),
-
                 u.getIdentificacion(),
-
                 u.getTelefono(),
-
                 u.getCorreo(),
-
                 u.getUsername(),
-
                 u.getPassword(),
-
-                u.getEstado().name(),
-
-                u.getRol().getIdRol(),
-
-                u.getDireccion() != null
-                && u.getDireccion().getBarrio() != null
-                        ? u.getDireccion()
-                                .getBarrio()
-                                .getId_barrio()
-                        : null
+                u.getRol().getNombre(),
+                u.getDireccion().getBarrio().getNombre(),
+                u.getDireccion().getCalle(),
+                u.getDireccion().getCarrera(),
+                u.getDireccion().getEtapa(),
+                u.getDireccion().getManzana(),
+                u.getDireccion().getCasa()
         );
     }
 
-    public void actualizar(Usuario u)
-            throws SQLException {
+    public void actualizar(Usuario u) throws SQLException {
 
         Validador.validarObjeto(u);
 
-        Validador.validarCampoVacio(
-                u.getPrimer_nombre());
+        Validador.validarCampoVacio(u.getPrimer_nombre());
+        Validador.validarCampoVacio(u.getPrimer_apellido());
 
-        Validador.validarCampoVacio(
-                u.getPrimer_apellido());
+        Validador.validarTelefono(u.getTelefono());
+        Validador.validarCorreo(u.getCorreo());
+        Validador.validarUsername(u.getUsername());
+        Validador.validarPassword(u.getPassword());
 
-        Validador.validarTelefono(
-                u.getTelefono());
-
-        Validador.validarCorreo(
-                u.getCorreo());
-
-        Validador.validarUsername(
-                u.getUsername());
-
-        Validador.validarPassword(
-                u.getPassword());
-
-        usuarioDAO.actualizar(u);
+        dao.actualizar(
+                u.getUsername(),
+                u.getPrimer_nombre(),
+                u.getSegundo_nombre(),
+                u.getPrimer_apellido(),
+                u.getSegundo_apellido(),
+                u.getTelefono(),
+                u.getCorreo(),
+                u.getPassword(),
+                u.getRol().getNombre(),
+                u.getDireccion().getBarrio().getNombre(),
+                u.getDireccion().getCalle(),
+                u.getDireccion().getCarrera(),
+                u.getDireccion().getEtapa(),
+                u.getDireccion().getManzana(),
+                u.getDireccion().getCasa()
+        );
     }
 
-    
-    public void eliminar(int id)
-            throws SQLException {
+    public Usuario login(String username, String password) throws SQLException {
 
-        if (id <= 0) {
+        Validador.validarUsername(username);
+        Validador.validarPassword(password);
 
-            throw new IllegalArgumentException();
-        }
-
-        usuarioDAO.eliminar(id);
+        return dao.login(username, password);
     }
 
-    public boolean existePorCedula(
-            String cedula)
-            throws SQLException {
+    public Usuario buscarPorCedula(String cedula) throws SQLException {
 
-        Validador.validarIdentificacion(
-                cedula);
+        Validador.validarIdentificacion(cedula);
 
-        return usuarioDAO.existePorCedula(
-                cedula);
+        return dao.buscarPorCedula(cedula);
     }
 
-    
-    public Usuario login(
-            String username,
-            String password)
-            throws SQLException {
-
-        Validador.validarUsername(
-                username);
-
-        Validador.validarPassword(
-                password);
-
-        return usuarioDAO.login(
-                username,
-                password);
+    public List<Usuario> listar() throws SQLException {
+        return dao.listarTodos();
     }
 
-   
-    public Usuario buscarPorId(int id)
-            throws SQLException {
+    public void eliminar(String cedula) throws SQLException {
 
-        if (id <= 0) {
+        Validador.validarIdentificacion(cedula);
 
-            throw new IllegalArgumentException();
-        }
-
-        return usuarioDAO.buscarPorId(id);
-    }
-
-    
-    public List<Usuario> listarTodos()
-            throws SQLException {
-
-        return usuarioDAO.listarTodos();
+        dao.eliminar(cedula);
     }
 }

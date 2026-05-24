@@ -7,7 +7,6 @@
             </packagings>
             <goals>
                 <goal>javafx:run</goal>
-                
             </goals>
             <properties>
                 <exec.vmArgs></exec.vmArgs>
