@@ -5,8 +5,8 @@
 package sistemagestion.service;
 
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.List;
+import sistemagestion.dao.AtencionAlertaDAO;
 import sistemagestion.model.AtencionAlerta;
 import sistemagestion.util.Validador;
 
@@ -15,93 +15,119 @@ import sistemagestion.util.Validador;
  * @author Maria Cristina
  */
 public class AtencionAlertaService {
- 
-    private AtencionAlertaDAO atencioalertaDAO;
- 
+
+    private AtencionAlertaDAO atencionDAO;
+
     public AtencionAlertaService() throws SQLException {
-        atencioalertaDAO = new AtencionAlertaDAO();
+        atencionDAO = new AtencionAlertaDAO();
     }
- 
+
     public boolean insertar(AtencionAlerta a) {
- 
+
         Validador.validarObjeto(a);
         Validador.validarObjeto(a.getAlerta());
         Validador.validarObjeto(a.getUnidad());
+
+        Validador.validarCampoVacio(a.getUnidad().getNombre());
         Validador.validarEnum(a.getEstado());
         Validador.validarCampoVacio(a.getDescripcion());
- 
-        // Validar que la alerta no esté cancelada ni resuelta
-        Validador.validarAlertaActiva(a.getAlerta());
- 
-        // Validar que la unidad esté operativa
-        Validador.validarUnidadOperativa(a.getUnidad());
- 
-        LocalDateTime fecha = (a.getFechaatencion() != null)
-                ? a.getFechaatencion()
-                : LocalDateTime.now();
- 
-        return atencioalertaDAO.insertar(
+
+        String tipoArma = null;
+        String medioTransporte = null;
+
+        if (a.getTipoarma() != null) {
+            tipoArma = a.getTipoarma().getNombre();
+        }
+
+        if (a.getMediotransporte() != null) {
+            medioTransporte = a.getMediotransporte().getNombre();
+        }
+
+        return atencionDAO.insertar(
                 a.getAlerta().getId_alerta(),
-                a.getUnidad().getId_unidad(),
+                a.getUnidad().getNombre(),
                 a.getEstado().name(),
-                fecha,
                 a.getDescripcion(),
-                a.getTipoarma() != null ? a.getTipoarma().getId_tipoarma() : null,
-                a.getMediotransporte() != null ? a.getMediotransporte().getId_mediotransporte() : null,
+                tipoArma,
+                medioTransporte,
                 a.getObservacion()
         );
     }
- 
-    public AtencionAlerta buscarPorId(int id) {
- 
-        if (id <= 0) {
+
+    public boolean actualizar(AtencionAlerta a) {
+
+        Validador.validarObjeto(a);
+
+        if (a.getId_atencion() <= 0) {
             throw new IllegalArgumentException();
         }
- 
-        return atencioalertaDAO.buscarPorId(id);
-    }
- 
-    public List<AtencionAlerta> listar() {
-        return atencioalertaDAO.listar();
-    }
- 
-    public boolean actualizar(AtencionAlerta a) {
- 
-        Validador.validarObjeto(a);
-        Validador.validarObjeto(a.getAlerta());
-        Validador.validarObjeto(a.getUnidad());
+
         Validador.validarEnum(a.getEstado());
         Validador.validarCampoVacio(a.getDescripcion());
- 
-        return atencioalertaDAO.actualizar(a);
-    }
- 
-    public boolean actualizarEstado(int id, String estado) {
- 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
+
+        String tipoArma = null;
+        String medioTransporte = null;
+
+        if (a.getTipoarma() != null) {
+            tipoArma = a.getTipoarma().getNombre();
         }
- 
-        Validador.validarCampoVacio(estado);
- 
-        return atencioalertaDAO.actualizarEstado(id, estado);
+
+        if (a.getMediotransporte() != null) {
+            medioTransporte = a.getMediotransporte().getNombre();
+        }
+
+        return atencionDAO.actualizar(
+                a.getId_atencion(),
+                a.getEstado().name(),
+                a.getDescripcion(),
+                tipoArma,
+                medioTransporte,
+                a.getObservacion()
+        );
     }
- 
+
     public boolean eliminar(int id) {
- 
+
         if (id <= 0) {
             throw new IllegalArgumentException();
         }
- 
-        return atencioalertaDAO.eliminar(id);
+
+        return atencionDAO.eliminar(id);
     }
- 
+
+    public AtencionAlerta buscarPorId(int id) {
+
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        return atencionDAO.buscarPorId(id);
+    }
+
+    public List<AtencionAlerta> listar() {
+        return atencionDAO.listar();
+    }
+
     public List<AtencionAlerta> listarPorAlerta(int idAlerta) {
- 
+
         if (idAlerta <= 0) {
             throw new IllegalArgumentException();
         }
- 
-        return atencioalertaDAO.listarPorAlerta(idAlerta);
+
+        return atencionDAO.listarPorAlerta(idAlerta);
+    }
+
+    public List<AtencionAlerta> buscarPorEstado(String estado) {
+
+        Validador.validarCampoVacio(estado);
+
+        return atencionDAO.buscarPorEstado(estado);
+    }
+
+    public List<AtencionAlerta> buscarPorEstadoExacto(String estado) {
+
+        Validador.validarCampoVacio(estado);
+
+        return atencionDAO.buscarPorEstadoExacto(estado);
     }
 }

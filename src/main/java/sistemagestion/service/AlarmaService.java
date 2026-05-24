@@ -13,85 +13,84 @@ import java.util.List;
 import sistemagestion.dao.AlarmaDAO;
 import sistemagestion.model.Alarma;
 import sistemagestion.util.Validador;
- 
+
 /**
  *
  * @author Maria Cristina
  */
 public class AlarmaService {
- 
+
     private AlarmaDAO alarmaDAO;
- 
+
     public AlarmaService() throws SQLException {
         alarmaDAO = new AlarmaDAO();
     }
- 
+
     public boolean insertar(Alarma a) {
- 
+
         Validador.validarObjeto(a);
         Validador.validarCampoVacio(a.getNombre());
+
         Validador.validarObjeto(a.getBarrio());
+        Validador.validarCampoVacio(a.getBarrio().getNombre());
+
         Validador.validarEnum(a.getEstado());
- 
+
         return alarmaDAO.insertar(
                 a.getNombre(),
-                a.getBarrio().getId_barrio(),
+                a.getBarrio().getNombre(),
                 a.getLatitud(),
                 a.getLongitud(),
                 a.getRadio_cobertura(),
                 a.getEstado().name()
         );
     }
- 
-    public Alarma buscarPorId(int id) {
- 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
- 
-        return alarmaDAO.buscarPorId(id);
-    }
- 
-    public List<Alarma> listar() {
-        return alarmaDAO.listar();
-    }
- 
+
     public boolean actualizar(Alarma a) {
- 
+
         Validador.validarObjeto(a);
+
+        if (a.getId_alarma() <= 0) {
+            throw new IllegalArgumentException();
+        }
+
         Validador.validarCampoVacio(a.getNombre());
+
         Validador.validarObjeto(a.getBarrio());
+        Validador.validarCampoVacio(a.getBarrio().getNombre());
+
         Validador.validarEnum(a.getEstado());
- 
-        return alarmaDAO.actualizar(a);
+
+        return alarmaDAO.actualizar(
+                a.getId_alarma(),
+                a.getNombre(),
+                a.getBarrio().getNombre(),
+                a.getLatitud(),
+                a.getLongitud(),
+                a.getRadio_cobertura(),
+                a.getEstado().name()
+        );
     }
- 
-    public boolean actualizarEstado(int id, String estado) {
- 
-        if (id <= 0) {
-            throw new IllegalArgumentException();
-        }
- 
-        Validador.validarCampoVacio(estado);
- 
-        return alarmaDAO.actualizarEstado(id, estado);
-    }
- 
+
     public boolean eliminar(int id) {
- 
+
         if (id <= 0) {
             throw new IllegalArgumentException();
         }
- 
+
         return alarmaDAO.eliminar(id);
     }
- 
-    public List<Alarma> listarPorBarrio(int idBarrio) {
- 
-        if (idBarrio <= 0) {
+
+    public Alarma buscarPorId(int id) {
+
+        if (id <= 0) {
             throw new IllegalArgumentException();
         }
- 
-        return alarmaDAO.listarPorBarrio(idBarrio);
+
+        return alarmaDAO.buscarPorId(id);
+    }
+
+    public List<Alarma> listar() {
+        return alarmaDAO.listar();
     }
 }
