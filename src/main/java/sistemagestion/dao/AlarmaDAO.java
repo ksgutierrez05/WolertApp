@@ -22,10 +22,12 @@ import sistemagestion.model.EstadoAlarma;
  */
 public class AlarmaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public AlarmaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+       
     }
 
     public boolean insertar(
@@ -37,7 +39,7 @@ public class AlarmaDAO {
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_insertar_alarma(?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.setString(2, nombreBarrio);
             cs.setDouble(3, latitud);
@@ -52,7 +54,6 @@ public class AlarmaDAO {
         }
     }
 
-   
     public boolean actualizar(
             int idAlarma,
             String nombre,
@@ -63,7 +64,7 @@ public class AlarmaDAO {
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_alarma(?, ?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlarma);
             cs.setString(2, nombre);
             cs.setString(3, nombreBarrio);
@@ -79,10 +80,9 @@ public class AlarmaDAO {
         }
     }
 
-   
     public boolean eliminar(int idAlarma) {
         String sql = "{call pkg_alertas.pr_eliminar_alarma(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlarma);
             cs.execute();
             return true;
@@ -92,26 +92,26 @@ public class AlarmaDAO {
         }
     }
 
-    
     public Alarma buscarPorId(int idAlarma) {
         String sql = "{call pkg_alertas.pr_consultar_alarma(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlarma);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            if (rs.next()) return mapear(rs);
+            if (rs.next()) {
+                return mapear(rs);
+            }
         } catch (SQLException e) {
             System.out.println("Error buscar alarma: " + e.getMessage());
         }
         return null;
     }
 
-    
     public List<Alarma> listar() {
         List<Alarma> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_alarmas(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);

@@ -8,7 +8,6 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
@@ -20,15 +19,17 @@ import sistemagestion.model.TipoAlerta;
  */
 public class TipoAlertaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public TipoAlertaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+         
     }
 
     public boolean insertar(String nombre) {
         String sql = "{call pkg_catalogos.pr_insertar_tipo_alerta(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -40,7 +41,7 @@ public class TipoAlertaDAO {
 
     public boolean actualizar(String nombreActual, String nombreNuevo) {
         String sql = "{call pkg_catalogos.pr_actualizar_tipo_alerta(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
             cs.execute();
@@ -53,7 +54,7 @@ public class TipoAlertaDAO {
 
     public boolean eliminar(String nombre) {
         String sql = "{call pkg_catalogos.pr_eliminar_tipo_alerta(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.execute();
             return true;
@@ -67,7 +68,7 @@ public class TipoAlertaDAO {
     public List<TipoAlerta> listar() {
         List<TipoAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_listar_tipos_alerta(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -84,7 +85,7 @@ public class TipoAlertaDAO {
     public List<TipoAlerta> buscar(String texto) {
         List<TipoAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_tipo_alerta(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -102,7 +103,7 @@ public class TipoAlertaDAO {
     public List<TipoAlerta> buscarExacto(String texto) {
         List<TipoAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_catalogos.pr_buscar_tipo_alerta_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

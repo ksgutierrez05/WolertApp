@@ -23,10 +23,12 @@ import sistemagestion.model.UnidadPolicial;
  */
 public class PoliciaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public PoliciaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+         
     }
 
     public boolean insertar(
@@ -37,7 +39,7 @@ public class PoliciaDAO {
             String estado
     ) {
         String sql = "{call pkg_usuarios.pr_insertar_policia(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedulaUsuario);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);
@@ -59,7 +61,7 @@ public class PoliciaDAO {
             String estado
     ) {
         String sql = "{call pkg_usuarios.pr_actualizar_policia(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedulaUsuario);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);
@@ -75,7 +77,7 @@ public class PoliciaDAO {
 
     public boolean eliminar(String cedulaUsuario) {
         String sql = "{call pkg_usuarios.pr_eliminar_policia(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedulaUsuario);
             cs.execute();
             return true;
@@ -89,7 +91,7 @@ public class PoliciaDAO {
         String sql = "SELECT COUNT(*) FROM policias p " +
                      "JOIN usuarios u ON p.id_usuario = u.id_usuario " +
                      "WHERE u.username = ? AND UPPER(p.placa) = UPPER(?)";
-        try (java.sql.PreparedStatement ps = con.prepareStatement(sql)) {
+        try (java.sql.PreparedStatement ps = con().prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, placa);
             ResultSet rs = ps.executeQuery();
@@ -103,7 +105,7 @@ public class PoliciaDAO {
     public List<Policia> listar() {
         List<Policia> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_listar_policias(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -119,7 +121,7 @@ public class PoliciaDAO {
     public List<Policia> buscar(String texto) {
         List<Policia> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_policia(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -136,7 +138,7 @@ public class PoliciaDAO {
     public List<Policia> buscarExacto(String texto) {
         List<Policia> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_policia_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

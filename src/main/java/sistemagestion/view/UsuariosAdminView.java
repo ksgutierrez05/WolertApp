@@ -12,8 +12,6 @@ package sistemagestion.view;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-
-
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,72 +28,61 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
+import sistemagestion.model.EstadoUsuario;
+import sistemagestion.model.Policia;
 import sistemagestion.model.RolUsuario;
 import sistemagestion.model.Usuario;
+import sistemagestion.service.BarrioService;
 import sistemagestion.service.RolUsuarioService;
 import sistemagestion.service.UsuarioService;
 
-/**
- * Vista de Gestión de Usuarios para el Panel Administrativo.
- * Se integra en AdministradorApp mediante: root.setCenter(new UsuariosAdminView().getView())
- *
- * @author Maria Cristina
- */
 public class UsuariosAdminView {
 
-    // ── Paleta idéntica a AdministradorApp ────────────────────────
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String GREEN     = "#43a047";
-    private static final String BLUE      = "#1565c0";
+    private static final String ORANGE = "#fb8c00";
+    private static final String GREEN = "#43a047";
+    private static final String BLUE = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
-    // ── Servicios ─────────────────────────────────────────────────
-    private UsuarioService    usuarioService;
+    private UsuarioService usuarioService;
     private RolUsuarioService rolService;
+    private BarrioService barrioService;
 
-    // ── Estado de la tabla ────────────────────────────────────────
     private ObservableList<Usuario> todosLosUsuarios = FXCollections.observableArrayList();
     private ObservableList<Usuario> usuariosFiltrados = FXCollections.observableArrayList();
 
-    // ── Paginación ────────────────────────────────────────────────
     private static final int FILAS_POR_PAGINA = 8;
     private int paginaActual = 1;
 
-    // ── Referencias UI ────────────────────────────────────────────
     private VBox tablaContainer;
     private Label lblMostrando;
     private HBox paginacionBox;
     private TextField campoBusqueda;
+
+    // ← campos de instancia — todos asignados en buildToolbar()
     private ComboBox<String> filtroEstado;
     private ComboBox<String> filtroRol;
+    private ComboBox<String> filtroBarrio;
 
-    // ── Stats labels (para actualizar en vivo) ────────────────────
     private Label lblTotalVal;
     private Label lblActivosVal;
     private Label lblInactivosVal;
     private Label lblRolesVal;
 
-    // =========================================================================
-    // Constructor
-    // =========================================================================
     public UsuariosAdminView() {
         try {
             usuarioService = new UsuarioService();
-            rolService     = new RolUsuarioService();
+            rolService = new RolUsuarioService();
+            barrioService = new BarrioService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
         }
     }
 
-    // =========================================================================
-    // ENTRY POINT — llama AdministradorApp con: root.setCenter(new UsuariosAdminView().getView())
-    // =========================================================================
     public ScrollPane getView() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(24));
@@ -109,7 +96,6 @@ public class UsuariosAdminView {
                 buildPaginacion()
         );
 
-        // Cargar datos reales
         cargarUsuarios();
 
         ScrollPane scroll = new ScrollPane(content);
@@ -119,9 +105,9 @@ public class UsuariosAdminView {
         return scroll;
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // TOP BAR
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
         HBox bar = new HBox();
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -140,30 +126,21 @@ public class UsuariosAdminView {
         Button btnNuevo = new Button("+ Nuevo usuario");
         btnNuevo.setStyle("""
                 -fx-background-color: #1565c0;
-                -fx-text-fill: white;
-                -fx-font-size: 13px;
-                -fx-font-weight: bold;
-                -fx-background-radius: 8;
-                -fx-padding: 10 18;
-                -fx-cursor: hand;
+                -fx-text-fill: white; -fx-font-size: 13px;
+                -fx-font-weight: bold; -fx-background-radius: 8;
+                -fx-padding: 10 18; -fx-cursor: hand;
                 """);
         btnNuevo.setOnMouseEntered(e -> btnNuevo.setStyle("""
                 -fx-background-color: #0d47a1;
-                -fx-text-fill: white;
-                -fx-font-size: 13px;
-                -fx-font-weight: bold;
-                -fx-background-radius: 8;
-                -fx-padding: 10 18;
-                -fx-cursor: hand;
+                -fx-text-fill: white; -fx-font-size: 13px;
+                -fx-font-weight: bold; -fx-background-radius: 8;
+                -fx-padding: 10 18; -fx-cursor: hand;
                 """));
         btnNuevo.setOnMouseExited(e -> btnNuevo.setStyle("""
                 -fx-background-color: #1565c0;
-                -fx-text-fill: white;
-                -fx-font-size: 13px;
-                -fx-font-weight: bold;
-                -fx-background-radius: 8;
-                -fx-padding: 10 18;
-                -fx-cursor: hand;
+                -fx-text-fill: white; -fx-font-size: 13px;
+                -fx-font-weight: bold; -fx-background-radius: 8;
+                -fx-padding: 10 18; -fx-cursor: hand;
                 """));
         btnNuevo.setOnAction(e -> abrirDialogoCrear());
 
@@ -172,22 +149,22 @@ public class UsuariosAdminView {
         return bar;
     }
 
-    // =========================================================================
-    // STATS ROW  (4 tarjetas)
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // STATS ROW
+    // ═══════════════════════════════════════════════════════════════
     private HBox buildStatsRow() {
         HBox row = new HBox(16);
 
-        lblTotalVal    = boldNum("0");
-        lblActivosVal  = boldNum("0");
-        lblInactivosVal= boldNum("0");
-        lblRolesVal    = boldNum("4");
+        lblTotalVal = boldNum("0");
+        lblActivosVal = boldNum("0");
+        lblInactivosVal = boldNum("0");
+        lblRolesVal = boldNum("0");
 
         row.getChildren().addAll(
-                statCard("👥", "#e8f0fe", BLUE,   "Total registrados",        lblTotalVal, "↑ +24 este mes",        BLUE),
-                statCard("✅", "#e8f5e9", GREEN,  "Usuarios ACTIVOS",         lblActivosVal, "+18 este mes",        GREEN),
-                statCard("🚨", RED_LIGHT, RED,    "Inactivos / Suspendidos",  lblInactivosVal, "↑ 5% este mes",     RED),
-                statCard("🏠", "#f3e5f5", "#7b1fa2","Roles configurados",     lblRolesVal, "Admin · Policía · Usuario", GRAY_TEXT)
+                statCard("👥", "#e8f0fe", BLUE, "Total registrados", lblTotalVal, "Total en el sistema", BLUE),
+                statCard("✅", "#e8f5e9", GREEN, "Usuarios ACTIVOS", lblActivosVal, "+18 este mes", GREEN),
+                statCard("🚨", RED_LIGHT, RED, "Inactivos / Suspendidos", lblInactivosVal, "↑ 5% este mes", RED),
+                statCard("🏠", "#f3e5f5", "#7b1fa2", "Roles configurados", lblRolesVal, "Admin · Policía · Usuario", GRAY_TEXT)
         );
         return row;
     }
@@ -200,7 +177,7 @@ public class UsuariosAdminView {
     }
 
     private VBox statCard(String icon, String bgIcon, String iconColor,
-                          String title, Label valueLabel, String sub, String subColor) {
+            String title, Label valueLabel, String sub, String subColor) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(20));
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
@@ -211,7 +188,8 @@ public class UsuariosAdminView {
         top.setAlignment(Pos.CENTER_LEFT);
         StackPane iconBox = new StackPane();
         Rectangle iconBg = new Rectangle(44, 44);
-        iconBg.setArcWidth(10); iconBg.setArcHeight(10);
+        iconBg.setArcWidth(10);
+        iconBg.setArcHeight(10);
         iconBg.setFill(Color.web(bgIcon));
         Label iconLbl = label(icon, 20, iconColor, false);
         iconBox.getChildren().addAll(iconBg, iconLbl);
@@ -221,9 +199,9 @@ public class UsuariosAdminView {
         return card;
     }
 
-    // =========================================================================
-    // TOOLBAR  (búsqueda + filtros)
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // TOOLBAR
+    // ═══════════════════════════════════════════════════════════════
     private HBox buildToolbar() {
         HBox bar = new HBox(12);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -231,95 +209,126 @@ public class UsuariosAdminView {
         bar.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         shadow(bar);
 
-        // Búsqueda
         campoBusqueda = new TextField();
-        campoBusqueda.setPromptText("🔍  Buscar por nombre, cédula o username...");
+        campoBusqueda.setPromptText("🔍 Buscar usuario...");
         campoBusqueda.setPrefHeight(40);
-        campoBusqueda.setStyle("""
-                -fx-background-color: #f5f7fb;
-                -fx-background-radius: 8;
-                -fx-border-radius: 8;
-                -fx-border-color: transparent;
-                -fx-padding: 0 14;
-                -fx-font-size: 13px;
-                """);
+        campoBusqueda.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(campoBusqueda, Priority.ALWAYS);
         campoBusqueda.textProperty().addListener((obs, o, n) -> filtrarYMostrar());
 
-        // Filtro Estado
         filtroEstado = new ComboBox<>();
-        filtroEstado.getItems().addAll("Estado: Todos", "ACTIVO", "INACTIVO", "SUSPENDIDO");
-        filtroEstado.setValue("Estado: Todos");
+        cargarEstados();
         filtroEstado.setPrefHeight(40);
-        filtroEstado.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
         filtroEstado.setOnAction(e -> filtrarYMostrar());
 
-        // Filtro Rol
         filtroRol = new ComboBox<>();
-        filtroRol.getItems().add("Rol: Todos");
-        filtroRol.setValue("Rol: Todos");
+        cargarRoles();
         filtroRol.setPrefHeight(40);
-        filtroRol.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
         filtroRol.setOnAction(e -> filtrarYMostrar());
 
-        // Cargar roles disponibles
-        cargarFiltroRoles();
+        // ← CORRECCIÓN: asigna al campo de instancia, no variable local
+        filtroBarrio = new ComboBox<>();
+        cargarBarrios(filtroBarrio);
+        filtroBarrio.setPrefHeight(40);
+        filtroBarrio.setOnAction(e -> filtrarYMostrar());
 
-        bar.getChildren().addAll(campoBusqueda, filtroEstado, filtroRol);
+        bar.getChildren().addAll(campoBusqueda, filtroEstado, filtroRol, filtroBarrio);
         return bar;
     }
 
-    // =========================================================================
+    private void cargarRoles() {
+
+        try {
+
+            filtroRol.getItems().clear();
+            filtroRol.getItems().add("Rol: Todos");
+
+            List<RolUsuario> roles = rolService.listar();
+
+            for (RolUsuario r : roles) {
+
+                if (r != null && r.getNombre() != null) {
+
+                    filtroRol.getItems().add(r.getNombre());
+                }
+            }
+
+            filtroRol.setValue("Rol: Todos");
+
+        } catch (Exception e) {
+
+            mostrarAlerta("Error roles", e.getMessage());
+        }
+    }
+
+    private void cargarEstados() {
+        filtroEstado.getItems().clear();
+        filtroEstado.getItems().add("Estado: Todos");
+        for (EstadoUsuario e : EstadoUsuario.values()) {
+            filtroEstado.getItems().add(e.name());
+        }
+        filtroEstado.setValue("Estado: Todos");
+    }
+
+    private void cargarBarrios(ComboBox<String> combo) {
+        try {
+            combo.getItems().clear();
+            combo.getItems().add("Barrio: Todos");
+            barrioService.listar().forEach(b -> combo.getItems().add(b.getNombre()));
+            combo.setValue("Barrio: Todos");
+        } catch (Exception e) {
+            mostrarAlerta("Error barrios", e.getMessage());
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // TABLA
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private VBox buildTabla() {
         VBox card = new VBox(0);
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         shadow(card);
 
-        // Encabezado
         HBox header = new HBox();
         header.setPadding(new Insets(14, 16, 14, 16));
-        header.setStyle("-fx-border-color: transparent transparent " + BORDER + " transparent; -fx-border-width: 0 0 1 0;");
+        header.setStyle("-fx-border-color: transparent transparent "
+                + BORDER + " transparent; -fx-border-width: 0 0 1 0;");
         header.getChildren().addAll(
-                colHeader("Usuario",               0.22),
-                colHeader("Identificación",        0.12),
-                colHeader("Correo electrónico",    0.20),
-                colHeader("Teléfono",              0.12),
-                colHeader("Username",              0.10),
-                colHeader("Rol",                   0.08),
-                colHeader("Estado",                0.09),
-                colHeader("Acciones",              0.07)
+                colHeader("Usuario"),
+                colHeader("Identificación"),
+                colHeader("Correo electrónico"),
+                colHeader("Teléfono"),
+                colHeader("Username"),
+                colHeader("Rol"),
+                colHeader("Estado"),
+                colHeader("Acciones")
         );
         card.getChildren().add(header);
 
-        // Contenedor de filas (se actualiza con paginación)
         tablaContainer = new VBox(0);
         card.getChildren().add(tablaContainer);
 
-        // Footer con info de paginación
         lblMostrando = label("Mostrando 0 – 0 de 0 usuarios", 12, GRAY_TEXT, false);
         HBox footer = new HBox();
         footer.setPadding(new Insets(12, 16, 12, 16));
-        footer.setStyle("-fx-border-color: " + BORDER + " transparent transparent transparent; -fx-border-width: 1 0 0 0;");
+        footer.setStyle("-fx-border-color: " + BORDER
+                + " transparent transparent transparent; -fx-border-width: 1 0 0 0;");
         footer.getChildren().add(lblMostrando);
         card.getChildren().add(footer);
 
         return card;
     }
 
-    private Label colHeader(String text, double pct) {
+    private Label colHeader(String text) {
         Label l = label(text, 12, GRAY_TEXT, false);
         l.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(l, Priority.ALWAYS);
-        l.setMinWidth(0);
-        // Peso proporcional vía maxWidth no aplica directo; usamos region con grow
         return l;
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // PAGINACIÓN
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private HBox buildPaginacion() {
         paginacionBox = new HBox(6);
         paginacionBox.setAlignment(Pos.CENTER_RIGHT);
@@ -327,14 +336,15 @@ public class UsuariosAdminView {
         return paginacionBox;
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // CARGA Y FILTRADO
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private void cargarUsuarios() {
-        if (usuarioService == null) return;
+        if (usuarioService == null) {
+            return;
+        }
         try {
-            List<Usuario> lista = usuarioService.listar();
-            todosLosUsuarios.setAll(lista);
+            todosLosUsuarios.setAll(usuarioService.listar());
             filtrarYMostrar();
             actualizarStats();
         } catch (SQLException e) {
@@ -342,20 +352,11 @@ public class UsuariosAdminView {
         }
     }
 
-    private void cargarFiltroRoles() {
-        if (rolService == null) return;
-        try {
-            List<RolUsuario> roles = rolService.listar();
-            roles.forEach(r -> filtroRol.getItems().add(r.getNombre()));
-        } catch (Exception e) {
-            // Si falla, dejamos solo "Rol: Todos"
-        }
-    }
-
     private void filtrarYMostrar() {
         String busqueda = campoBusqueda.getText().toLowerCase().trim();
-        String estado   = filtroEstado.getValue();
-        String rol      = filtroRol.getValue();
+        String estado = filtroEstado.getValue();
+        String rol = filtroRol.getValue();
+        String barrio = filtroBarrio.getValue();
 
         List<Usuario> filtrados = todosLosUsuarios.stream()
                 .filter(u -> {
@@ -363,11 +364,22 @@ public class UsuariosAdminView {
                             || nombreCompleto(u).toLowerCase().contains(busqueda)
                             || u.getIdentificacion().toLowerCase().contains(busqueda)
                             || u.getUsername().toLowerCase().contains(busqueda);
+
                     boolean matchEstado = estado == null || estado.startsWith("Estado")
-                            || (u.getEstado() != null && u.getEstado().name().equalsIgnoreCase(estado));
+                            || (u.getEstado() != null
+                            && u.getEstado().name().equalsIgnoreCase(estado));
+
                     boolean matchRol = rol == null || rol.startsWith("Rol")
-                            || (u.getRol() != null && u.getRol().getNombre().equalsIgnoreCase(rol));
-                    return matchBusq && matchEstado && matchRol;
+                            || (u.getRol() != null
+                            && u.getRol().getNombre().equalsIgnoreCase(rol));
+
+                    boolean matchBarrio = barrio == null || barrio.startsWith("Barrio")
+                            || (u.getDireccion() != null
+                            && u.getDireccion().getBarrio() != null
+                            && u.getDireccion().getBarrio().getNombre()
+                                    .equalsIgnoreCase(barrio));
+
+                    return matchBusq && matchEstado && matchRol && matchBarrio;
                 })
                 .collect(Collectors.toList());
 
@@ -389,7 +401,8 @@ public class UsuariosAdminView {
             tablaContainer.getChildren().add(vacio);
         } else {
             for (int i = desde; i < hasta; i++) {
-                tablaContainer.getChildren().add(buildFila(usuariosFiltrados.get(i), i % 2 == 0));
+                tablaContainer.getChildren().add(
+                        buildFila(usuariosFiltrados.get(i), i % 2 == 0));
             }
         }
 
@@ -399,27 +412,25 @@ public class UsuariosAdminView {
         actualizarPaginacion();
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // FILA DE TABLA
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private HBox buildFila(Usuario u, boolean par) {
         HBox fila = new HBox();
         fila.setAlignment(Pos.CENTER_LEFT);
         fila.setPadding(new Insets(12, 16, 12, 16));
-        fila.setStyle("-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
+        String bgNormal = "-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
                 + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
-                + "-fx-border-width: 0 0 1 0;");
+                + "-fx-border-width: 0 0 1 0;";
+        fila.setStyle(bgNormal);
         fila.setOnMouseEntered(e -> fila.setStyle("""
                 -fx-background-color: #EEF2FF;
                 -fx-border-color: transparent transparent #e5e7eb transparent;
-                -fx-border-width: 0 0 1 0;
-                -fx-cursor: hand;
+                -fx-border-width: 0 0 1 0; -fx-cursor: hand;
                 """));
-        fila.setOnMouseExited(e -> fila.setStyle("-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
-                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
-                + "-fx-border-width: 0 0 1 0;"));
+        fila.setOnMouseExited(e -> fila.setStyle(bgNormal));
 
-        // Celda: Avatar + nombre
+        // Avatar + nombre
         HBox celdaUsuario = new HBox(10);
         celdaUsuario.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(celdaUsuario, Priority.ALWAYS);
@@ -436,8 +447,8 @@ public class UsuariosAdminView {
         celdaUsuario.getChildren().addAll(avatarBox, nombreBox);
 
         // Celdas simples
-        Label cedula   = celda(u.getIdentificacion());
-        Label correo   = celda(u.getCorreo() != null ? u.getCorreo() : "—");
+        Label cedula = celda(u.getIdentificacion());
+        Label correo = celda(u.getCorreo() != null ? u.getCorreo() : "—");
         Label telefono = celda(u.getTelefono() != null ? u.getTelefono() : "—");
         Label username = celda(u.getUsername());
 
@@ -445,18 +456,18 @@ public class UsuariosAdminView {
         String rolNombre = u.getRol() != null ? u.getRol().getNombre() : "—";
         Label rolLbl = label(rolNombre, 11, rolColor(rolNombre), true);
         rolLbl.setPadding(new Insets(3, 8, 3, 8));
-        rolLbl.setStyle("-fx-background-color: " + rolBg(rolNombre) + ";"
-                + "-fx-background-radius: 20;");
+        rolLbl.setStyle("-fx-background-color: " + rolBg(rolNombre)
+                + "; -fx-background-radius: 20;");
         HBox rolBox = new HBox(rolLbl);
         rolBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(rolBox, Priority.ALWAYS);
 
         // Estado badge
         String estadoStr = u.getEstado() != null ? u.getEstado().name() : "—";
-        Label estadoLbl = label(estadoStr, 11, estadoColor(estadoStr), true);
+        Label estadoLbl = label(estadoStr, 11, estadoColor(u.getEstado()), true);
         estadoLbl.setPadding(new Insets(3, 8, 3, 8));
-        estadoLbl.setStyle("-fx-background-color: " + estadoBg(estadoStr) + ";"
-                + "-fx-background-radius: 20;");
+        estadoLbl.setStyle("-fx-background-color: " + estadoBg(u.getEstado())
+                + "; -fx-background-radius: 20;");
         HBox estadoBox = new HBox(estadoLbl);
         estadoBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(estadoBox, Priority.ALWAYS);
@@ -466,9 +477,9 @@ public class UsuariosAdminView {
         acciones.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(acciones, Priority.ALWAYS);
         acciones.getChildren().addAll(
-                btnAccion("👁", "#0284c7", () -> abrirDialogoVer(u)),
-                btnAccion("✏", "#f59e0b", () -> abrirDialogoEditar(u)),
-                btnAccion("🗑", "#ef4444", () -> confirmarEliminar(u))
+                btnAccion("👁", () -> abrirDialogoVer(u)),
+                btnAccion("✏", () -> abrirDialogoEditar(u)),
+                btnAccion("🗑", () -> confirmarEliminar(u))
         );
 
         fila.getChildren().addAll(
@@ -478,9 +489,9 @@ public class UsuariosAdminView {
         return fila;
     }
 
-    // =========================================================================
-    // DIALOGO VER USUARIO
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // DIÁLOGO VER
+    // ═══════════════════════════════════════════════════════════════
     private void abrirDialogoVer(Usuario u) {
         Dialog<Void> dlg = new Dialog<>();
         dlg.setTitle("Detalle de Usuario");
@@ -490,7 +501,6 @@ public class UsuariosAdminView {
         content.setPadding(new Insets(20));
         content.setPrefWidth(420);
 
-        // Avatar grande
         Circle avatar = new Circle(35, Color.web(colorAvatar(u.getPrimer_nombre())));
         Label avatarLbl = label(iniciales(u), 22, WHITE, true);
         StackPane avatarBox = new StackPane(avatar, avatarLbl);
@@ -506,12 +516,12 @@ public class UsuariosAdminView {
         content.getChildren().addAll(
                 header,
                 new Separator(),
-                detalleRow("📋 Cédula",     u.getIdentificacion()),
-                detalleRow("📞 Teléfono",   u.getTelefono() != null ? u.getTelefono() : "—"),
-                detalleRow("📧 Correo",     u.getCorreo() != null ? u.getCorreo() : "—"),
-                detalleRow("👤 Username",   u.getUsername()),
-                detalleRow("🔐 Rol",        u.getRol() != null ? u.getRol().getNombre() : "—"),
-                detalleRow("📍 Dirección",  direccionTexto(u))
+                detalleRow("📋 Cédula", u.getIdentificacion()),
+                detalleRow("📞 Teléfono", u.getTelefono() != null ? u.getTelefono() : "—"),
+                detalleRow("📧 Correo", u.getCorreo() != null ? u.getCorreo() : "—"),
+                detalleRow("👤 Username", u.getUsername()),
+                detalleRow("🔐 Rol", u.getRol() != null ? u.getRol().getNombre() : "—"),
+                detalleRow("📍 Dirección", direccionTexto(u))
         );
 
         dlg.getDialogPane().setContent(content);
@@ -519,32 +529,29 @@ public class UsuariosAdminView {
         dlg.showAndWait();
     }
 
-    // =========================================================================
-    // DIALOGO CREAR USUARIO
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // DIÁLOGOS CREAR / EDITAR
+    // ═══════════════════════════════════════════════════════════════
     private void abrirDialogoCrear() {
         Dialog<ButtonType> dlg = crearDialogoFormulario(null);
         dlg.setTitle("Nuevo Usuario");
         dlg.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) cargarUsuarios();
+            if (bt == ButtonType.OK) {
+                cargarUsuarios();
+            }
         });
     }
 
-    // =========================================================================
-    // DIALOGO EDITAR USUARIO
-    // =========================================================================
     private void abrirDialogoEditar(Usuario u) {
         Dialog<ButtonType> dlg = crearDialogoFormulario(u);
         dlg.setTitle("Editar Usuario — " + u.getUsername());
         dlg.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) cargarUsuarios();
+            if (bt == ButtonType.OK) {
+                cargarUsuarios();
+            }
         });
     }
 
-    /**
-     * Formulario reutilizable para crear/editar.
-     * Si u == null → modo creación; si u != null → modo edición (precarga campos).
-     */
     private Dialog<ButtonType> crearDialogoFormulario(Usuario u) {
         Dialog<ButtonType> dlg = new Dialog<>();
         dlg.setHeaderText(null);
@@ -558,40 +565,73 @@ public class UsuariosAdminView {
         form.setPadding(new Insets(20));
         form.setStyle("-fx-background-color: white;");
 
-        // Campos
-        TextField fPrimerNombre    = dlgField("Primer Nombre *",   u != null ? u.getPrimer_nombre()    : "");
-        TextField fSegundoNombre   = dlgField("Segundo Nombre",    u != null ? u.getSegundo_nombre()   : "");
-        TextField fPrimerApellido  = dlgField("Primer Apellido *", u != null ? u.getPrimer_apellido()  : "");
-        TextField fSegundoApellido = dlgField("Segundo Apellido",  u != null ? u.getSegundo_apellido() : "");
-        TextField fCedula          = dlgField("Cédula *",          u != null ? u.getIdentificacion()   : "");
-        TextField fTelefono        = dlgField("Teléfono",          u != null ? u.getTelefono()         : "");
-        TextField fCorreo          = dlgField("Correo",            u != null ? u.getCorreo()           : "");
-        TextField fUsername        = dlgField("Username *",        u != null ? u.getUsername()         : "");
-        PasswordField fPassword    = dlgPassword("Contraseña" + (u != null ? " (dejar vacío = no cambiar)" : " *"));
+        TextField fPrimerNombre = dlgField("Primer Nombre *", u != null ? u.getPrimer_nombre() : "");
+        TextField fSegundoNombre = dlgField("Segundo Nombre", u != null ? u.getSegundo_nombre() : "");
+        TextField fPrimerApellido = dlgField("Primer Apellido *", u != null ? u.getPrimer_apellido() : "");
+        TextField fSegundoApellido = dlgField("Segundo Apellido", u != null ? u.getSegundo_apellido() : "");
+        TextField fCedula = dlgField("Cédula *", u != null ? u.getIdentificacion() : "");
+        TextField fTelefono = dlgField("Teléfono", u != null ? u.getTelefono() : "");
+        TextField fCorreo = dlgField("Correo", u != null ? u.getCorreo() : "");
+        TextField fUsername = dlgField("Username *", u != null ? u.getUsername() : "");
+        PasswordField fPassword = dlgPassword("Contraseña"
+                + (u != null ? " (vacío = no cambiar)" : " *"));
 
-        // Modo edición: cédula no editable
-        if (u != null) fCedula.setDisable(true);
+        if (u != null) {
+            fCedula.setDisable(true);
+        }
 
-        // ComboBox Rol — solo admin puede asignar
+        TextField fPlaca = dlgField("Placa policial", "");
+        TextField fRango = dlgField("Rango policial", "");
+
+        VBox seccionPolicia = new VBox(10);
+
+        seccionPolicia.getChildren().addAll(
+                seccion("DATOS POLICIALES"),
+                fPlaca,
+                fRango
+        );
+
+        seccionPolicia.setVisible(false);
+        seccionPolicia.setManaged(false);
+
         ComboBox<String> cmbRol = new ComboBox<>();
         cmbRol.setPromptText("Seleccionar Rol *");
         cmbRol.setPrefHeight(40);
         cmbRol.setMaxWidth(Double.MAX_VALUE);
         cmbRol.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
         if (rolService != null) {
-            try {
-                rolService.listar().forEach(r -> cmbRol.getItems().add(r.getNombre()));
-            } catch (Exception ignored) {}
-        }
-        if (u != null && u.getRol() != null) cmbRol.setValue(u.getRol().getNombre());
 
-        // ComboBox Estado (solo en edición)
+            try {
+
+                List<RolUsuario> roles = rolService.listar();
+
+                for (RolUsuario r : roles) {
+
+                    if (r != null && r.getNombre() != null) {
+
+                        cmbRol.getItems().add(r.getNombre());
+                    }
+                }
+
+            } catch (Exception e) {
+
+                mostrarAlerta("Error roles", e.getMessage());
+            }
+        }
+        if (u != null && u.getRol() != null) {
+            cmbRol.setValue(u.getRol().getNombre());
+        }
+
         ComboBox<String> cmbEstado = new ComboBox<>();
-        cmbEstado.getItems().addAll("ACTIVO", "INACTIVO", "SUSPENDIDO");
+        for (EstadoUsuario e : EstadoUsuario.values()) {
+            cmbEstado.getItems().add(e.name());
+        }
         cmbEstado.setPrefHeight(40);
         cmbEstado.setMaxWidth(Double.MAX_VALUE);
         cmbEstado.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
-        if (u != null && u.getEstado() != null) cmbEstado.setValue(u.getEstado().name());
+        if (u != null && u.getEstado() != null) {
+            cmbEstado.setValue(u.getEstado().name());
+        }
 
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
@@ -608,6 +648,7 @@ public class UsuariosAdminView {
                 seccion("ROL Y ESTADO"),
                 cmbRol,
                 u != null ? cmbEstado : new Label(""),
+                seccionPolicia,
                 lblError
         );
 
@@ -615,29 +656,46 @@ public class UsuariosAdminView {
         dlg.getDialogPane().setContent(scroll);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        // Personalizar botón OK
         Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
         btnOk.setText(u == null ? "Crear Usuario" : "Guardar Cambios");
         btnOk.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
 
-        // Validación antes de cerrar
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+
             lblError.setText("");
 
-            if (fPrimerNombre.getText().isBlank() || fPrimerApellido.getText().isBlank()
+            if (fPrimerNombre.getText().isBlank()
+                    || fPrimerApellido.getText().isBlank()
                     || fUsername.getText().isBlank()
                     || (u == null && fPassword.getText().isBlank())
                     || cmbRol.getValue() == null) {
+
                 lblError.setText("Completa los campos obligatorios (*)");
                 ev.consume();
                 return;
             }
 
+            String rolSeleccionadoTexto = cmbRol.getValue();
+
+            if (rolSeleccionadoTexto != null
+                    && rolSeleccionadoTexto.equalsIgnoreCase("POLICIA")) {
+
+                if (fPlaca.getText().isBlank()
+                        || fRango.getText().isBlank()) {
+
+                    lblError.setText("Completa los datos policiales");
+                    ev.consume();
+                    return;
+                }
+            }
+
             try {
+
                 if (u == null) {
-                    // CREAR
+
                     Usuario nuevo = new Usuario();
+
                     nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
                     nuevo.setSegundo_nombre(fSegundoNombre.getText().trim());
                     nuevo.setPrimer_apellido(fPrimerApellido.getText().trim());
@@ -647,12 +705,29 @@ public class UsuariosAdminView {
                     nuevo.setCorreo(fCorreo.getText().trim());
                     nuevo.setUsername(fUsername.getText().trim());
                     nuevo.setPassword(fPassword.getText());
-                    RolUsuario rol = new RolUsuario();
-                    rol.setNombre(cmbRol.getValue());
-                    nuevo.setRol(rol);
+
+                    RolUsuario rolSeleccionado = rolService.listar().stream()
+                            .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
+                            .findFirst()
+                            .orElse(null);
+
+                    nuevo.setRol(rolSeleccionado);
+
+                    if (rolSeleccionado != null
+                            && rolSeleccionado.getNombre().equalsIgnoreCase("POLICIA")) {
+
+                        Policia policia = new Policia();
+
+                        policia.setPlaca(fPlaca.getText().trim());
+                        policia.setRango(fRango.getText().trim());
+
+                        nuevo.setPolicia(policia);
+                    }
+
                     usuarioService.insertar(nuevo);
+
                 } else {
-                    // EDITAR
+
                     u.setPrimer_nombre(fPrimerNombre.getText().trim());
                     u.setSegundo_nombre(fSegundoNombre.getText().trim());
                     u.setPrimer_apellido(fPrimerApellido.getText().trim());
@@ -660,16 +735,39 @@ public class UsuariosAdminView {
                     u.setTelefono(fTelefono.getText().trim());
                     u.setCorreo(fCorreo.getText().trim());
                     u.setUsername(fUsername.getText().trim());
-                    if (!fPassword.getText().isBlank()) u.setPassword(fPassword.getText());
-                    RolUsuario rol = new RolUsuario();
-                    rol.setNombre(cmbRol.getValue());
-                    u.setRol(rol);
+
+                    if (!fPassword.getText().isBlank()) {
+                        u.setPassword(fPassword.getText());
+                    }
+
+                    RolUsuario rolSeleccionado = rolService.listar().stream()
+                            .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
+                            .findFirst()
+                            .orElse(null);
+
+                    u.setRol(rolSeleccionado);
+
+                    if (rolSeleccionado != null
+                            && rolSeleccionado.getNombre().equalsIgnoreCase("POLICIA")) {
+
+                        Policia policia = new Policia();
+
+                        policia.setPlaca(fPlaca.getText().trim());
+                        policia.setRango(fRango.getText().trim());
+
+                        u.setPolicia(policia);
+                    }
+
                     usuarioService.actualizar(u);
                 }
+
             } catch (IllegalArgumentException ex) {
+
                 lblError.setText(ex.getMessage());
                 ev.consume();
+
             } catch (SQLException ex) {
+
                 lblError.setText("Error BD: " + ex.getMessage());
                 ev.consume();
             }
@@ -678,9 +776,9 @@ public class UsuariosAdminView {
         return dlg;
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // CONFIRMAR ELIMINAR
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private void confirmarEliminar(Usuario u) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Eliminar usuario");
@@ -698,40 +796,59 @@ public class UsuariosAdminView {
         });
     }
 
-    // =========================================================================
-    // PAGINACIÓN — render de botones
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // PAGINACIÓN
+    // ═══════════════════════════════════════════════════════════════
     private void actualizarPaginacion() {
-        if (paginacionBox == null) return;
+        if (paginacionBox == null) {
+            return;
+        }
         paginacionBox.getChildren().clear();
 
         int total = usuariosFiltrados.size();
         int totalPaginas = (int) Math.ceil((double) total / FILAS_POR_PAGINA);
-        if (totalPaginas <= 1) return;
+        if (totalPaginas <= 1) {
+            return;
+        }
 
-        paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1,
-                () -> { paginaActual--; renderizarPagina(); }));
+        paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1, () -> {
+            paginaActual--;
+            renderizarPagina();
+        }));
 
         int inicio = Math.max(1, paginaActual - 2);
-        int fin    = Math.min(totalPaginas, paginaActual + 2);
+        int fin = Math.min(totalPaginas, paginaActual + 2);
 
         if (inicio > 1) {
-            paginacionBox.getChildren().addAll(btnPag("1", true, () -> { paginaActual = 1; renderizarPagina(); }),
+            paginacionBox.getChildren().addAll(
+                    btnPag("1", true, () -> {
+                        paginaActual = 1;
+                        renderizarPagina();
+                    }),
                     label("...", 13, GRAY_TEXT, false));
         }
         for (int i = inicio; i <= fin; i++) {
             final int pg = i;
-            paginacionBox.getChildren().add(btnPag(String.valueOf(i), true,
-                    () -> { paginaActual = pg; renderizarPagina(); }));
+            paginacionBox.getChildren().add(
+                    btnPag(String.valueOf(i), true, () -> {
+                        paginaActual = pg;
+                        renderizarPagina();
+                    }));
         }
         if (fin < totalPaginas) {
-            paginacionBox.getChildren().addAll(label("...", 13, GRAY_TEXT, false),
+            paginacionBox.getChildren().addAll(
+                    label("...", 13, GRAY_TEXT, false),
                     btnPag(String.valueOf(totalPaginas), true,
-                            () -> { paginaActual = totalPaginas; renderizarPagina(); }));
+                            () -> {
+                                paginaActual = totalPaginas;
+                                renderizarPagina();
+                            }));
         }
 
-        paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPaginas,
-                () -> { paginaActual++; renderizarPagina(); }));
+        paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPaginas, () -> {
+            paginaActual++;
+            renderizarPagina();
+        }));
     }
 
     private Button btnPag(String txt, boolean enabled, Runnable accion) {
@@ -746,13 +863,14 @@ public class UsuariosAdminView {
         return b;
     }
 
-    // =========================================================================
-    // STATS — actualizar contadores
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
+    // STATS
+    // ═══════════════════════════════════════════════════════════════
     private void actualizarStats() {
-        long total   = todosLosUsuarios.size();
+        long total = todosLosUsuarios.size();
         long activos = todosLosUsuarios.stream()
-                .filter(u -> u.getEstado() != null && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
+                .filter(u -> u.getEstado() != null
+                && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
                 .count();
         long inactivos = total - activos;
 
@@ -761,14 +879,17 @@ public class UsuariosAdminView {
         lblInactivosVal.setText(String.valueOf(inactivos));
 
         if (rolService != null) {
-            try { lblRolesVal.setText(String.valueOf(rolService.listar().size())); }
-            catch (Exception ignored) {}
+            try {
+                lblRolesVal.setText(String.valueOf(rolService.listar().size()));
+            } catch (Exception e) {
+                lblRolesVal.setText("0");
+            }
         }
     }
 
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     // HELPERS UI
-    // =========================================================================
+    // ═══════════════════════════════════════════════════════════════
     private Label celda(String txt) {
         Label l = label(txt != null ? txt : "—", 13, "#374151", false);
         l.setMaxWidth(Double.MAX_VALUE);
@@ -778,13 +899,14 @@ public class UsuariosAdminView {
         return l;
     }
 
-    private Button btnAccion(String icon, String color, Runnable accion) {
+    private Button btnAccion(String icon, Runnable accion) {
         Button b = new Button(icon);
         b.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; "
                 + "-fx-cursor: hand; -fx-padding: 4 6;");
         b.setOnMouseEntered(e -> b.setStyle("-fx-background-color: #f0f0f0; "
-                + "-fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 6; -fx-padding: 4 6;"));
-        b.setOnMouseExited(e  -> b.setStyle("-fx-background-color: transparent; "
+                + "-fx-font-size: 14px; -fx-cursor: hand; "
+                + "-fx-background-radius: 6; -fx-padding: 4 6;"));
+        b.setOnMouseExited(e -> b.setStyle("-fx-background-color: transparent; "
                 + "-fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4 6;"));
         b.setOnAction(e -> accion.run());
         return b;
@@ -795,8 +917,7 @@ public class UsuariosAdminView {
         row.setAlignment(Pos.CENTER_LEFT);
         Label k = label(campo, 13, GRAY_TEXT, false);
         k.setMinWidth(130);
-        Label v = label(valor != null ? valor : "—", 13, "#111827", false);
-        row.getChildren().addAll(k, v);
+        row.getChildren().addAll(k, label(valor != null ? valor : "—", 13, "#111827", false));
         return row;
     }
 
@@ -857,17 +978,17 @@ public class UsuariosAdminView {
         a.showAndWait();
     }
 
-    // ── Texto helpers ─────────────────────────────────────────────
+    // ── Texto ─────────────────────────────────────────────────────
     private String nombreCompleto(Usuario u) {
         return (u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "")
                 + (u.getSegundo_nombre() != null && !u.getSegundo_nombre().isBlank()
-                   ? " " + u.getSegundo_nombre() : "");
+                ? " " + u.getSegundo_nombre() : "");
     }
 
     private String apellidoCompleto(Usuario u) {
         return (u.getPrimer_apellido() != null ? u.getPrimer_apellido() : "")
                 + (u.getSegundo_apellido() != null && !u.getSegundo_apellido().isBlank()
-                   ? " " + u.getSegundo_apellido() : "");
+                ? " " + u.getSegundo_apellido() : "");
     }
 
     private String iniciales(Usuario u) {
@@ -879,60 +1000,85 @@ public class UsuariosAdminView {
     }
 
     private String direccionTexto(Usuario u) {
-        if (u.getDireccion() == null) return "—";
+        if (u.getDireccion() == null) {
+            return "—";
+        }
         var d = u.getDireccion();
-        String barrio = d.getBarrio() != null ? d.getBarrio().getNombre() : "";
-        return barrio + " · Calle " + d.getCalle() + " Cra " + d.getCarrera();
+        String bar = d.getBarrio() != null ? d.getBarrio().getNombre() : "";
+        return bar + " · Calle " + d.getCalle() + " Cra " + d.getCarrera();
     }
 
     // ── Colores dinámicos ─────────────────────────────────────────
     private static final String[] AVATAR_COLORS = {
-        "#1565c0","#2e7d32","#6a1b9a","#c62828","#e65100",
-        "#00695c","#283593","#4e342e","#37474f","#558b2f"
+        "#1565c0", "#2e7d32", "#6a1b9a", "#c62828", "#e65100",
+        "#00695c", "#283593", "#4e342e", "#37474f", "#558b2f"
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String rolColor(String rol) {
-        if (rol == null) return GRAY_TEXT;
+        if (rol == null) {
+            return GRAY_TEXT;
+        }
         return switch (rol.toUpperCase()) {
-            case "ADMIN"      -> BLUE;
-            case "POLICIA"    -> "#7b1fa2";
-            case "RESIDENTE"  -> GREEN;
-            default           -> GRAY_TEXT;
+            case "ADMIN" ->
+                BLUE;
+            case "POLICIA" ->
+                "#7b1fa2";
+            case "RESIDENTE" ->
+                GREEN;
+            default ->
+                GRAY_TEXT;
         };
     }
 
     private String rolBg(String rol) {
-        if (rol == null) return "#f3f4f6";
+        if (rol == null) {
+            return "#f3f4f6";
+        }
         return switch (rol.toUpperCase()) {
-            case "ADMIN"     -> "#e8f0fe";
-            case "POLICIA"   -> "#f3e5f5";
-            case "RESIDENTE" -> "#e8f5e9";
-            default          -> "#f3f4f6";
+            case "ADMIN" ->
+                "#e8f0fe";
+            case "POLICIA" ->
+                "#f3e5f5";
+            case "RESIDENTE" ->
+                "#e8f5e9";
+            default ->
+                "#f3f4f6";
         };
     }
 
-    private String estadoColor(String estado) {
-        if (estado == null) return GRAY_TEXT;
-        return switch (estado.toUpperCase()) {
-            case "ACTIVO"      -> GREEN;
-            case "SUSPENDIDO"  -> ORANGE;
-            case "INACTIVO"    -> RED;
-            default            -> GRAY_TEXT;
+    // ── EstadoUsuario — usa los valores reales del enum ───────────
+    private String estadoColor(EstadoUsuario estado) {
+        if (estado == null) {
+            return GRAY_TEXT;
+        }
+        return switch (estado) {
+            case ACTIVO ->
+                GREEN;
+            case INACTIVO ->
+                RED;
+            case SUSPENDIDO ->
+                ORANGE;
         };
     }
 
-    private String estadoBg(String estado) {
-        if (estado == null) return "#f3f4f6";
-        return switch (estado.toUpperCase()) {
-            case "ACTIVO"     -> "#e8f5e9";
-            case "SUSPENDIDO" -> "#fff8e1";
-            case "INACTIVO"   -> RED_LIGHT;
-            default           -> "#f3f4f6";
+    private String estadoBg(EstadoUsuario estado) {
+        if (estado == null) {
+            return "#f3f4f6";
+        }
+        return switch (estado) {
+            case ACTIVO ->
+                "#e8f5e9";
+            case INACTIVO ->
+                RED_LIGHT;
+            case SUSPENDIDO ->
+                "#fff8e1";
         };
     }
 }

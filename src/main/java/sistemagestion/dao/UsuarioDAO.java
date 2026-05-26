@@ -21,10 +21,12 @@ import sistemagestion.model.Usuario;
  */
 public class UsuarioDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public UsuarioDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+        
     }
 
     public boolean insertar(
@@ -38,7 +40,7 @@ public class UsuarioDAO {
             String manzana, String casa
     ) {
         String sql = "{call pkg_usuarios.pr_insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, primerNombre);
             cs.setString(2, segundoNombre);
             cs.setString(3, primerApellido);
@@ -75,7 +77,7 @@ public class UsuarioDAO {
             String manzana, String casa
     ) {
         String sql = "{call pkg_usuarios.pr_actualizar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, username);
             cs.setString(2, primerNombre);
             cs.setString(3, segundoNombre);
@@ -102,7 +104,7 @@ public class UsuarioDAO {
     // pr_eliminar_usuario 
     public boolean eliminar(String cedula) {
         String sql = "{call pkg_usuarios.pr_eliminar_usuario(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedula);
             cs.execute();
             return true;
@@ -115,7 +117,7 @@ public class UsuarioDAO {
     // pr_login_usuario
     public Usuario login(String username, String password) throws SQLException {
         String sql = "{call pkg_usuarios.pr_login_usuario(?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, username);
             cs.setString(2, password);
             cs.registerOutParameter(3, OracleTypes.CURSOR);
@@ -131,7 +133,7 @@ public class UsuarioDAO {
     // pr_consultar_usuario recibe cedula
     public Usuario buscarPorCedula(String cedula) throws SQLException {
         String sql = "{call pkg_usuarios.pr_consultar_usuario(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedula);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -147,7 +149,7 @@ public class UsuarioDAO {
     public List<Usuario> listarTodos() throws SQLException {
         List<Usuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_listar_usuarios(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -162,7 +164,7 @@ public class UsuarioDAO {
     public List<Usuario> buscar(String texto) throws SQLException {
         List<Usuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_usuario(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -178,7 +180,7 @@ public class UsuarioDAO {
     public List<Usuario> buscarExacto(String texto) throws SQLException {
         List<Usuario> lista = new ArrayList<>();
         String sql = "{call pkg_usuarios.pr_buscar_usuario_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, texto);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -192,7 +194,7 @@ public class UsuarioDAO {
 
     public boolean inactivar(String cedula) {
         String sql = "{call pkg_usuarios.pr_inactivar_usuario(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedula);
             cs.execute();
             return true;
@@ -204,7 +206,7 @@ public class UsuarioDAO {
 
     public boolean activar(String cedula) {
         String sql = "{call pkg_usuarios.pr_activar_usuario(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, cedula);
             cs.execute();
             return true;
