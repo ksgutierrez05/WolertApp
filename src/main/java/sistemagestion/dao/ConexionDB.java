@@ -17,7 +17,7 @@ public class ConexionDB {
     private static Connection cn;
 
     private static final String URL
-            = "jdbc:oracle:thin:@localhost:1521/xepdb1";
+            = "jdbc:oracle:thin:@10.123.30.162:1521/xepdb1";
 
     private static final String USER = "usrwolertapp";
     private static final String PASS = "usrwolertapp";
