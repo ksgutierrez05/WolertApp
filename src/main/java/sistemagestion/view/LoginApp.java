@@ -97,6 +97,8 @@ public class LoginApp {
         root.getChildren().addAll(loginForm, registerForm, overlayPanel);
         return root;
     }
+    
+    
 
     // ════════════════════════════════════════════════════════════════════════
     // PANEL AZUL

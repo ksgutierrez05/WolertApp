@@ -45,14 +45,14 @@ import java.util.List;
 public class MapaAlarmas {
 
     // ── Paleta ────────────────────────────────────────────────────────────────
-    private static final String C_INPUT_BG  = "#f7f7f7";
+    private static final String C_INPUT_BG   = "#f7f7f7";
     private static final String C_INPUT_TEXT = "#4b5563";
-    private static final String C_LABEL     = "#374151";
-    private static final String C_COORD_BG  = "#f0f4ff";
-    private static final String C_COORD_BDR = "#c7d7fd";
-    private static final String C_COORD_VAL = "#1e3a8a";
-    private static final String C_SEPARATOR = "#e5e7eb";
-    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
+    private static final String C_LABEL      = "#374151";
+    private static final String C_COORD_BG   = "#f0f4ff";
+    private static final String C_COORD_BDR  = "#c7d7fd";
+    private static final String C_COORD_VAL  = "#1e3a8a";
+    private static final String C_SEPARATOR  = "#e5e7eb";
+    private static final String C_DARK_GRAD  = "linear-gradient(to right, #16283d, #1f3a56)";
 
     // ── Servicios ─────────────────────────────────────────────────────────────
     private AlarmaService alarmaService;
@@ -60,21 +60,21 @@ public class MapaAlarmas {
     private BarrioService barrioService;
 
     // ── Estado del mapa ───────────────────────────────────────────────────────
-    private JXMapViewer  mapa;
-    private GeoPosition  posicionSeleccionada;
+    private JXMapViewer mapa;
+    private GeoPosition posicionSeleccionada;
 
-    // ── Controles — Information Expert: campos de instancia ──────────────────
-    private TextField        txtNombre;
-    private ComboBox<String> cmbComuna;
-    private ComboBox<String> cmbBarrio;
-    private Slider           sliderRadio;
-    private TextField        txtRadioManual;
-    private ComboBox<String> cmbEstado;
-    private Label            lblCoordenadas;
-    private Label            lblCoordFooter;
-    private Label            lblInstruccionHeader;
+    // ── Controles ─────────────────────────────────────────────────────────────
+    private TextField           txtNombre;
+    private ComboBox<String>    cmbComuna;
+    private ComboBox<String>    cmbBarrio;
+    private Slider              sliderRadio;
+    private TextField           txtRadioManual;
+    private ComboBox<EstadoAlarma> cmbEstado;   // ← ahora tipado con el enum
+    private Label               lblCoordenadas;
+    private Label               lblCoordFooter;
+    private Label               lblInstruccionHeader;
 
-    // ── Constructor — inicializa servicios ────────────────────────────────────
+    // ── Constructor ───────────────────────────────────────────────────────────
     public MapaAlarmas() {
         try { alarmaService = new AlarmaService(); }
         catch (SQLException e) { System.out.println("Error AlarmaService: " + e.getMessage()); }
@@ -103,7 +103,6 @@ public class MapaAlarmas {
     // BARRA SUPERIOR
     // ════════════════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
-        // Logo con PNG recortado
         javafx.scene.image.ImageView logoImg = new javafx.scene.image.ImageView();
         try {
             java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(
@@ -138,7 +137,7 @@ public class MapaAlarmas {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // CENTRO: mapa + panel derecho
+    // CENTRO
     // ════════════════════════════════════════════════════════════════════════
     private BorderPane buildCentro() {
         BorderPane centro = new BorderPane();
@@ -170,7 +169,6 @@ public class MapaAlarmas {
         return stack;
     }
 
-    // Information Expert: el mapa conoce su propia inicialización
     private void inicializarMapa(SwingNode swingNode) {
         mapa = new JXMapViewer();
         TileFactoryInfo info = new TileFactoryInfo(
@@ -195,7 +193,6 @@ public class MapaAlarmas {
         swingNode.setContent(mapa);
     }
 
-    // High Cohesion: click en método propio
     private void onMapaClick(MouseEvent e) {
         posicionSeleccionada = mapa.convertPointToGeoPosition(e.getPoint());
         mapa.repaint();
@@ -209,7 +206,6 @@ public class MapaAlarmas {
         });
     }
 
-    // High Cohesion: pintura en método propio
     private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         if (posicionSeleccionada == null) return;
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -218,7 +214,6 @@ public class MapaAlarmas {
         int cx = (int) pt.getX() - map.getViewportBounds().x;
         int cy = (int) pt.getY() - map.getViewportBounds().y;
 
-        // Círculo de cobertura
         int radioM = (int) sliderRadio.getValue();
         if (radioM > 0) {
             double mpp = 156543.03392
@@ -233,7 +228,6 @@ public class MapaAlarmas {
             g.draw(new Ellipse2D.Double(cx - rp, cy - rp, rp * 2, rp * 2));
         }
 
-        // Marcador PNG
         try {
             java.io.InputStream is = getClass().getResourceAsStream("/SirenaPin.png");
             if (is != null) {
@@ -292,21 +286,17 @@ public class MapaAlarmas {
         return scroll;
     }
 
-    // High Cohesion: formulario en su propio método
     private VBox buildFormulario() {
-        // Nombre
         txtNombre = new TextField();
         txtNombre.setPromptText("Ej: Alarma Sector Norte");
         estilizarInput(txtNombre);
 
-        // Comuna
         cmbComuna = new ComboBox<>();
         cmbComuna.setPromptText("Seleccione una comuna");
         cmbComuna.setMaxWidth(Double.MAX_VALUE);
         estilizarCombo(cmbComuna);
         cargarComunas();
 
-        // Barrio (filtrado por comuna)
         cmbBarrio = new ComboBox<>();
         cmbBarrio.setPromptText("Seleccione un barrio");
         cmbBarrio.setMaxWidth(Double.MAX_VALUE);
@@ -315,7 +305,6 @@ public class MapaAlarmas {
 
         cmbComuna.setOnAction(e -> filtrarBarrios());
 
-        // Radio
         sliderRadio = new Slider(50, 2000, 500);
         sliderRadio.setBlockIncrement(50);
         sliderRadio.setStyle(
@@ -360,14 +349,13 @@ public class MapaAlarmas {
         radioRow.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(sliderRadio, Priority.ALWAYS);
 
-        // Estado
-        cmbEstado = new ComboBox<>(FXCollections.observableArrayList(
-                "ACTIVA", "INACTIVA", "MANTENIMIENTO"));
+        // ── Estado: ComboBox<EstadoAlarma> con textos bonitos ─────────────────
+        cmbEstado = new ComboBox<>();
         cmbEstado.setPromptText("Seleccione estado");
         cmbEstado.setMaxWidth(Double.MAX_VALUE);
-        estilizarCombo(cmbEstado);
+        cmbEstado.setItems(FXCollections.observableArrayList(EstadoAlarma.values()));
+        estilizarComboEnum(cmbEstado);
 
-        // Coordenadas
         lblCoordenadas = new Label("—,  —");
         lblCoordenadas.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         lblCoordenadas.setTextFill(Color.web(C_COORD_VAL));
@@ -385,7 +373,6 @@ public class MapaAlarmas {
                 + "-fx-border-color:" + C_COORD_BDR + ";"
                 + "-fx-border-width:1;-fx-border-radius:10;-fx-background-radius:10;");
 
-        // Botones
         Button btnGuardar = buildBotonPrimario("Guardar alarma");
         btnGuardar.setOnAction(e -> guardarAlarma());
 
@@ -405,8 +392,6 @@ public class MapaAlarmas {
     // ════════════════════════════════════════════════════════════════════════
     // LÓGICA DE NEGOCIO
     // ════════════════════════════════════════════════════════════════════════
-
-    // Information Expert: cargar comunas conoce cmbComuna
     private void cargarComunas() {
         try {
             List<Comuna> comunas = comunaService.listar();
@@ -418,7 +403,6 @@ public class MapaAlarmas {
         }
     }
 
-    // Information Expert: filtrar barrios conoce cmbComuna y cmbBarrio
     private void filtrarBarrios() {
         String comunaSeleccionada = cmbComuna.getValue();
         cmbBarrio.getItems().clear();
@@ -441,12 +425,11 @@ public class MapaAlarmas {
         }
     }
 
-    // Information Expert: guardar conoce todos los campos
     private void guardarAlarma() {
-        if (txtNombre.getText().trim().isEmpty()) { alerta("Ingrese el nombre.");              return; }
-        if (cmbBarrio.getValue() == null)          { alerta("Seleccione un barrio.");           return; }
+        if (txtNombre.getText().trim().isEmpty()) { alerta("Ingrese el nombre.");               return; }
+        if (cmbBarrio.getValue() == null)          { alerta("Seleccione un barrio.");            return; }
         if (posicionSeleccionada == null)           { alerta("Seleccione ubicación en el mapa."); return; }
-        if (cmbEstado.getValue() == null)           { alerta("Seleccione el estado.");           return; }
+        if (cmbEstado.getValue() == null)           { alerta("Seleccione el estado.");            return; }
 
         Alarma a = new Alarma();
         a.setNombre(txtNombre.getText().trim());
@@ -456,14 +439,13 @@ public class MapaAlarmas {
         a.setLatitud(posicionSeleccionada.getLatitude());
         a.setLongitud(posicionSeleccionada.getLongitude());
         a.setRadio_cobertura(sliderRadio.getValue());
-        a.setEstado(EstadoAlarma.valueOf(cmbEstado.getValue()));
+        a.setEstado(cmbEstado.getValue());   // ← directo, sin valueOf
 
         boolean ok = alarmaService.insertar(a);
-        if (ok) { info("Alarma registrada correctamente"); limpiarFormulario(); }
-        else    { alerta("Error al guardar — verifica los datos"); }
+        if (ok) { info("Alarma registrada correctamente."); limpiarFormulario(); }
+        else    { alerta("Error al guardar — verifica los datos."); }
     }
 
-    // Information Expert: limpiar conoce todos los campos
     private void limpiarFormulario() {
         txtNombre.clear();
         cmbComuna.setValue(null);
@@ -481,7 +463,7 @@ public class MapaAlarmas {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // HELPERS DE UI — High Cohesion
+    // HELPERS DE UI
     // ════════════════════════════════════════════════════════════════════════
     private VBox campo(String etiqueta, javafx.scene.Node control) {
         Label lbl = new Label(etiqueta);
@@ -568,13 +550,66 @@ public class MapaAlarmas {
         });
     }
 
+    // ── Combo especial para el enum EstadoAlarma con textos legibles ──────────
+    private void estilizarComboEnum(ComboBox<EstadoAlarma> cb) {
+        cb.setStyle(
+                "-fx-background-color:" + C_INPUT_BG + ";"
+                + "-fx-text-fill:" + C_INPUT_TEXT + ";"
+                + "-fx-prompt-text-fill:#9ca3af;"
+                + "-fx-border-color:transparent;"
+                + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:14px;");
+        cb.setPrefHeight(48);
+
+        cb.setCellFactory(lv -> new ListCell<EstadoAlarma>() {
+            @Override protected void updateItem(EstadoAlarma item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); return; }
+                setText(labelEstado(item));
+                setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;");
+                setOnMouseEntered(e -> setStyle(
+                        "-fx-background-color:" + C_DARK_GRAD + ";"
+                        + "-fx-background-radius:6;-fx-text-fill:white;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
+                setOnMouseExited(e -> setStyle(
+                        "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
+            }
+        });
+
+        cb.setButtonCell(new ListCell<EstadoAlarma>() {
+            @Override protected void updateItem(EstadoAlarma item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item != null) {
+                    setText(labelEstado(item));
+                    setStyle("-fx-background-color:" + C_INPUT_BG + ";"
+                            + "-fx-background-radius:30;-fx-text-fill:black;"
+                            + "-fx-font-size:14px;-fx-padding:4 14 4 14;");
+                } else {
+                    setText("Seleccione estado");
+                    setStyle("-fx-background-color:transparent;"
+                            + "-fx-text-fill:#9ca3af;-fx-font-size:14px;");
+                }
+            }
+        });
+    }
+
+    // ── Centraliza el texto legible de cada estado ────────────────────────────
+    private String labelEstado(EstadoAlarma est) {
+        switch (est) {
+            case ACTIVA:           return "Activa";
+            case INACTIVA:         return "Inactiva";
+            case EN_MANTENIMIENTO: return "En mantenimiento";
+            default:               return est.name();
+        }
+    }
+
     private void estilizarSlider() {
         javafx.scene.layout.StackPane track =
                 (javafx.scene.layout.StackPane) sliderRadio.lookup(".track");
         if (track != null) {
             track.setMaxHeight(3); track.setPrefHeight(3);
-            track.setStyle("-fx-background-color:" + C_DARK_GRAD
-                    + ";-fx-background-radius:3;");
+            track.setStyle("-fx-background-color:" + C_DARK_GRAD + ";-fx-background-radius:3;");
         }
         javafx.scene.layout.StackPane thumb =
                 (javafx.scene.layout.StackPane) sliderRadio.lookup(".thumb");
