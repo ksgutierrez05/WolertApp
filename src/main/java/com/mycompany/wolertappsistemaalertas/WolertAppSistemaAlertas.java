@@ -24,18 +24,18 @@ public class WolertAppSistemaAlertas extends Application {
     public void start(Stage stage) {
         
        
-        /*LoginApp login = new LoginApp();
+        LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
         stage.setTitle("WolertApp");
         stage.setScene(scene);
         stage.setResizable(false);
-        stage.show();  */
+        stage.show();  
 
         //Temporalmente abre el mapa directo, sin login ni dashboard
         //new MapaAlarmas().mostrar();
-       new MapaAlarmasRegistradas().mostrar();
+       //new MapaAlarmasRegistradas().mostrar();
         //new MapaAlarmasRegistada().mostrar();
     }
 

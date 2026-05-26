@@ -89,6 +89,10 @@ public class AdministradorApp {
         Scene scene = new Scene(root, 1100, 620);
         stage.setTitle("WolertApp – Panel Administrativo");
         stage.setScene(scene);
+         stage.setResizable(true);          // permite redimensionar
+    stage.setMaximized(false);         // arranca normal (cambiá a true si querés que abra maximizado)
+    stage.setMinWidth(900);            // ancho mínimo para que no se rompa el layout
+    stage.setMinHeight(500);           // alto mínimo
         stage.show();
     }
 
