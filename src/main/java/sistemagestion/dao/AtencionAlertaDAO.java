@@ -24,10 +24,12 @@ import sistemagestion.model.UnidadPolicial;
  */
 public class AtencionAlertaDAO {
 
-    private Connection con;
+    private Connection con() throws SQLException {
+        return ConexionDB.getInstancia().getConexion();
+    }
 
     public AtencionAlertaDAO() throws SQLException {
-        this.con = ConexionDB.getInstancia().getConexion();
+     
     }
 
     public boolean insertar(
@@ -40,7 +42,7 @@ public class AtencionAlertaDAO {
             String observacion
     ) {
         String sql = "{call pkg_alertas.pr_insertar_atencion(?, ?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.setString(2, nombreUnidad);
             cs.setString(3, estadoFinal);
@@ -66,7 +68,7 @@ public class AtencionAlertaDAO {
             String observacion
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_atencion(?, ?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAtencion);
             cs.setString(2, estadoFinal);
             cs.setString(3, descripcion);
@@ -84,7 +86,7 @@ public class AtencionAlertaDAO {
     // pr_eliminar_atencion
     public boolean eliminar(int idAtencion) {
         String sql = "{call pkg_alertas.pr_eliminar_atencion(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAtencion);
             cs.execute();
             return true;
@@ -97,7 +99,7 @@ public class AtencionAlertaDAO {
     // pr_consultar_atencion
     public AtencionAlerta buscarPorId(int idAtencion) {
         String sql = "{call pkg_alertas.pr_consultar_atencion(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAtencion);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -115,7 +117,7 @@ public class AtencionAlertaDAO {
     public List<AtencionAlerta> listar() {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_atenciones(?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
@@ -132,7 +134,7 @@ public class AtencionAlertaDAO {
     public List<AtencionAlerta> listarPorAlerta(int idAlerta) {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_atenciones_por_alerta(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -150,7 +152,7 @@ public class AtencionAlertaDAO {
     public List<AtencionAlerta> buscarPorEstado(String estado) {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_atencion_por_estado(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, estado);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
@@ -168,7 +170,7 @@ public class AtencionAlertaDAO {
     public List<AtencionAlerta> buscarPorEstadoExacto(String estado) {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_buscar_atencion_por_estado_exacto(?, ?)}";
-        try (CallableStatement cs = con.prepareCall(sql)) {
+        try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, estado);
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();

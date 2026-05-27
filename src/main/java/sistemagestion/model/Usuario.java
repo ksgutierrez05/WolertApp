@@ -27,5 +27,13 @@ public class Usuario extends Persona{
     public void setRol(RolUsuario rol) {
         this.rol = rol;
     }
+
+    public void setPolicia(Policia policia) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+  
+
+    
     
 }
