@@ -4,14 +4,6 @@
  */
 package sistemagestion.view;
 
-/**
- *
- * @author Maria Cristina
- */
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 import java.sql.SQLException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +25,7 @@ import sistemagestion.model.Policia;
 import sistemagestion.model.RolUsuario;
 import sistemagestion.model.Usuario;
 import sistemagestion.service.BarrioService;
+import sistemagestion.service.PoliciaService;
 import sistemagestion.service.RolUsuarioService;
 import sistemagestion.service.UsuarioService;
 
@@ -51,7 +44,7 @@ public class UsuariosAdminView {
     private UsuarioService usuarioService;
     private RolUsuarioService rolService;
     private BarrioService barrioService;
-
+    private PoliciaService policiaService;
     private ObservableList<Usuario> todosLosUsuarios = FXCollections.observableArrayList();
     private ObservableList<Usuario> usuariosFiltrados = FXCollections.observableArrayList();
 
@@ -63,7 +56,6 @@ public class UsuariosAdminView {
     private HBox paginacionBox;
     private TextField campoBusqueda;
 
-    // ← campos de instancia — todos asignados en buildToolbar()
     private ComboBox<String> filtroEstado;
     private ComboBox<String> filtroRol;
     private ComboBox<String> filtroBarrio;
@@ -78,6 +70,7 @@ public class UsuariosAdminView {
             usuarioService = new UsuarioService();
             rolService = new RolUsuarioService();
             barrioService = new BarrioService();
+            policiaService = new PoliciaService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
         }
@@ -226,7 +219,6 @@ public class UsuariosAdminView {
         filtroRol.setPrefHeight(40);
         filtroRol.setOnAction(e -> filtrarYMostrar());
 
-        // ← CORRECCIÓN: asigna al campo de instancia, no variable local
         filtroBarrio = new ComboBox<>();
         cargarBarrios(filtroBarrio);
         filtroBarrio.setPrefHeight(40);
@@ -237,26 +229,17 @@ public class UsuariosAdminView {
     }
 
     private void cargarRoles() {
-
         try {
-
             filtroRol.getItems().clear();
             filtroRol.getItems().add("Rol: Todos");
-
             List<RolUsuario> roles = rolService.listar();
-
             for (RolUsuario r : roles) {
-
                 if (r != null && r.getNombre() != null) {
-
                     filtroRol.getItems().add(r.getNombre());
                 }
             }
-
             filtroRol.setValue("Rol: Todos");
-
         } catch (Exception e) {
-
             mostrarAlerta("Error roles", e.getMessage());
         }
     }
@@ -340,9 +323,7 @@ public class UsuariosAdminView {
     // CARGA Y FILTRADO
     // ═══════════════════════════════════════════════════════════════
     private void cargarUsuarios() {
-        if (usuarioService == null) {
-            return;
-        }
+        if (usuarioService == null) return;
         try {
             todosLosUsuarios.setAll(usuarioService.listar());
             filtrarYMostrar();
@@ -446,13 +427,11 @@ public class UsuariosAdminView {
         );
         celdaUsuario.getChildren().addAll(avatarBox, nombreBox);
 
-        // Celdas simples
-        Label cedula = celda(u.getIdentificacion());
-        Label correo = celda(u.getCorreo() != null ? u.getCorreo() : "—");
+        Label cedula   = celda(u.getIdentificacion());
+        Label correo   = celda(u.getCorreo() != null ? u.getCorreo() : "—");
         Label telefono = celda(u.getTelefono() != null ? u.getTelefono() : "—");
         Label username = celda(u.getUsername());
 
-        // Rol badge
         String rolNombre = u.getRol() != null ? u.getRol().getNombre() : "—";
         Label rolLbl = label(rolNombre, 11, rolColor(rolNombre), true);
         rolLbl.setPadding(new Insets(3, 8, 3, 8));
@@ -462,7 +441,6 @@ public class UsuariosAdminView {
         rolBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(rolBox, Priority.ALWAYS);
 
-        // Estado badge
         String estadoStr = u.getEstado() != null ? u.getEstado().name() : "—";
         Label estadoLbl = label(estadoStr, 11, estadoColor(u.getEstado()), true);
         estadoLbl.setPadding(new Insets(3, 8, 3, 8));
@@ -472,13 +450,13 @@ public class UsuariosAdminView {
         estadoBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(estadoBox, Priority.ALWAYS);
 
-        // Acciones
+        // Acciones: ver, cambiar estado, eliminar
         HBox acciones = new HBox(6);
         acciones.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(acciones, Priority.ALWAYS);
         acciones.getChildren().addAll(
                 btnAccion("👁", () -> abrirDialogoVer(u)),
-                btnAccion("✏", () -> abrirDialogoEditar(u)),
+                btnAccion("✏", () -> abrirDialogoCambiarEstado(u)),
                 btnAccion("🗑", () -> confirmarEliminar(u))
         );
 
@@ -516,12 +494,13 @@ public class UsuariosAdminView {
         content.getChildren().addAll(
                 header,
                 new Separator(),
-                detalleRow("📋 Cédula", u.getIdentificacion()),
-                detalleRow("📞 Teléfono", u.getTelefono() != null ? u.getTelefono() : "—"),
-                detalleRow("📧 Correo", u.getCorreo() != null ? u.getCorreo() : "—"),
-                detalleRow("👤 Username", u.getUsername()),
-                detalleRow("🔐 Rol", u.getRol() != null ? u.getRol().getNombre() : "—"),
-                detalleRow("📍 Dirección", direccionTexto(u))
+                detalleRow("📋 Cédula",     u.getIdentificacion()),
+                detalleRow("📞 Teléfono",   u.getTelefono()  != null ? u.getTelefono()  : "—"),
+                detalleRow("📧 Correo",     u.getCorreo()    != null ? u.getCorreo()    : "—"),
+                detalleRow("👤 Username",   u.getUsername()),
+                detalleRow("🔐 Rol",        u.getRol()       != null ? u.getRol().getNombre() : "—"),
+                detalleRow("📍 Dirección",  direccionTexto(u)),
+                detalleRow("🔘 Estado",     u.getEstado()    != null ? u.getEstado().name() : "—")
         );
 
         dlg.getDialogPane().setContent(content);
@@ -530,30 +509,94 @@ public class UsuariosAdminView {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // DIÁLOGOS CREAR / EDITAR
+    // DIÁLOGO CAMBIAR ESTADO  (único modo de edición permitido)
+    // ═══════════════════════════════════════════════════════════════
+    private void abrirDialogoCambiarEstado(Usuario u) {
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Cambiar estado — " + u.getUsername());
+        dlg.setHeaderText(null);
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(24));
+        content.setPrefWidth(360);
+
+        // Info del usuario (solo lectura)
+        Label lblNombre = new Label(nombreCompleto(u) + " " + apellidoCompleto(u));
+        lblNombre.setFont(Font.font("System", FontWeight.BOLD, 15));
+        lblNombre.setTextFill(Color.web("#111827"));
+
+        Label lblCedula = label("Cédula: " + u.getIdentificacion(), 12, GRAY_TEXT, false);
+        Label lblRol    = label("Rol: " + (u.getRol() != null ? u.getRol().getNombre() : "—"),
+                                12, GRAY_TEXT, false);
+
+        // Selector de estado
+        Label lblTitulo = label("Nuevo estado *", 12, GRAY_TEXT, false);
+        ComboBox<String> cmbEstado = new ComboBox<>();
+        for (EstadoUsuario e : EstadoUsuario.values()) {
+            cmbEstado.getItems().add(e.name());
+        }
+        if (u.getEstado() != null) {
+            cmbEstado.setValue(u.getEstado().name());
+        }
+        cmbEstado.setPrefHeight(40);
+        cmbEstado.setMaxWidth(Double.MAX_VALUE);
+        cmbEstado.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
+
+        Label lblError = label("", 12, RED, false);
+        lblError.setWrapText(true);
+
+        content.getChildren().addAll(
+                lblNombre, lblCedula, lblRol,
+                new Separator(),
+                lblTitulo, cmbEstado,
+                lblError
+        );
+
+        dlg.getDialogPane().setContent(content);
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
+        btnOk.setText("Guardar estado");
+        btnOk.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white; "
+                + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
+
+        btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            lblError.setText("");
+
+            if (cmbEstado.getValue() == null) {
+                lblError.setText("Selecciona un estado.");
+                ev.consume();
+                return;
+            }
+
+            // Si el estado no cambió, no hay nada que hacer
+            if (u.getEstado() != null
+                    && u.getEstado().name().equals(cmbEstado.getValue())) {
+                return; // cierra el diálogo sin llamar al servicio
+            }
+
+            try {
+                u.setEstado(EstadoUsuario.valueOf(cmbEstado.getValue()));
+                usuarioService.actualizar(u);
+                cargarUsuarios();
+            } catch (IllegalArgumentException ex) {
+                lblError.setText("Error de validación: " + ex.getMessage());
+                ev.consume();
+            } catch (SQLException ex) {
+                lblError.setText("Error BD: " + ex.getMessage());
+                ev.consume();
+            }
+        });
+
+        dlg.showAndWait();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DIÁLOGO CREAR  (solo ADMIN y ADMINISTRADOR_POLICIA)
     // ═══════════════════════════════════════════════════════════════
     private void abrirDialogoCrear() {
-        Dialog<ButtonType> dlg = crearDialogoFormulario(null);
-        dlg.setTitle("Nuevo Usuario");
-        dlg.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) {
-                cargarUsuarios();
-            }
-        });
-    }
-
-    private void abrirDialogoEditar(Usuario u) {
-        Dialog<ButtonType> dlg = crearDialogoFormulario(u);
-        dlg.setTitle("Editar Usuario — " + u.getUsername());
-        dlg.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) {
-                cargarUsuarios();
-            }
-        });
-    }
-
-    private Dialog<ButtonType> crearDialogoFormulario(Usuario u) {
         Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Nuevo Usuario");
         dlg.setHeaderText(null);
 
         ScrollPane scroll = new ScrollPane();
@@ -565,73 +608,59 @@ public class UsuariosAdminView {
         form.setPadding(new Insets(20));
         form.setStyle("-fx-background-color: white;");
 
-        TextField fPrimerNombre = dlgField("Primer Nombre *", u != null ? u.getPrimer_nombre() : "");
-        TextField fSegundoNombre = dlgField("Segundo Nombre", u != null ? u.getSegundo_nombre() : "");
-        TextField fPrimerApellido = dlgField("Primer Apellido *", u != null ? u.getPrimer_apellido() : "");
-        TextField fSegundoApellido = dlgField("Segundo Apellido", u != null ? u.getSegundo_apellido() : "");
-        TextField fCedula = dlgField("Cédula *", u != null ? u.getIdentificacion() : "");
-        TextField fTelefono = dlgField("Teléfono", u != null ? u.getTelefono() : "");
-        TextField fCorreo = dlgField("Correo", u != null ? u.getCorreo() : "");
-        TextField fUsername = dlgField("Username *", u != null ? u.getUsername() : "");
-        PasswordField fPassword = dlgPassword("Contraseña"
-                + (u != null ? " (vacío = no cambiar)" : " *"));
+        TextField fPrimerNombre    = dlgField("Primer Nombre *",    "");
+        TextField fSegundoNombre   = dlgField("Segundo Nombre",     "");
+        TextField fPrimerApellido  = dlgField("Primer Apellido *",  "");
+        TextField fSegundoApellido = dlgField("Segundo Apellido",   "");
+        TextField fCedula          = dlgField("Cédula *",           "");
+        TextField fTelefono        = dlgField("Teléfono",           "");
+        TextField fCorreo          = dlgField("Correo",             "");
+        TextField fUsername        = dlgField("Username *",         "");
+        PasswordField fPassword    = dlgPassword("Contraseña *");
 
-        if (u != null) {
-            fCedula.setDisable(true);
-        }
-
-        TextField fPlaca = dlgField("Placa policial", "");
-        TextField fRango = dlgField("Rango policial", "");
+        // Campos policiales — visibles solo si el rol es ADMINISTRADOR_POLICIA
+        TextField fPlaca = dlgField("Placa policial *", "");
+        TextField fRango = dlgField("Rango policial *", "");
 
         VBox seccionPolicia = new VBox(10);
-
         seccionPolicia.getChildren().addAll(
                 seccion("DATOS POLICIALES"),
                 fPlaca,
                 fRango
         );
-
         seccionPolicia.setVisible(false);
         seccionPolicia.setManaged(false);
 
+        // Solo ADMIN y ADMINISTRADOR_POLICIA
         ComboBox<String> cmbRol = new ComboBox<>();
         cmbRol.setPromptText("Seleccionar Rol *");
         cmbRol.setPrefHeight(40);
         cmbRol.setMaxWidth(Double.MAX_VALUE);
         cmbRol.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
+
         if (rolService != null) {
-
             try {
-
-                List<RolUsuario> roles = rolService.listar();
-
-                for (RolUsuario r : roles) {
-
+                for (RolUsuario r : rolService.listar()) {
                     if (r != null && r.getNombre() != null) {
-
-                        cmbRol.getItems().add(r.getNombre());
+                        String nombre = r.getNombre().toUpperCase();
+                        if (nombre.equals("ADMIN") || nombre.equals("ADMINISTRADOR_POLICIA")) {
+                            cmbRol.getItems().add(r.getNombre());
+                        }
                     }
                 }
-
             } catch (Exception e) {
-
                 mostrarAlerta("Error roles", e.getMessage());
             }
         }
-        if (u != null && u.getRol() != null) {
-            cmbRol.setValue(u.getRol().getNombre());
-        }
 
-        ComboBox<String> cmbEstado = new ComboBox<>();
-        for (EstadoUsuario e : EstadoUsuario.values()) {
-            cmbEstado.getItems().add(e.name());
-        }
-        cmbEstado.setPrefHeight(40);
-        cmbEstado.setMaxWidth(Double.MAX_VALUE);
-        cmbEstado.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
-        if (u != null && u.getEstado() != null) {
-            cmbEstado.setValue(u.getEstado().name());
-        }
+        // Mostrar / ocultar sección policial según el rol elegido
+        cmbRol.setOnAction(e -> {
+            String seleccionado = cmbRol.getValue();
+            boolean esPolicia = seleccionado != null
+                    && seleccionado.toUpperCase().equals("ADMINISTRADOR_POLICIA");
+            seccionPolicia.setVisible(esPolicia);
+            seccionPolicia.setManaged(esPolicia);
+        });
 
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
@@ -645,9 +674,8 @@ public class UsuariosAdminView {
                 seccion("CUENTA"),
                 fUsername,
                 fPassword,
-                seccion("ROL Y ESTADO"),
+                seccion("ROL"),
                 cmbRol,
-                u != null ? cmbEstado : new Label(""),
                 seccionPolicia,
                 lblError
         );
@@ -657,123 +685,81 @@ public class UsuariosAdminView {
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
-        btnOk.setText(u == null ? "Crear Usuario" : "Guardar Cambios");
+        btnOk.setText("Crear Usuario");
         btnOk.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white; "
                 + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
 
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-
             lblError.setText("");
 
             if (fPrimerNombre.getText().isBlank()
                     || fPrimerApellido.getText().isBlank()
+                    || fCedula.getText().isBlank()
                     || fUsername.getText().isBlank()
-                    || (u == null && fPassword.getText().isBlank())
+                    || fPassword.getText().isBlank()
                     || cmbRol.getValue() == null) {
-
-                lblError.setText("Completa los campos obligatorios (*)");
+                lblError.setText("Completa los campos obligatorios (*).");
                 ev.consume();
                 return;
             }
 
-            String rolSeleccionadoTexto = cmbRol.getValue();
-
-            if (rolSeleccionadoTexto != null
-                    && rolSeleccionadoTexto.equalsIgnoreCase("POLICIA")) {
-
-                if (fPlaca.getText().isBlank()
-                        || fRango.getText().isBlank()) {
-
-                    lblError.setText("Completa los datos policiales");
-                    ev.consume();
-                    return;
-                }
+            boolean esPolicia = cmbRol.getValue().toUpperCase()
+                                       .equals("ADMINISTRADOR_POLICIA");
+            if (esPolicia && (fPlaca.getText().isBlank() || fRango.getText().isBlank())) {
+                lblError.setText("Completa los datos policiales obligatorios (*).");
+                ev.consume();
+                return;
             }
 
             try {
+                Usuario nuevo = new Usuario();
+                nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
+                nuevo.setSegundo_nombre(fSegundoNombre.getText().trim());
+                nuevo.setPrimer_apellido(fPrimerApellido.getText().trim());
+                nuevo.setSegundo_apellido(fSegundoApellido.getText().trim());
+                nuevo.setIdentificacion(fCedula.getText().trim());
+                nuevo.setTelefono(fTelefono.getText().trim());
+                nuevo.setCorreo(fCorreo.getText().trim());
+                nuevo.setUsername(fUsername.getText().trim());
+                nuevo.setPassword(fPassword.getText());
+                nuevo.setEstado(EstadoUsuario.ACTIVO);
 
-                if (u == null) {
+                RolUsuario rolSeleccionado = rolService.listar().stream()
+                        .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
+                        .findFirst()
+                        .orElse(null);
+                nuevo.setRol(rolSeleccionado);
 
-                    Usuario nuevo = new Usuario();
+                usuarioService.insertar(nuevo);
 
-                    nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
-                    nuevo.setSegundo_nombre(fSegundoNombre.getText().trim());
-                    nuevo.setPrimer_apellido(fPrimerApellido.getText().trim());
-                    nuevo.setSegundo_apellido(fSegundoApellido.getText().trim());
-                    nuevo.setIdentificacion(fCedula.getText().trim());
-                    nuevo.setTelefono(fTelefono.getText().trim());
-                    nuevo.setCorreo(fCorreo.getText().trim());
-                    nuevo.setUsername(fUsername.getText().trim());
-                    nuevo.setPassword(fPassword.getText());
+                // Si es policía también se registra el perfil policial
+                if (esPolicia) {
+                    Policia policia = new Policia();
+                    policia.setIdentificacion(fCedula.getText().trim());
+                    policia.setPlaca(fPlaca.getText().trim());
+                    policia.setRango(fRango.getText().trim());
+                    policia.setEstadopolicial(sistemagestion.model.EstadoPolicia.DISPONIBLE);
 
-                    RolUsuario rolSeleccionado = rolService.listar().stream()
-                            .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
-                            .findFirst()
-                            .orElse(null);
+                    sistemagestion.model.UnidadPolicial unidadVacia
+                            = new sistemagestion.model.UnidadPolicial();
+                    unidadVacia.setNombre("");
+                    policia.setUnidadpolicial(unidadVacia);
 
-                    nuevo.setRol(rolSeleccionado);
-
-                    if (rolSeleccionado != null
-                            && rolSeleccionado.getNombre().equalsIgnoreCase("POLICIA")) {
-
-                        Policia policia = new Policia();
-
-                        policia.setPlaca(fPlaca.getText().trim());
-                        policia.setRango(fRango.getText().trim());
-
-                        nuevo.setPolicia(policia);
-                    }
-
-                    usuarioService.insertar(nuevo);
-
-                } else {
-
-                    u.setPrimer_nombre(fPrimerNombre.getText().trim());
-                    u.setSegundo_nombre(fSegundoNombre.getText().trim());
-                    u.setPrimer_apellido(fPrimerApellido.getText().trim());
-                    u.setSegundo_apellido(fSegundoApellido.getText().trim());
-                    u.setTelefono(fTelefono.getText().trim());
-                    u.setCorreo(fCorreo.getText().trim());
-                    u.setUsername(fUsername.getText().trim());
-
-                    if (!fPassword.getText().isBlank()) {
-                        u.setPassword(fPassword.getText());
-                    }
-
-                    RolUsuario rolSeleccionado = rolService.listar().stream()
-                            .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
-                            .findFirst()
-                            .orElse(null);
-
-                    u.setRol(rolSeleccionado);
-
-                    if (rolSeleccionado != null
-                            && rolSeleccionado.getNombre().equalsIgnoreCase("POLICIA")) {
-
-                        Policia policia = new Policia();
-
-                        policia.setPlaca(fPlaca.getText().trim());
-                        policia.setRango(fRango.getText().trim());
-
-                        u.setPolicia(policia);
-                    }
-
-                    usuarioService.actualizar(u);
+                    policiaService.insertar(policia);
                 }
 
+                cargarUsuarios();
+
             } catch (IllegalArgumentException ex) {
-
-                lblError.setText(ex.getMessage());
+                lblError.setText("Error de validación: " + ex.getMessage());
                 ev.consume();
-
             } catch (SQLException ex) {
-
                 lblError.setText("Error BD: " + ex.getMessage());
                 ev.consume();
             }
         });
 
-        return dlg;
+        dlg.showAndWait();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -800,16 +786,12 @@ public class UsuariosAdminView {
     // PAGINACIÓN
     // ═══════════════════════════════════════════════════════════════
     private void actualizarPaginacion() {
-        if (paginacionBox == null) {
-            return;
-        }
+        if (paginacionBox == null) return;
         paginacionBox.getChildren().clear();
 
-        int total = usuariosFiltrados.size();
+        int total       = usuariosFiltrados.size();
         int totalPaginas = (int) Math.ceil((double) total / FILAS_POR_PAGINA);
-        if (totalPaginas <= 1) {
-            return;
-        }
+        if (totalPaginas <= 1) return;
 
         paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1, () -> {
             paginaActual--;
@@ -817,14 +799,11 @@ public class UsuariosAdminView {
         }));
 
         int inicio = Math.max(1, paginaActual - 2);
-        int fin = Math.min(totalPaginas, paginaActual + 2);
+        int fin    = Math.min(totalPaginas, paginaActual + 2);
 
         if (inicio > 1) {
             paginacionBox.getChildren().addAll(
-                    btnPag("1", true, () -> {
-                        paginaActual = 1;
-                        renderizarPagina();
-                    }),
+                    btnPag("1", true, () -> { paginaActual = 1; renderizarPagina(); }),
                     label("...", 13, GRAY_TEXT, false));
         }
         for (int i = inicio; i <= fin; i++) {
@@ -839,10 +818,7 @@ public class UsuariosAdminView {
             paginacionBox.getChildren().addAll(
                     label("...", 13, GRAY_TEXT, false),
                     btnPag(String.valueOf(totalPaginas), true,
-                            () -> {
-                                paginaActual = totalPaginas;
-                                renderizarPagina();
-                            }));
+                            () -> { paginaActual = totalPaginas; renderizarPagina(); }));
         }
 
         paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPaginas, () -> {
@@ -867,10 +843,10 @@ public class UsuariosAdminView {
     // STATS
     // ═══════════════════════════════════════════════════════════════
     private void actualizarStats() {
-        long total = todosLosUsuarios.size();
-        long activos = todosLosUsuarios.stream()
+        long total    = todosLosUsuarios.size();
+        long activos  = todosLosUsuarios.stream()
                 .filter(u -> u.getEstado() != null
-                && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
+                        && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
                 .count();
         long inactivos = total - activos;
 
@@ -982,13 +958,13 @@ public class UsuariosAdminView {
     private String nombreCompleto(Usuario u) {
         return (u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "")
                 + (u.getSegundo_nombre() != null && !u.getSegundo_nombre().isBlank()
-                ? " " + u.getSegundo_nombre() : "");
+                        ? " " + u.getSegundo_nombre() : "");
     }
 
     private String apellidoCompleto(Usuario u) {
         return (u.getPrimer_apellido() != null ? u.getPrimer_apellido() : "")
                 + (u.getSegundo_apellido() != null && !u.getSegundo_apellido().isBlank()
-                ? " " + u.getSegundo_apellido() : "");
+                        ? " " + u.getSegundo_apellido() : "");
     }
 
     private String iniciales(Usuario u) {
@@ -1000,9 +976,7 @@ public class UsuariosAdminView {
     }
 
     private String direccionTexto(Usuario u) {
-        if (u.getDireccion() == null) {
-            return "—";
-        }
+        if (u.getDireccion() == null) return "—";
         var d = u.getDireccion();
         String bar = d.getBarrio() != null ? d.getBarrio().getNombre() : "";
         return bar + " · Calle " + d.getCalle() + " Cra " + d.getCarrera();
@@ -1015,70 +989,45 @@ public class UsuariosAdminView {
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) {
-            return AVATAR_COLORS[0];
-        }
+        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String rolColor(String rol) {
-        if (rol == null) {
-            return GRAY_TEXT;
-        }
+        if (rol == null) return GRAY_TEXT;
         return switch (rol.toUpperCase()) {
-            case "ADMIN" ->
-                BLUE;
-            case "POLICIA" ->
-                "#7b1fa2";
-            case "RESIDENTE" ->
-                GREEN;
-            default ->
-                GRAY_TEXT;
+            case "ADMIN"                  -> BLUE;
+            case "ADMINISTRADOR_POLICIA"  -> "#7b1fa2";
+            case "RESIDENTE"              -> GREEN;
+            default                       -> GRAY_TEXT;
         };
     }
 
     private String rolBg(String rol) {
-        if (rol == null) {
-            return "#f3f4f6";
-        }
+        if (rol == null) return "#f3f4f6";
         return switch (rol.toUpperCase()) {
-            case "ADMIN" ->
-                "#e8f0fe";
-            case "POLICIA" ->
-                "#f3e5f5";
-            case "RESIDENTE" ->
-                "#e8f5e9";
-            default ->
-                "#f3f4f6";
+            case "ADMIN"                  -> "#e8f0fe";
+            case "ADMINISTRADOR_POLICIA"  -> "#f3e5f5";
+            case "RESIDENTE"              -> "#e8f5e9";
+            default                       -> "#f3f4f6";
         };
     }
 
-    // ── EstadoUsuario — usa los valores reales del enum ───────────
     private String estadoColor(EstadoUsuario estado) {
-        if (estado == null) {
-            return GRAY_TEXT;
-        }
+        if (estado == null) return GRAY_TEXT;
         return switch (estado) {
-            case ACTIVO ->
-                GREEN;
-            case INACTIVO ->
-                RED;
-            case SUSPENDIDO ->
-                ORANGE;
+            case ACTIVO     -> GREEN;
+            case INACTIVO   -> RED;
+            case SUSPENDIDO -> ORANGE;
         };
     }
 
     private String estadoBg(EstadoUsuario estado) {
-        if (estado == null) {
-            return "#f3f4f6";
-        }
+        if (estado == null) return "#f3f4f6";
         return switch (estado) {
-            case ACTIVO ->
-                "#e8f5e9";
-            case INACTIVO ->
-                RED_LIGHT;
-            case SUSPENDIDO ->
-                "#fff8e1";
+            case ACTIVO     -> "#e8f5e9";
+            case INACTIVO   -> RED_LIGHT;
+            case SUSPENDIDO -> "#fff8e1";
         };
     }
 }
