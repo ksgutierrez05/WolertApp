@@ -2,6 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
+
 package sistemagestion.view;
 
 /**
@@ -1220,4 +1221,8 @@ public class UsuarioApp {
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/develop
