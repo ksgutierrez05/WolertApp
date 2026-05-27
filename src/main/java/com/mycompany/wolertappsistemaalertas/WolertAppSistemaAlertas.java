@@ -11,6 +11,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import sistemagestion.model.Usuario;
 import sistemagestion.service.AlertaService;
+import sistemagestion.view.AdministradorPoliciaApp;
 import sistemagestion.view.MapaAlarmas;
 import sistemagestion.view.MapaAlarmasRegistada;
 import sistemagestion.view.MapaAlarmasRegistradas;
@@ -28,23 +29,35 @@ public class WolertAppSistemaAlertas extends Application {
     public void start(Stage stage) {
         
        
-        /*LoginApp login = new LoginApp();
+        LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
         stage.setTitle("WolertApp");
         stage.setScene(scene);
         stage.setResizable(true);
-        stage.show();  */
+        stage.show(); 
 
         //Temporalmente abre el mapa directo, sin login ni dashboard
         //new MapaAlarmas().mostrar();
        //new MapaAlarmasRegistradas().mostrar();
-        new MapaAlarmasRegistada().mostrar();
-        //Usuario usuario = new Usuario();
+        //new MapaAlarmasRegistada().mostrar();
+       // Usuario usuario = new Usuario();
 
         //new MapaAlerta(null, null, null, null).mostrar();
-        new MapaUnidadesPoliciales().mostrar();
+        //new MapaUnidadesPoliciales().mostrar();
+        /*Usuario usuario = new Usuario();
+
+        usuario.setPrimer_nombre("Katherine");
+        usuario.setPrimer_apellido("Gutierrez");
+        usuario.setUsername("admin");
+
+        // ── Abrir dashboard administrador ──────────────────
+        AdministradorPoliciaApp app =
+                new AdministradorPoliciaApp(usuario);
+
+        app.show(stage);*/
+    
     }
 
     public static void main(String[] args) {

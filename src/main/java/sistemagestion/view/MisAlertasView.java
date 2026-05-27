@@ -28,7 +28,7 @@ import sistemagestion.service.BarrioService;
 
 /**
  * Vista "Mis Alertas" para el usuario ciudadano.
-
+ *
  *
  * @author Maria Cristina
  */
@@ -73,6 +73,12 @@ public class MisAlertasView {
     private Label lblEnAtencionVal;
     private Label lblResueltasVal;
 
+    // ── Colores de métricas ────────────────────────
+    private static final String COLOR_TOTAL = RED;
+    private static final String COLOR_PEND = ORANGE;
+    private static final String COLOR_ATENCION = BLUE;
+    private static final String COLOR_RESUELTA = GREEN;
+
     // ─────────────────────────────────────────────────────────────
     /**
      * @param usuarioActual Usuario logueado (obtenido del login).
@@ -92,6 +98,7 @@ public class MisAlertasView {
 
     // ── Punto de entrada ─────────────────────────────────────────
     public ScrollPane getView() {
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         VBox content = new VBox(20);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color:" + BG + ";");
@@ -150,20 +157,17 @@ public class MisAlertasView {
     private HBox buildMetrics() {
         HBox row = new HBox(16);
 
-        lblTotalVal = boldNum("0");
-        lblPendientesVal = boldNum("0");
-        lblEnAtencionVal = boldNum("0");
-        lblResueltasVal = boldNum("0");
+        lblTotalVal = boldNum("0", RED);
+        lblPendientesVal = boldNum("0", ORANGE);
+        lblEnAtencionVal = boldNum("0", BLUE);
+        lblResueltasVal = boldNum("0", GREEN);
 
         row.getChildren().addAll(
-                statCard("📋", RED_LIGHT, RED, "Mis alertas", lblTotalVal,
-                        "Total reportadas", RED),
-                statCard("⏳", "#fff8e1", ORANGE, "Pendientes", lblPendientesVal,
-                        "Sin atender todavía", ORANGE),
-                statCard("🔵", "#eff6ff", BLUE, "En proceso", lblEnAtencionVal,
-                        "En atención / asignada", BLUE),
-                statCard("✅", "#e8f5e9", GREEN, "Resueltas", lblResueltasVal,
-                        "Cerradas correctamente", GREEN)
+                // fondo claro → icono color fuerte (mismo par)
+                statCard("\uf46d", RED_LIGHT, RED, "Mis alertas", lblTotalVal, "Total reportadas", RED),
+                statCard("\uf252", "#fff8e1", ORANGE, "Pendientes", lblPendientesVal, "Sin atender todavía", ORANGE),
+                statCard("\uf111", "#eff6ff", BLUE, "En proceso", lblEnAtencionVal, "En atención / asignada", BLUE),
+                statCard("\uf058", "#e8f5e9", GREEN, "Resueltas", lblResueltasVal, "Cerradas correctamente", GREEN)
         );
         return row;
     }
@@ -539,6 +543,7 @@ public class MisAlertasView {
         long resueltas = misAlertas.stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.RESUELTA).count();
 
+        // setText no toca el color — el color quedó fijo en boldNum()
         lblTotalVal.setText(String.valueOf(total));
         lblPendientesVal.setText(String.valueOf(pendientes));
         lblEnAtencionVal.setText(String.valueOf(enAtencion));
@@ -619,36 +624,59 @@ public class MisAlertasView {
     // ═══════════════════════════════════════════════════════════════
     // HELPERS UI
     // ═══════════════════════════════════════════════════════════════
-    private VBox statCard(String icon, String bgIcon, String iconColor,
+    private VBox statCard(String faUnicode, String bgIcon, String iconColor,
             String title, Label valueLabel, String sub, String subColor) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(18));
+
+        valueLabel.setStyle(
+                "-fx-font-size:34px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-text-fill:" + iconColor + ";"
+        );
+
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(20, 18, 16, 18));
+        card.setPrefHeight(130);          // ← altura fija → más rectangular
         card.setStyle("-fx-background-color:" + WHITE + "; -fx-background-radius:14;");
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
+        // Cuadrado de color + ícono FA
         StackPane iconBox = new StackPane();
-        Rectangle iconBg = new Rectangle(44, 44);
-        iconBg.setArcWidth(10);
-        iconBg.setArcHeight(10);
-        iconBg.setFill(Color.web(bgIcon));
-        Label iconLbl = label(icon, 20, iconColor, false);
+        iconBox.setPrefSize(46, 46);
+        iconBox.setMinSize(46, 46);
+        iconBox.setMaxSize(46, 46);
+
+        Region iconBg = new Region();
+        iconBg.setPrefSize(46, 46);
+        iconBg.setStyle(
+                "-fx-background-color:" + bgIcon + ";"
+                + "-fx-background-radius:11;");
+
+        Label iconLbl = new Label(faUnicode);
+        iconLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:20px;"
+                + "-fx-text-fill:" + iconColor + ";");        // ← color fuerte
+
         iconBox.getChildren().addAll(iconBg, iconLbl);
 
-        HBox top = new HBox(12);
-        top.setAlignment(Pos.CENTER_LEFT);
-        top.getChildren().addAll(iconBox, label(title, 12, GRAY_TEXT, false));
+        HBox topRow = new HBox(12);
+        topRow.setAlignment(Pos.CENTER_LEFT);
+        topRow.getChildren().addAll(iconBox, label(title, 12, GRAY_TEXT, false));
 
-        card.getChildren().addAll(top, valueLabel, label(sub, 11, subColor, false));
+        // Subtexto en el mismo color del ícono
+        Label subLbl = label(sub, 11, subColor, true);
+
+        card.getChildren().addAll(topRow, valueLabel, subLbl);
         card.setOnMouseEntered(e -> card.setTranslateY(-2));
         card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
-    private Label boldNum(String val) {
+    private Label boldNum(String val, String color) {
         Label l = new Label(val);
-        l.setFont(Font.font("System", FontWeight.BOLD, 32));
-        l.setTextFill(Color.web("#111827"));
+        l.setFont(Font.font("System", FontWeight.BOLD, 34));
+        l.setTextFill(Color.web(color));
         return l;
     }
 
