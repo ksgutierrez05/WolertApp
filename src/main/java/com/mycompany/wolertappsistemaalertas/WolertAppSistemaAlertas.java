@@ -46,17 +46,7 @@ public class WolertAppSistemaAlertas extends Application {
 
         //new MapaAlerta(null, null, null, null).mostrar();
         //new MapaUnidadesPoliciales().mostrar();
-        /*Usuario usuario = new Usuario();
-
-        usuario.setPrimer_nombre("Katherine");
-        usuario.setPrimer_apellido("Gutierrez");
-        usuario.setUsername("admin");
-
-        // ── Abrir dashboard administrador ──────────────────
-        AdministradorPoliciaApp app =
-                new AdministradorPoliciaApp(usuario);
-
-        app.show(stage);*/
+      
     
     }
 

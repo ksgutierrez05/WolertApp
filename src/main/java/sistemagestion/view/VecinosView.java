@@ -8,8 +8,6 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
-
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -28,35 +26,36 @@ import sistemagestion.model.*;
 import sistemagestion.service.*;
 
 /**
- * Vista "Mis Vecinos" — muestra los usuarios que han reportado alertas
- * en el mismo barrio del usuario logueado. Solo usa datos reales de la BD.
+ * Vista "Mis Vecinos" — muestra los usuarios que han reportado alertas en el
+ * mismo barrio del usuario logueado. Solo usa datos reales de la BD.
  *
- * Datos disponibles por alerta (vw_alertas_completa):
- *   NOMBRE_USUARIO, USERNAME, CEDULA, TELEFONO,
- *   TIPO_ALERTA, BARRIO, COMUNA, FECHA, ESTADO, DESCRIPCION
+ * Datos disponibles por alerta (vw_alertas_completa): NOMBRE_USUARIO, USERNAME,
+ * CEDULA, TELEFONO, TIPO_ALERTA, BARRIO, COMUNA, FECHA, ESTADO, DESCRIPCION
  *
  * @author generado
  */
 public class VecinosView {
 
     // ── Paleta (igual que UsuarioApp) ─────────────────────────────
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String GREEN     = "#43a047";
-    private static final String BLUE      = "#1565c0";
-    private static final String BLUE_LIGHT= "#e8f0fe";
+    private static final String ORANGE = "#fb8c00";
+    private static final String GREEN = "#43a047";
+    private static final String BLUE = "#1565c0";
+    private static final String BLUE_LIGHT = "#e8f0fe";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
     // ── Dependencias ──────────────────────────────────────────────
-    private final Usuario        usuarioActual;
-    private final AlertaService  alertaService;
+    private final Usuario usuarioActual;
+    private final AlertaService alertaService;
 
     // ── Estado UI ─────────────────────────────────────────────────
-    /** Barrio del usuario logueado, puede ser null si no tiene dirección */
+    /**
+     * Barrio del usuario logueado, puede ser null si no tiene dirección
+     */
     private final String miBarrio;
 
     /**
@@ -68,16 +67,20 @@ public class VecinosView {
             String username,
             String cedula,
             String telefono,
-            long   totalAlertas,
-            long   alertasActivas,
+            long totalAlertas,
+            long alertasActivas,
             String ultimoTipoAlerta,
             String ultimoEstado
-    ) {}
+            ) {
+
+    }
 
     // ── Constructor ───────────────────────────────────────────────
     public VecinosView(Usuario usuarioActual, AlertaService alertaService) {
+        javafx.scene.text.Font.loadFont(
+                getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         this.usuarioActual = usuarioActual;
-        this.alertaService  = alertaService;
+        this.alertaService = alertaService;
 
         // Barrio del usuario logueado
         String barrio = null;
@@ -131,7 +134,7 @@ public class VecinosView {
 
         Label subtitulo = new Label(
                 "Usuarios que han reportado alertas en " + barrioDisplay
-                        + "  ·  Solo se muestran quienes han publicado al menos una alerta"
+                + "  ·  Solo se muestran quienes han publicado al menos una alerta"
         );
         subtitulo.setFont(Font.font("System", 13));
         subtitulo.setTextFill(Color.web(GRAY_TEXT));
@@ -146,59 +149,83 @@ public class VecinosView {
     // =========================================================================
     private HBox buildResumenCard(List<DatosVecino> vecinos) {
         HBox row = new HBox(16);
+        HBox.setHgrow(row, Priority.ALWAYS);
 
-        long totalVecinos   = vecinos.size();
+        long totalVecinos = vecinos.size();
         long conAlertaActiva = vecinos.stream()
-                .filter(v -> v.alertasActivas() > 0)
-                .count();
-        long totalAlertas   = vecinos.stream()
-                .mapToLong(DatosVecino::totalAlertas)
-                .sum();
+                .filter(v -> v.alertasActivas() > 0).count();
+        long totalAlertas = vecinos.stream()
+                .mapToLong(DatosVecino::totalAlertas).sum();
 
         row.getChildren().addAll(
-                resumenItem("👥", "#e8f0fe", BLUE,
-                        "Vecinos activos",  totalVecinos,
+                resumenItem("#e8f0fe", BLUE, "\uf0c0",
+                        "Vecinos activos", totalVecinos,
                         miBarrio != null ? "En " + miBarrio : "En tu barrio"),
-                resumenItem("🔔", RED_LIGHT, RED,
+                resumenItem("#fff0f0", RED, "\uf0f3",
                         "Con alerta activa", conAlertaActiva,
                         "PENDIENTE o EN ATENCIÓN"),
-                resumenItem("📋", "#e8f5e9", GREEN,
-                        "Alertas totales",   totalAlertas,
+                resumenItem("#e8f5e9", GREEN, "\uf46d",
+                        "Alertas totales", totalAlertas,
                         "Reportadas por vecinos")
         );
         return row;
     }
 
-    private VBox resumenItem(String icon, String bgIcon, String iconColor,
-                             String titulo, long valor, String sub) {
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(14));
+    private VBox resumenItem(String bgIcon, String accentColor, String iconFA,
+            String titulo, long valor, String sub) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
-        card.setMinHeight(100);
-        card.setMaxHeight(100);
+        card.setMinHeight(145);
+        card.setMaxHeight(145);
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
-        StackPane iconBox = new StackPane();
-        Rectangle bg = new Rectangle(48, 48);
-        bg.setArcWidth(14); bg.setArcHeight(14);
-        bg.setFill(Color.web(bgIcon));
-        iconBox.getChildren().addAll(bg, lbl(icon, 20, iconColor, false));
+        // ── Rectángulo redondeado + ícono FA ──────────────────────────
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(52, 52);
+        iconWrap.setMinSize(52, 52);
+        iconWrap.setMaxSize(52, 52);
 
+        Rectangle iconBg = new Rectangle(52, 52);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
+        iconBg.setFill(Color.web(bgIcon));
+
+        Label iconLbl = new Label(iconFA);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px;"
+                + "-fx-text-fill: " + accentColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+        // ── Título ────────────────────────────────────────────────────
+        Label tituloLbl = new Label(titulo);
+        tituloLbl.setStyle(
+                "-fx-font-size: 13px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: #374151;");
+
+        // ── Número grande en color del acento ─────────────────────────
         Label valLbl = new Label(String.valueOf(valor));
-        valLbl.setFont(Font.font("System", FontWeight.BOLD, 28));
-        valLbl.setTextFill(Color.web("#111827"));
+        valLbl.setStyle(
+                "-fx-font-size: 36px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: " + accentColor + ";");
 
-        VBox texto = new VBox(3);
-        texto.getChildren().addAll(lbl(titulo, 13, "#374151", true), valLbl, lbl(sub, 11, GRAY_TEXT, false));
+        // ── Subtexto ──────────────────────────────────────────────────
+        Label subLbl = new Label(sub);
+        subLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
 
-        HBox top = new HBox(14);
+        VBox textBox = new VBox(3, tituloLbl, valLbl, subLbl);
+
+        HBox top = new HBox(16);
         top.setAlignment(Pos.CENTER_LEFT);
-        top.getChildren().addAll(iconBox, texto);
+        top.getChildren().addAll(iconWrap, textBox);
         card.getChildren().add(top);
 
-        card.setOnMouseEntered(e -> card.setTranslateY(-2));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -209,33 +236,68 @@ public class VecinosView {
         VBox card = new VBox(0);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 14;");
         card.setPadding(new Insets(20));
+        card.setMinHeight(600);
         shadow(card);
 
-        // — Título de sección —
-        HBox sectionHeader = new HBox(8);
+        // ── Header con ícono FA ───────────────────────────────────────
+        HBox sectionHeader = new HBox(10);
         sectionHeader.setAlignment(Pos.CENTER_LEFT);
         sectionHeader.setPadding(new Insets(0, 0, 14, 0));
-        sectionHeader.getChildren().addAll(
-                lbl("📋", 16, BLUE, false),
-                lbl("Directorio de vecinos", 15, "#111827", true)
-        );
+
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(34, 34);
+        iconWrap.setMinSize(34, 34);
+        iconWrap.setMaxSize(34, 34);
+        Rectangle iconBg = new Rectangle(34, 34);
+        iconBg.setArcWidth(10);
+        iconBg.setArcHeight(10);
+        iconBg.setFill(Color.web("#e8f0fe"));
+        Label iconLbl = new Label("\uf0c0");
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 15px;"
+                + "-fx-text-fill: " + BLUE + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+        Label titleLbl = new Label("Directorio de vecinos");
+        titleLbl.setStyle(
+                "-fx-font-size: 15px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: #111827;");
 
         // Badge cantidad
         Label badge = new Label(String.valueOf(vecinos.size()));
-        badge.setFont(Font.font("System", FontWeight.BOLD, 11));
-        badge.setTextFill(Color.web(WHITE));
-        badge.setPadding(new Insets(2, 8, 2, 8));
-        badge.setStyle("-fx-background-color: " + BLUE + "; -fx-background-radius: 20;");
-        sectionHeader.getChildren().add(badge);
+        badge.setStyle(
+                "-fx-background-color: " + BLUE + ";"
+                + "-fx-text-fill: white;"
+                + "-fx-font-size: 11px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-background-radius: 20;"
+                + "-fx-padding: 2 8 2 8;");
 
+        sectionHeader.getChildren().addAll(iconWrap, titleLbl, badge);
         card.getChildren().addAll(sectionHeader, separator());
 
         if (vecinos.isEmpty()) {
             VBox empty = new VBox(12);
             empty.setAlignment(Pos.CENTER);
             empty.setPadding(new Insets(40));
-            Label emptyIcon = new Label("🏘");
-            emptyIcon.setFont(Font.font(48));
+
+            // ícono FA vacío
+            StackPane emptyIcon = new StackPane();
+            emptyIcon.setPrefSize(72, 72);
+            emptyIcon.setMinSize(72, 72);
+            Rectangle emptyBg = new Rectangle(72, 72);
+            emptyBg.setArcWidth(20);
+            emptyBg.setArcHeight(20);
+            emptyBg.setFill(Color.web("#f0f4ff"));
+            Label emptyLbl = new Label("\uf015");
+            emptyLbl.setStyle(
+                    "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size: 30px;"
+                    + "-fx-text-fill: " + BLUE + ";");
+            emptyIcon.getChildren().addAll(emptyBg, emptyLbl);
+
             String msg = miBarrio != null
                     ? "Ningún vecino de " + miBarrio + " ha reportado alertas aún."
                     : "No tienes barrio asignado o no hay vecinos con alertas.";
@@ -244,15 +306,13 @@ public class VecinosView {
             return card;
         }
 
-        // Encabezado de tabla
+        // Encabezado de tabla con fondo
         HBox thead = buildFilaEncabezado();
+        thead.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 8;");
         card.getChildren().addAll(thead, separator());
 
-        // Filas de datos
         for (int i = 0; i < vecinos.size(); i++) {
-            DatosVecino v = vecinos.get(i);
-            HBox fila = buildFilaVecino(v, i);
-            card.getChildren().add(fila);
+            card.getChildren().add(buildFilaVecino(vecinos.get(i), i));
             if (i < vecinos.size() - 1) {
                 card.getChildren().add(separator());
             }
@@ -264,25 +324,28 @@ public class VecinosView {
     // ── Encabezado de tabla ───────────────────────────────────────
     private HBox buildFilaEncabezado() {
         HBox row = new HBox();
-        row.setPadding(new Insets(10, 0, 10, 0));
+        row.setPadding(new Insets(10, 8, 10, 8));
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setStyle("-fx-background-color: #f8fafc;");
 
         row.getChildren().addAll(
-                celdaHead("#",           50),
-                celdaHead("Vecino",     200),
-                celdaHead("Usuario",    140),
-                celdaHead("Teléfono",   130),
-                celdaHead("Alertas",     80),
-                celdaHead("Activas",     80),
-                celdaHead("Último tipo",150),
-                celdaHead("Estado",     120)
+                celdaHead("#", 50),
+                celdaHead("Vecino", 200),
+                celdaHead("Usuario", 140),
+                celdaHead("Teléfono", 130),
+                celdaHead("Alertas", 80),
+                celdaHead("Activas", 80),
+                celdaHead("Último tipo", 150),
+                celdaHead("Estado", 120)
         );
         return row;
     }
 
     private Label celdaHead(String texto, double ancho) {
-        Label l = lbl(texto, 11, GRAY_TEXT, true);
+        Label l = new Label(texto.toUpperCase());
+        l.setStyle(
+                "-fx-font-size: 11px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: #9ca3af;");
         l.setPrefWidth(ancho);
         l.setMinWidth(ancho);
         l.setPadding(new Insets(0, 8, 0, 8));
@@ -293,70 +356,79 @@ public class VecinosView {
     private HBox buildFilaVecino(DatosVecino v, int index) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(14, 0, 14, 0));
+        row.setPadding(new Insets(14, 8, 14, 8));
         row.setCursor(javafx.scene.Cursor.HAND);
 
         String normalBg = index % 2 == 0 ? "transparent" : "#fafbfc";
         row.setStyle("-fx-background-color: " + normalBg + ";");
-        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: " + BLUE_LIGHT + ";"));
-        row.setOnMouseExited(e  -> row.setStyle("-fx-background-color: " + normalBg + ";"));
+        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #eff6ff;"));
+        row.setOnMouseExited(e -> row.setStyle("-fx-background-color: " + normalBg + ";"));
 
-        // Avatar con inicial
-        String inicial = v.nombreCompleto() != null && !v.nombreCompleto().isBlank()
-                ? String.valueOf(v.nombreCompleto().charAt(0)).toUpperCase()
-                : "?";
-        String[] avatarColors = {"#1565c0","#43a047","#e53935","#fb8c00","#6a1b9a","#00838f"};
-        String avatarColor = avatarColors[Math.abs(v.username().hashCode()) % avatarColors.length];
-
-        Circle avatarCircle = new Circle(18, Color.web(avatarColor));
-        Label avatarLbl = lbl(inicial, 14, WHITE, true);
-        StackPane avatar = new StackPane(avatarCircle, avatarLbl);
-        avatar.setMinWidth(36); avatar.setMaxWidth(36);
-
-        // Número
+        // Número de fila
         Label numLbl = lbl(String.valueOf(index + 1), 12, GRAY_TEXT, false);
-        numLbl.setPrefWidth(50); numLbl.setMinWidth(50);
+        numLbl.setPrefWidth(50);
+        numLbl.setMinWidth(50);
         numLbl.setPadding(new Insets(0, 8, 0, 8));
 
-        // Nombre
+        // Avatar circular con inicial
+        String inicial = v.nombreCompleto() != null && !v.nombreCompleto().isBlank()
+                ? String.valueOf(v.nombreCompleto().charAt(0)).toUpperCase() : "?";
+        String[] avatarColors = {"#1565c0", "#43a047", "#e53935", "#fb8c00", "#6a1b9a", "#00838f"};
+        String avatarColor = avatarColors[Math.abs(v.username().hashCode()) % avatarColors.length];
+        Circle avatarCircle = new Circle(20, Color.web(avatarColor));
+        Label avatarLbl = lbl(inicial, 14, WHITE, true);
+        StackPane avatar = new StackPane(avatarCircle, avatarLbl);
+        avatar.setMinWidth(40);
+        avatar.setMaxWidth(40);
+
+        // Nombre + cédula
         VBox nombreBox = new VBox(2);
-        nombreBox.setPrefWidth(200); nombreBox.setMinWidth(200);
-        nombreBox.setPadding(new Insets(0, 8, 0, 4));
+        nombreBox.setPrefWidth(160);
+        nombreBox.setMinWidth(160);
+        nombreBox.setPadding(new Insets(0, 8, 0, 8));
         String nombreDisplay = v.nombreCompleto() != null && !v.nombreCompleto().isBlank()
                 ? v.nombreCompleto() : "Sin nombre";
-        nombreBox.getChildren().addAll(
-                lbl(nombreDisplay, 13, "#111827", true),
-                lbl("C.C. " + (v.cedula() != null ? v.cedula() : "—"), 10, GRAY_TEXT, false)
-        );
+        Label nombreLbl = new Label(nombreDisplay);
+        nombreLbl.setStyle("-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#111827;");
+        nombreLbl.setMaxWidth(150);
+        nombreLbl.setEllipsisString("…");
+        Label cedulaLbl = lbl("C.C. " + (v.cedula() != null ? v.cedula() : "—"),
+                10, GRAY_TEXT, false);
+        nombreBox.getChildren().addAll(nombreLbl, cedulaLbl);
 
         // Username
-        Label userLbl = lbl("@" + (v.username() != null ? v.username() : "—"), 12, BLUE, false);
-        userLbl.setPrefWidth(140); userLbl.setMinWidth(140);
+        Label userLbl = new Label("@" + (v.username() != null ? v.username() : "—"));
+        userLbl.setStyle("-fx-font-size:12px;-fx-text-fill:" + BLUE + ";");
+        userLbl.setPrefWidth(140);
+        userLbl.setMinWidth(140);
         userLbl.setPadding(new Insets(0, 8, 0, 8));
 
         // Teléfono
         Label telLbl = lbl(v.telefono() != null ? v.telefono() : "—", 12, "#374151", false);
-        telLbl.setPrefWidth(130); telLbl.setMinWidth(130);
+        telLbl.setPrefWidth(130);
+        telLbl.setMinWidth(130);
         telLbl.setPadding(new Insets(0, 8, 0, 8));
 
-        // Total alertas
-        Label totalLbl = lbl(String.valueOf(v.totalAlertas()), 13, "#111827", true);
-        totalLbl.setPrefWidth(80); totalLbl.setMinWidth(80);
+        // Total alertas — en azul
+        Label totalLbl = new Label(String.valueOf(v.totalAlertas()));
+        totalLbl.setStyle("-fx-font-size:14px;-fx-font-weight:bold;-fx-text-fill:" + BLUE + ";");
+        totalLbl.setPrefWidth(80);
+        totalLbl.setMinWidth(80);
         totalLbl.setPadding(new Insets(0, 8, 0, 8));
-        totalLbl.setAlignment(Pos.CENTER);
 
-        // Alertas activas
-        Label activasLbl = lbl(String.valueOf(v.alertasActivas()), 13,
-                v.alertasActivas() > 0 ? RED : GREEN, true);
-        activasLbl.setPrefWidth(80); activasLbl.setMinWidth(80);
+        // Alertas activas — rojo si >0, verde si 0
+        Label activasLbl = new Label(String.valueOf(v.alertasActivas()));
+        activasLbl.setStyle("-fx-font-size:14px;-fx-font-weight:bold;-fx-text-fill:"
+                + (v.alertasActivas() > 0 ? RED : GREEN) + ";");
+        activasLbl.setPrefWidth(80);
+        activasLbl.setMinWidth(80);
         activasLbl.setPadding(new Insets(0, 8, 0, 8));
 
-        // Último tipo alerta
-        Label tipoLbl = lbl(
-                v.ultimoTipoAlerta() != null ? v.ultimoTipoAlerta() : "—",
-                11, "#374151", false
-        );
-        tipoLbl.setPrefWidth(150); tipoLbl.setMinWidth(150);
+        // Último tipo
+        Label tipoLbl = lbl(v.ultimoTipoAlerta() != null ? v.ultimoTipoAlerta() : "—",
+                11, "#374151", false);
+        tipoLbl.setPrefWidth(150);
+        tipoLbl.setMinWidth(150);
         tipoLbl.setPadding(new Insets(0, 8, 0, 8));
         tipoLbl.setWrapText(true);
 
@@ -364,34 +436,48 @@ public class VecinosView {
         Label estadoBadge = buildEstadoBadge(v.ultimoEstado());
 
         row.getChildren().addAll(
-                numLbl,
-                new StackPane(avatar), // wrap para que respete padding
-                nombreBox,
-                userLbl,
-                telLbl,
-                totalLbl,
-                activasLbl,
-                tipoLbl,
-                estadoBadge
+                numLbl, avatar, nombreBox,
+                userLbl, telLbl, totalLbl,
+                activasLbl, tipoLbl, estadoBadge
         );
-
         return row;
     }
 
     private Label buildEstadoBadge(String estado) {
-        String texto   = estado != null ? estado.replace("_", " ") : "—";
+        String texto = estado != null ? estado.replace("_", " ") : "—";
         String fgColor;
         String bgColor;
 
         if (estado == null) {
-            fgColor = GRAY_TEXT; bgColor = "#f3f4f6";
-        } else switch (estado) {
-            case "PENDIENTE"      -> { fgColor = RED;    bgColor = RED_LIGHT; }
-            case "EN_ATENCION"    -> { fgColor = ORANGE; bgColor = "#fff8e1"; }
-            case "UNIDAD_ASIGNADA"-> { fgColor = BLUE;   bgColor = BLUE_LIGHT; }
-            case "RESUELTA"       -> { fgColor = GREEN;  bgColor = "#e8f5e9"; }
-            case "CANCELADA"      -> { fgColor = GRAY_TEXT; bgColor = "#f3f4f6"; }
-            default               -> { fgColor = GRAY_TEXT; bgColor = "#f3f4f6"; }
+            fgColor = GRAY_TEXT;
+            bgColor = "#f3f4f6";
+        } else {
+            switch (estado) {
+                case "PENDIENTE" -> {
+                    fgColor = RED;
+                    bgColor = RED_LIGHT;
+                }
+                case "EN_ATENCION" -> {
+                    fgColor = ORANGE;
+                    bgColor = "#fff8e1";
+                }
+                case "UNIDAD_ASIGNADA" -> {
+                    fgColor = BLUE;
+                    bgColor = BLUE_LIGHT;
+                }
+                case "RESUELTA" -> {
+                    fgColor = GREEN;
+                    bgColor = "#e8f5e9";
+                }
+                case "CANCELADA" -> {
+                    fgColor = GRAY_TEXT;
+                    bgColor = "#f3f4f6";
+                }
+                default -> {
+                    fgColor = GRAY_TEXT;
+                    bgColor = "#f3f4f6";
+                }
+            }
         }
 
         Label badge = new Label(texto);
@@ -409,9 +495,9 @@ public class VecinosView {
     // CARGA DE DATOS REALES
     // =========================================================================
     /**
-     * Obtiene todas las alertas del barrio del usuario logueado,
-     * agrupa por username y construye un DatosVecino por persona.
-     * Excluye al propio usuario logueado.
+     * Obtiene todas las alertas del barrio del usuario logueado, agrupa por
+     * username y construye un DatosVecino por persona. Excluye al propio
+     * usuario logueado.
      */
     private List<DatosVecino> cargarVecinos() {
         if (alertaService == null || miBarrio == null) {
@@ -430,10 +516,10 @@ public class VecinosView {
 
         List<Alerta> alertasBarrio = todasAlertas.stream()
                 .filter(a -> a.getBarrio() != null
-                        && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
+                && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
                 .filter(a -> a.getUsuario() != null
-                        && a.getUsuario().getUsername() != null
-                        && !a.getUsuario().getUsername().equalsIgnoreCase(miUsername))
+                && a.getUsuario().getUsername() != null
+                && !a.getUsuario().getUsername().equalsIgnoreCase(miUsername))
                 .collect(Collectors.toList());
 
         // Agrupar por username
@@ -446,7 +532,7 @@ public class VecinosView {
         List<DatosVecino> vecinos = new ArrayList<>();
 
         for (Map.Entry<String, List<Alerta>> entry : porUsuario.entrySet()) {
-            String username    = entry.getKey();
+            String username = entry.getKey();
             List<Alerta> suyas = entry.getValue();
 
             // Tomamos los datos personales de la primera alerta (son constantes por usuario)
@@ -457,8 +543,8 @@ public class VecinosView {
                     + " " + (u.getIdentificacion() != null ? "" : ""); // nombre ya viene en NOMBRE_USUARIO
             // En la vista el campo mapea NOMBRE_USUARIO → primer_nombre (ver AlertaDAO.mapear)
             // así que getPrimer_nombre() contiene el nombre completo tal como viene de la BD
-            String nombre   = u.getPrimer_nombre() != null ? u.getPrimer_nombre().trim() : username;
-            String cedula   = u.getIdentificacion();
+            String nombre = u.getPrimer_nombre() != null ? u.getPrimer_nombre().trim() : username;
+            String cedula = u.getIdentificacion();
             String telefono = u.getTelefono();
 
             long totalAlertas = suyas.size();
@@ -467,9 +553,9 @@ public class VecinosView {
             long activas = suyas.stream()
                     .filter(a -> a.getEstado() != null)
                     .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                            || a.getEstado() == EstadoAlerta.EN_ATENCION
-                            || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA
-                            || a.getEstado() == EstadoAlerta.RECIBIDA)
+                    || a.getEstado() == EstadoAlerta.EN_ATENCION
+                    || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA
+                    || a.getEstado() == EstadoAlerta.RECIBIDA)
                     .count();
 
             // Última alerta (la más reciente por fecha)
@@ -478,7 +564,7 @@ public class VecinosView {
                     .max(Comparator.comparing(Alerta::getFechaHora))
                     .orElse(primera);
 
-            String ultimoTipo   = ultima.getTipoalerta() != null
+            String ultimoTipo = ultima.getTipoalerta() != null
                     ? ultima.getTipoalerta().getNombre() : null;
             String ultimoEstado = ultima.getEstado() != null
                     ? ultima.getEstado().name() : null;
