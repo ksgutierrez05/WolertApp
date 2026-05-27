@@ -1221,4 +1221,8 @@ public class UsuarioApp {
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/develop
