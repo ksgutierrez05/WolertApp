@@ -4,10 +4,6 @@
  */
 package sistemagestion.view;
 
-/**
- *
- * @author Maria Cristina
- */
 import java.sql.SQLException;
 import java.util.List;
 import javafx.geometry.Insets;
@@ -27,134 +23,187 @@ import sistemagestion.service.MedioTransporteService;
 import sistemagestion.service.TipoAlertaService;
 import sistemagestion.service.TipoArmaService;
 
-/**
- * Vista de gestión de Tipos / Catálogos para el panel administrativo. Tres
- * pestañas: Tipos de alerta · Tipos de arma · Medios de transporte. Mismo
- * patrón visual que ComunaAdminView.
- *
- * SRP — solo construye y gestiona esta pantalla. DIP — recibe los services
- * desde el constructor o los crea localmente, igual que el resto de vistas
- * Admin.
- *
- * @author Maria Cristina
- */
 public class TiposAdminView {
 
-    // ── Colores — mismos que AdministradorApp ────────────────────
-    private static final String WHITE = "#ffffff";
-    private static final String BG = "#f4f6fb";
-    private static final String BLUE = "#1565c0";
-    private static final String GREEN = "#43a047";
-    private static final String RED = "#e53935";
-    private static final String ORANGE = "#fb8c00";
-    private static final String PURPLE = "#7b1fa2";
-    private static final String TEAL = "#00796b";
+    // ── Colores — idénticos a ComunaAdminView/BarrioAdminView ────
+    private static final String WHITE     = "#ffffff";
+    private static final String BG        = "#f4f6fb";
+    private static final String BLUE      = "#1565c0";
+    private static final String GREEN     = "#43a047";
+    private static final String RED       = "#e53935";
+    private static final String RED_LIGHT = "#fff0f0";
+    private static final String ORANGE    = "#fb8c00";
+    private static final String PURPLE    = "#7b1fa2";
+    private static final String TEAL      = "#00796b";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER = "#e5e7eb";
+    private static final String BORDER    = "#e5e7eb";
 
     // ── Services ─────────────────────────────────────────────────
-    private TipoAlertaService tipoAlertaService;
-    private TipoArmaService tipoArmaService;
-    private MedioTransporteService medioTransporteService;
+    private TipoAlertaService       tipoAlertaService;
+    private TipoArmaService         tipoArmaService;
+    private MedioTransporteService  medioTransporteService;
 
     // ── Contenedores recargables ──────────────────────────────────
-    private VBox tableBoxAlerta;
-    private VBox tableBoxArma;
-    private VBox tableBoxMedio;
+    private VBox tablaContainerAlerta;
+    private VBox tablaContainerArma;
+    private VBox tablaContainerMedio;
+    private Label lblMostrandoAlerta;
+    private Label lblMostrandoArma;
+    private Label lblMostrandoMedio;
 
     // ── Pestaña activa (0 = alerta, 1 = arma, 2 = medio) ─────────
     private int pestanaActiva = 0;
 
-    // ─────────────────────────────────────────────────────────────
+    // ── Búsqueda activa por pestaña ───────────────────────────────
+    private TextField campoBusquedaAlerta;
+    private TextField campoBusquedaArma;
+    private TextField campoBusquedaMedio;
+
     public TiposAdminView() {
+        javafx.scene.text.Font.loadFont(
+                getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
-            tipoAlertaService = new TipoAlertaService();
-            tipoArmaService = new TipoArmaService();
+            tipoAlertaService      = new TipoAlertaService();
+            tipoArmaService        = new TipoArmaService();
             medioTransporteService = new MedioTransporteService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
         }
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
     // PUNTO DE ENTRADA
-    // ─────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
     public ScrollPane getView() {
         VBox content = new VBox(20);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: " + BG + ";");
 
-        // Área dinámica — se reemplaza al cambiar pestaña
         StackPane bodyArea = new StackPane();
         VBox.setVgrow(bodyArea, Priority.ALWAYS);
 
         content.getChildren().addAll(
-                buildTopBar(),
-                buildMetrics(),
+                buildTopBar(bodyArea),
+                buildStatsRow(),
                 buildTabBar(bodyArea),
                 bodyArea
         );
 
-        // Carga la primera pestaña
         bodyArea.getChildren().setAll(buildPanelAlerta());
 
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle(
-                "-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
+        scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
         return scroll;
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // TOP BAR
+    // TOP BAR — título + botón dinámico según pestaña
     // ═══════════════════════════════════════════════════════════════
-    private HBox buildTopBar() {
+    private HBox buildTopBar(StackPane bodyArea) {
         HBox bar = new HBox();
         bar.setAlignment(Pos.CENTER_LEFT);
 
-        VBox title = new VBox(4);
-        Label h1 = new Label("Tipos / Catálogos");
-        h1.setFont(Font.font("System", FontWeight.BOLD, 28));
-        h1.setTextFill(Color.web("#111827"));
-        Label sub = label(
-                "Administra tipos de alerta, armas y medios de transporte",
+        VBox titles = new VBox(4);
+        Label title = new Label("Tipos / Catálogos");
+        title.setFont(Font.font("System", FontWeight.BOLD, 28));
+        title.setTextFill(Color.web("#111827"));
+        Label sub = label("Administra tipos de alerta, armas y medios de transporte",
                 13, GRAY_TEXT, false);
-        title.getChildren().addAll(h1, sub);
+        titles.getChildren().addAll(title, sub);
 
-        bar.getChildren().add(title);
+        HBox right = new HBox(12);
+        right.setAlignment(Pos.CENTER_RIGHT);
+        HBox.setHgrow(right, Priority.ALWAYS);
+
+        Button btnNuevo = new Button("+ Nuevo tipo");
+        btnNuevo.setStyle(btnPrimaryStyle());
+        btnNuevo.setOnMouseEntered(e -> btnNuevo.setStyle(btnPrimaryHoverStyle()));
+        btnNuevo.setOnMouseExited(e  -> btnNuevo.setStyle(btnPrimaryStyle()));
+        btnNuevo.setOnAction(e -> {
+            switch (pestanaActiva) {
+                case 0 -> abrirFormularioAlerta(null);
+                case 1 -> abrirFormularioArma(null);
+                case 2 -> abrirFormularioMedio(null);
+            }
+        });
+
+        right.getChildren().add(btnNuevo);
+        bar.getChildren().addAll(titles, right);
         return bar;
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // MÉTRICAS
+    // STATS ROW — Font Awesome + boldNum con color
     // ═══════════════════════════════════════════════════════════════
-    private HBox buildMetrics() {
+    private HBox buildStatsRow() {
         HBox row = new HBox(16);
+        HBox.setHgrow(row, Priority.ALWAYS);
 
         int totalAlertas = cargarTiposAlerta().size();
-        int totalArmas = cargarTiposArma().size();
-        int totalMedios = cargarMedios().size();
+        int totalArmas   = cargarTiposArma().size();
+        int totalMedios  = cargarMedios().size();
+        int totalCatalog = totalAlertas + totalArmas + totalMedios;
+
+        Label lblAlertasVal  = boldNum(String.valueOf(totalAlertas),  RED);
+        Label lblArmasVal    = boldNum(String.valueOf(totalArmas),    PURPLE);
+        Label lblMediosVal   = boldNum(String.valueOf(totalMedios),   TEAL);
+        Label lblCatalogVal  = boldNum(String.valueOf(totalCatalog),  GREEN);
 
         row.getChildren().addAll(
-                statCard("🔔", "#fff0f0", RED,
-                        "Tipos de alerta",
-                        String.valueOf(totalAlertas),
-                        "Categorías activas", RED),
-                statCard("🔫", "#f3e8ff", PURPLE,
-                        "Tipos de arma",
-                        String.valueOf(totalArmas),
-                        "Registradas en el sistema", PURPLE),
-                statCard("🚗", "#e0f2fe", TEAL,
-                        "Medios de transporte",
-                        String.valueOf(totalMedios),
-                        "Disponibles", TEAL),
-                statCard("📦", "#e8f5e9", GREEN,
-                        "Total catálogos",
-                        String.valueOf(totalAlertas + totalArmas + totalMedios),
-                        "Ítems en el sistema", GREEN)
+                statCard(RED_LIGHT,  RED,    "\uf0f3", "Tipos de alerta",       lblAlertasVal,  "Categorías activas"),
+                statCard("#f3e8ff",  PURPLE, "\uf6ff", "Tipos de arma",         lblArmasVal,    "Registradas en el sistema"),
+                statCard("#e0f2fe",  TEAL,   "\uf1b9", "Medios de transporte",  lblMediosVal,   "Disponibles"),
+                statCard("#e8f5e9",  GREEN,  "\uf466", "Total catálogos",       lblCatalogVal,  "Ítems en el sistema")
         );
         return row;
+    }
+
+    private Label boldNum(String val, String color) {
+        Label l = new Label(val);
+        l.setStyle(
+                "-fx-font-size: 36px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: " + color + ";");
+        return l;
+    }
+
+    private VBox statCard(String bgIcon, String accentColor, String iconFA,
+                          String title, Label valueLabel, String sub) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20, 22, 20, 22));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+        HBox.setHgrow(card, Priority.ALWAYS);
+        shadow(card);
+
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(52, 52);
+        iconWrap.setMinSize(52, 52);
+        iconWrap.setMaxSize(52, 52);
+        Rectangle iconBg = new Rectangle(52, 52);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
+        iconBg.setFill(Color.web(bgIcon));
+        Label iconLbl = new Label(iconFA);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px; -fx-text-fill: " + accentColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;");
+        Label subLbl = new Label(sub);
+        subLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
+
+        HBox top = new HBox(16);
+        top.setAlignment(Pos.CENTER_LEFT);
+        top.getChildren().addAll(iconWrap, new VBox(3, titleLbl, valueLabel, subLbl));
+        card.getChildren().add(top);
+
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
+        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        return card;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -169,12 +218,11 @@ public class TiposAdminView {
                 + "-fx-border-width: 0 0 1 0;");
 
         Button[] tabs = {
-            tabBtn("🔔  Tipos de alerta", 0),
-            tabBtn("🔫  Tipos de arma", 1),
-            tabBtn("🚗  Medios de transporte", 2)
+            tabBtn("🔔   Tipos de alerta",      0),
+            tabBtn("🔫   Tipos de arma",         1),
+            tabBtn("🚗   Medios de transporte",  2)
         };
 
-        // Resaltar pestaña activa al inicio
         aplicarEstiloTab(tabs[0], true);
         aplicarEstiloTab(tabs[1], false);
         aplicarEstiloTab(tabs[2], false);
@@ -203,28 +251,25 @@ public class TiposAdminView {
         Button btn = new Button(texto);
         btn.setPrefHeight(44);
         btn.setPadding(new Insets(0, 24, 0, 24));
+        btn.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid', 'System';"
+                + "-fx-font-size: 13px;");
         btn.setCursor(javafx.scene.Cursor.HAND);
         return btn;
     }
 
     private void actualizarTabs(Button[] tabs, int activo) {
-        for (int i = 0; i < tabs.length; i++) {
-            aplicarEstiloTab(tabs[i], i == activo);
-        }
+        for (int i = 0; i < tabs.length; i++) aplicarEstiloTab(tabs[i], i == activo);
     }
 
     private void aplicarEstiloTab(Button btn, boolean activo) {
         btn.setStyle(activo
-                ? "-fx-background-color: " + WHITE + ";"
-                + "-fx-text-fill: " + BLUE + ";"
+                ? "-fx-background-color: " + WHITE + "; -fx-text-fill: " + BLUE + ";"
                 + "-fx-font-size: 13px; -fx-font-weight: bold;"
                 + "-fx-border-color: transparent transparent " + BLUE + " transparent;"
-                + "-fx-border-width: 0 0 2 0;"
-                + "-fx-background-radius: 0; -fx-cursor: hand;"
-                : "-fx-background-color: " + WHITE + ";"
-                + "-fx-text-fill: " + GRAY_TEXT + ";"
-                + "-fx-font-size: 13px;"
-                + "-fx-border-color: transparent;"
+                + "-fx-border-width: 0 0 2 0; -fx-background-radius: 0; -fx-cursor: hand;"
+                : "-fx-background-color: " + WHITE + "; -fx-text-fill: " + GRAY_TEXT + ";"
+                + "-fx-font-size: 13px; -fx-border-color: transparent;"
                 + "-fx-background-radius: 0; -fx-cursor: hand;");
     }
 
@@ -232,467 +277,395 @@ public class TiposAdminView {
     // PANEL — TIPOS DE ALERTA
     // ═══════════════════════════════════════════════════════════════
     private VBox buildPanelAlerta() {
-        VBox panel = new VBox(12);
-        panel.setStyle(
-                "-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
-        panel.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
+        VBox panel = new VBox(0);
+        panel.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
+        shadow(panel);
 
         panel.getChildren().addAll(
-                buildToolbar("Buscar tipo de alerta...",
-                        "+ Nuevo tipo de alerta",
-                        () -> abrirFormularioAlerta(null, panel)),
+                buildToolbarPanel("Buscar tipo de alerta...", campoBusquedaAlerta,
+                        tf -> { campoBusquedaAlerta = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
                 buildTablaAlerta()
         );
         return panel;
     }
 
     private VBox buildTablaAlerta() {
-        tableBoxAlerta = new VBox();
+        VBox card = new VBox(0);
+
+        HBox header = buildHeader();
+        HBox hNombreWrap = new HBox();
+        HBox.setHgrow(hNombreWrap, Priority.ALWAYS);
+        hNombreWrap.getChildren().add(colHeader("Nombre / tipo", 0));
+        header.getChildren().addAll(hNombreWrap, colHeaderFixed("Acciones", 120));
+        card.getChildren().add(header);
+
+        tablaContainerAlerta = new VBox(0);
+        card.getChildren().add(tablaContainerAlerta);
+
+        HBox footer = buildFooterBox();
+        lblMostrandoAlerta = label("Cargando...", 12, GRAY_TEXT, false);
+        footer.getChildren().add(lblMostrandoAlerta);
+        card.getChildren().add(footer);
+
         renderTablaAlerta(cargarTiposAlerta());
-        return tableBoxAlerta;
+        return card;
     }
 
     private void renderTablaAlerta(List<TipoAlerta> lista) {
-        tableBoxAlerta.getChildren().clear();
-
-        // Cabecera
-        HBox header = buildHeaderRow(
-                col("ID", 60), col("Nombre", 300),
-                col("Alertas registradas", 180), col("Última alerta", 180),
-                col("Acciones", 120));
-        tableBoxAlerta.getChildren().addAll(header, separadorH());
-
+        if (tablaContainerAlerta == null) return;
+        tablaContainerAlerta.getChildren().clear();
         if (lista.isEmpty()) {
-            Label empty = label("No hay tipos de alerta registrados.", 13, GRAY_TEXT, false);
-            empty.setPadding(new Insets(24, 16, 24, 16));
-            tableBoxAlerta.getChildren().add(empty);
+            Label v = label("No hay tipos de alerta registrados.", 14, GRAY_TEXT, false);
+            VBox.setMargin(v, new Insets(30, 16, 30, 16));
+            tablaContainerAlerta.getChildren().add(v);
         } else {
-            boolean alt = false;
-            for (TipoAlerta t : lista) {
-                tableBoxAlerta.getChildren().addAll(buildFilaAlerta(t, alt), separadorH());
-                alt = !alt;
+            for (int i = 0; i < lista.size(); i++) {
+                tablaContainerAlerta.getChildren().add(buildFilaAlerta(lista.get(i), i % 2 == 0));
             }
         }
-
-        tableBoxAlerta.getChildren().add(buildFooter(lista.size(), "tipos de alerta"));
+        if (lblMostrandoAlerta != null)
+            lblMostrandoAlerta.setText("Total: " + lista.size() + " tipos de alerta");
     }
 
-    private HBox buildFilaAlerta(TipoAlerta t, boolean alt) {
-        HBox row = buildFilaBase(alt);
+    private HBox buildFilaAlerta(TipoAlerta t, boolean par) {
+        HBox fila = buildFilaBase(par);
 
-        Label idLbl = label(String.valueOf(t.getId_tipoalerta()), 13, GRAY_TEXT, false);
-        idLbl.setPrefWidth(60);
+        // Nombre crece
+        HBox celdaNombre = new HBox(10);
+        celdaNombre.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(celdaNombre, Priority.ALWAYS);
 
-        // Badge de nombre con color según tipo
-        HBox nombreBox = new HBox(8);
-        nombreBox.setAlignment(Pos.CENTER_LEFT);
-        nombreBox.setPrefWidth(300);
         String[] badge = badgeAlerta(t.getNombre());
-        Label badgeLbl = new Label(badge[0] + " " + t.getNombre());
-        badgeLbl.setStyle(
-                "-fx-background-color: " + badge[1] + ";"
-                + "-fx-text-fill: " + badge[2] + ";"
-                + "-fx-background-radius: 12;"
-                + "-fx-padding: 3 10 3 10;"
-                + "-fx-font-size: 12px;");
-        nombreBox.getChildren().add(badgeLbl);
+        StackPane avatarBox = new StackPane();
+        Circle avatar = new Circle(20, Color.web(badge[3]));
+        Label avatarLbl = label(badge[0], 14, WHITE, false);
+        avatarBox.getChildren().addAll(avatar, avatarLbl);
 
-        // Columnas informativas — en una integración real vendrían de alertaService
-        Label alertasLbl = label("—", 13, GRAY_TEXT, false);
-        alertasLbl.setPrefWidth(180);
-        Label ultimaLbl = label("—", 13, GRAY_TEXT, false);
-        ultimaLbl.setPrefWidth(180);
+        VBox nombreBox = new VBox(2);
+        Label nombreLbl = new Label(t.getNombre());
+        nombreLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #111827;");
+        Label badgeLbl = new Label(badge[1]);
+        badgeLbl.setStyle(
+                "-fx-background-color: " + badge[2] + ";"
+                + "-fx-text-fill: " + badge[3] + ";"
+                + "-fx-font-size: 10px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 20; -fx-padding: 2 8 2 8;");
+        nombreBox.getChildren().addAll(nombreLbl, badgeLbl);
+        celdaNombre.getChildren().addAll(avatarBox, nombreBox);
 
         HBox acciones = accionesBox(
-                () -> abrirFormularioAlerta(t, null),
-                () -> confirmarEliminarAlerta(t)
-        );
+                () -> abrirFormularioAlerta(t),
+                () -> confirmarEliminarAlerta(t));
 
-        row.getChildren().addAll(idLbl, nombreBox, alertasLbl, ultimaLbl, acciones);
-        return row;
+        fila.getChildren().addAll(celdaNombre, acciones);
+        return fila;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // PANEL — TIPOS DE ARMA
     // ═══════════════════════════════════════════════════════════════
     private VBox buildPanelArma() {
-        VBox panel = new VBox(12);
-        panel.setStyle(
-                "-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
-        panel.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
+        VBox panel = new VBox(0);
+        panel.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
+        shadow(panel);
 
         panel.getChildren().addAll(
-                buildToolbar("Buscar tipo de arma...",
-                        "+ Nuevo tipo de arma",
-                        () -> abrirFormularioArma(null, panel)),
+                buildToolbarPanel("Buscar tipo de arma...", campoBusquedaArma,
+                        tf -> { campoBusquedaArma = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
                 buildTablaArma()
         );
         return panel;
     }
 
     private VBox buildTablaArma() {
-        tableBoxArma = new VBox();
+        VBox card = new VBox(0);
+
+        HBox header = buildHeader();
+        HBox hNombreWrap = new HBox();
+        HBox.setHgrow(hNombreWrap, Priority.ALWAYS);
+        hNombreWrap.getChildren().add(colHeader("Nombre", 0));
+        header.getChildren().addAll(
+                hNombreWrap,
+                colHeaderFixed("Descripción", 280),
+                colHeaderFixed("Acciones",    120));
+        card.getChildren().add(header);
+
+        tablaContainerArma = new VBox(0);
+        card.getChildren().add(tablaContainerArma);
+
+        HBox footer = buildFooterBox();
+        lblMostrandoArma = label("Cargando...", 12, GRAY_TEXT, false);
+        footer.getChildren().add(lblMostrandoArma);
+        card.getChildren().add(footer);
+
         renderTablaArma(cargarTiposArma());
-        return tableBoxArma;
+        return card;
     }
 
     private void renderTablaArma(List<TipoArma> lista) {
-        tableBoxArma.getChildren().clear();
-
-        HBox header = buildHeaderRow(
-                col("ID", 60), col("Nombre", 280),
-                col("Descripción", 360), col("Acciones", 120));
-        tableBoxArma.getChildren().addAll(header, separadorH());
-
+        if (tablaContainerArma == null) return;
+        tablaContainerArma.getChildren().clear();
         if (lista.isEmpty()) {
-            Label empty = label("No hay tipos de arma registrados.", 13, GRAY_TEXT, false);
-            empty.setPadding(new Insets(24, 16, 24, 16));
-            tableBoxArma.getChildren().add(empty);
+            Label v = label("No hay tipos de arma registrados.", 14, GRAY_TEXT, false);
+            VBox.setMargin(v, new Insets(30, 16, 30, 16));
+            tablaContainerArma.getChildren().add(v);
         } else {
-            boolean alt = false;
-            for (TipoArma t : lista) {
-                tableBoxArma.getChildren().addAll(buildFilaArma(t, alt), separadorH());
-                alt = !alt;
+            for (int i = 0; i < lista.size(); i++) {
+                tablaContainerArma.getChildren().add(buildFilaArma(lista.get(i), i % 2 == 0));
             }
         }
-
-        tableBoxArma.getChildren().add(buildFooter(lista.size(), "tipos de arma"));
+        if (lblMostrandoArma != null)
+            lblMostrandoArma.setText("Total: " + lista.size() + " tipos de arma");
     }
 
-    private HBox buildFilaArma(TipoArma t, boolean alt) {
-        HBox row = buildFilaBase(alt);
+    private HBox buildFilaArma(TipoArma t, boolean par) {
+        HBox fila = buildFilaBase(par);
 
-        Label idLbl = label(String.valueOf(t.getId_tipoarma()), 13, GRAY_TEXT, false);
-        idLbl.setPrefWidth(60);
+        // Nombre crece
+        HBox celdaNombre = new HBox(10);
+        celdaNombre.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(celdaNombre, Priority.ALWAYS);
 
-        HBox nombreBox = new HBox(8);
-        nombreBox.setAlignment(Pos.CENTER_LEFT);
-        nombreBox.setPrefWidth(280);
-        Circle dot = new Circle(5, Color.web(PURPLE));
-        nombreBox.getChildren().addAll(dot, label(t.getNombre(), 13, "#111827", true));
+        StackPane avatarBox = new StackPane();
+        Circle avatar = new Circle(20, Color.web(PURPLE));
+        Label avatarLbl = label("\uf6ff", 12, WHITE, false);
+        avatarLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 12px; -fx-text-fill: white;");
+        avatarBox.getChildren().addAll(avatar, avatarLbl);
 
+        VBox nombreBox = new VBox(2);
+        Label nombreLbl = new Label(t.getNombre());
+        nombreLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #111827;");
+        Label subLbl = label("Tipo de arma", 11, GRAY_TEXT, false);
+        nombreBox.getChildren().addAll(nombreLbl, subLbl);
+        celdaNombre.getChildren().addAll(avatarBox, nombreBox);
+
+        // Descripción — ancho fijo
         Label descLbl = label(
-                t.getDescripcion() != null ? t.getDescripcion() : "—",
-                13, GRAY_TEXT, false);
-        descLbl.setPrefWidth(360);
-        descLbl.setWrapText(true);
+                t.getDescripcion() != null && !t.getDescripcion().isBlank()
+                        ? t.getDescripcion() : "—",
+                12, GRAY_TEXT, false);
+        descLbl.setPrefWidth(280);
+        descLbl.setMinWidth(280);
+        descLbl.setMaxWidth(280);
+        descLbl.setWrapText(false);
+        descLbl.setEllipsisString("…");
 
         HBox acciones = accionesBox(
-                () -> abrirFormularioArma(t, null),
-                () -> confirmarEliminarArma(t)
-        );
+                () -> abrirFormularioArma(t),
+                () -> confirmarEliminarArma(t));
 
-        row.getChildren().addAll(idLbl, nombreBox, descLbl, acciones);
-        return row;
+        fila.getChildren().addAll(celdaNombre, descLbl, acciones);
+        return fila;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // PANEL — MEDIOS DE TRANSPORTE
     // ═══════════════════════════════════════════════════════════════
     private VBox buildPanelMedio() {
-        VBox panel = new VBox(12);
-        panel.setStyle(
-                "-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
-        panel.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
+        VBox panel = new VBox(0);
+        panel.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 0 0 12 12;");
+        shadow(panel);
 
         panel.getChildren().addAll(
-                buildToolbar("Buscar medio de transporte...",
-                        "+ Nuevo medio",
-                        () -> abrirFormularioMedio(null, panel)),
+                buildToolbarPanel("Buscar medio de transporte...", campoBusquedaMedio,
+                        tf -> { campoBusquedaMedio = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
                 buildTablaMedio()
         );
         return panel;
     }
 
     private VBox buildTablaMedio() {
-        tableBoxMedio = new VBox();
+        VBox card = new VBox(0);
+
+        HBox header = buildHeader();
+        HBox hNombreWrap = new HBox();
+        HBox.setHgrow(hNombreWrap, Priority.ALWAYS);
+        hNombreWrap.getChildren().add(colHeader("Nombre", 0));
+        header.getChildren().addAll(hNombreWrap, colHeaderFixed("Acciones", 120));
+        card.getChildren().add(header);
+
+        tablaContainerMedio = new VBox(0);
+        card.getChildren().add(tablaContainerMedio);
+
+        HBox footer = buildFooterBox();
+        lblMostrandoMedio = label("Cargando...", 12, GRAY_TEXT, false);
+        footer.getChildren().add(lblMostrandoMedio);
+        card.getChildren().add(footer);
+
         renderTablaMedio(cargarMedios());
-        return tableBoxMedio;
+        return card;
     }
 
     private void renderTablaMedio(List<MedioTransporte> lista) {
-        tableBoxMedio.getChildren().clear();
-
-        HBox header = buildHeaderRow(
-                col("ID", 60), col("Nombre", 400), col("Acciones", 120));
-        tableBoxMedio.getChildren().addAll(header, separadorH());
-
+        if (tablaContainerMedio == null) return;
+        tablaContainerMedio.getChildren().clear();
         if (lista.isEmpty()) {
-            Label empty = label("No hay medios de transporte registrados.",
-                    13, GRAY_TEXT, false);
-            empty.setPadding(new Insets(24, 16, 24, 16));
-            tableBoxMedio.getChildren().add(empty);
+            Label v = label("No hay medios de transporte registrados.", 14, GRAY_TEXT, false);
+            VBox.setMargin(v, new Insets(30, 16, 30, 16));
+            tablaContainerMedio.getChildren().add(v);
         } else {
-            boolean alt = false;
-            for (MedioTransporte m : lista) {
-                tableBoxMedio.getChildren().addAll(buildFilaMedio(m, alt), separadorH());
-                alt = !alt;
+            for (int i = 0; i < lista.size(); i++) {
+                tablaContainerMedio.getChildren().add(buildFilaMedio(lista.get(i), i % 2 == 0));
             }
         }
-
-        tableBoxMedio.getChildren().add(buildFooter(lista.size(), "medios de transporte"));
+        if (lblMostrandoMedio != null)
+            lblMostrandoMedio.setText("Total: " + lista.size() + " medios de transporte");
     }
 
-    private HBox buildFilaMedio(MedioTransporte m, boolean alt) {
-        HBox row = buildFilaBase(alt);
+    private HBox buildFilaMedio(MedioTransporte m, boolean par) {
+        HBox fila = buildFilaBase(par);
 
-        Label idLbl = label(String.valueOf(m.getId_mediotransporte()), 13, GRAY_TEXT, false);
-        idLbl.setPrefWidth(60);
+        HBox celdaNombre = new HBox(10);
+        celdaNombre.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(celdaNombre, Priority.ALWAYS);
 
-        HBox nombreBox = new HBox(8);
-        nombreBox.setAlignment(Pos.CENTER_LEFT);
-        nombreBox.setPrefWidth(400);
-        HBox.setHgrow(nombreBox, Priority.ALWAYS);
-        Circle dot = new Circle(5, Color.web(TEAL));
-        nombreBox.getChildren().addAll(dot, label(m.getNombre(), 13, "#111827", true));
+        StackPane avatarBox = new StackPane();
+        Circle avatar = new Circle(20, Color.web(TEAL));
+        Label avatarLbl = new Label("\uf1b9");
+        avatarLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 12px; -fx-text-fill: white;");
+        avatarBox.getChildren().addAll(avatar, avatarLbl);
+
+        VBox nombreBox = new VBox(2);
+        Label nombreLbl = new Label(m.getNombre() != null ? m.getNombre() : "—");
+        nombreLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #111827;");
+        Label subLbl = label("Medio de transporte", 11, GRAY_TEXT, false);
+        nombreBox.getChildren().addAll(nombreLbl, subLbl);
+        celdaNombre.getChildren().addAll(avatarBox, nombreBox);
 
         HBox acciones = accionesBox(
-                () -> abrirFormularioMedio(m, null),
-                () -> confirmarEliminarMedio(m)
-        );
+                () -> abrirFormularioMedio(m),
+                () -> confirmarEliminarMedio(m));
 
-        row.getChildren().addAll(idLbl, nombreBox, acciones);
-        return row;
+        fila.getChildren().addAll(celdaNombre, acciones);
+        return fila;
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // FORMULARIOS — TIPO ALERTA
+    // FORMULARIOS — como Dialog (igual que ComunaAdminView)
     // ═══════════════════════════════════════════════════════════════
-    private void abrirFormularioAlerta(TipoAlerta existente, VBox panelOrigen) {
+    private void abrirFormularioAlerta(TipoAlerta existente) {
         boolean esEdicion = existente != null;
-        Label errorLbl = label("", 12, RED, false);
-        errorLbl.setVisible(false);
 
-        TextField txtNombre = campoTexto("Ej: Robo / Asalto, Incendio...");
-        if (esEdicion) {
-            txtNombre.setText(existente.getNombre());
-        }
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle(esEdicion ? "Editar tipo de alerta" : "Nuevo tipo de alerta");
+        dlg.setHeaderText(null);
 
-        mostrarFormularioEnRoot(
+        VBox form = buildFormBase(
                 esEdicion ? "Editar tipo de alerta" : "Nuevo tipo de alerta",
-                esEdicion ? "Modifica el nombre del tipo" : "Registra una nueva categoría de alerta",
-                List.of(
-                        new CampoFormulario("Nombre del tipo de alerta", txtNombre)
-                ),
-                errorLbl,
-                esEdicion ? "💾 Guardar cambios" : "✅ Crear tipo",
-                () -> {
-                    try {
-                        if (esEdicion) {
-                            existente.setNombre(txtNombre.getText().trim());
-                            tipoAlertaService.actualizar(existente);
-                            mostrarExito("Tipo de alerta actualizado.");
-                        } else {
-                            TipoAlerta nuevo = new TipoAlerta();
-                            nuevo.setNombre(txtNombre.getText().trim());
-                            tipoAlertaService.insertar(nuevo);
-                            mostrarExito("Tipo de alerta creado.");
-                        }
-                        return true;
-                    } catch (IllegalArgumentException ex) {
-                        errorLbl.setText(ex.getMessage() != null
-                                ? ex.getMessage() : "Nombre inválido.");
-                        errorLbl.setVisible(true);
-                        return false;
-                    }
-                }
-        );
+                esEdicion ? "Modifica el nombre del tipo" : "Registra una nueva categoría de alerta");
+
+        TextField txtNombre = dlgField("Ej: Robo / Asalto, Incendio...",
+                esEdicion ? existente.getNombre() : "");
+        Label lblError = label("", 12, RED, false);
+        lblError.setWrapText(true);
+
+        form.getChildren().addAll(
+                label("Nombre del tipo de alerta *", 12, GRAY_TEXT, false),
+                txtNombre, lblError);
+
+        dlg.getDialogPane().setContent(form);
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        styleDlgBtn(dlg, ButtonType.OK, esEdicion ? "Guardar cambios" : "Crear tipo");
+
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
+        btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            lblError.setText("");
+            String nombre = txtNombre.getText().trim();
+            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            try {
+                if (esEdicion) { existente.setNombre(nombre); tipoAlertaService.actualizar(existente); }
+                else { TipoAlerta n = new TipoAlerta(); n.setNombre(nombre); tipoAlertaService.insertar(n); }
+                renderTablaAlerta(cargarTiposAlerta());
+            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+        });
+        dlg.showAndWait();
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // FORMULARIOS — TIPO ARMA
-    // ═══════════════════════════════════════════════════════════════
-    private void abrirFormularioArma(TipoArma existente, VBox panelOrigen) {
-
-        // ✅ Variables finales — el lambda puede capturarlas sin problema
-        final boolean esEdicion = existente != null;
-        final TipoArma ref = existente;
-
-        Label errorLbl = label("", 12, RED, false);
-        errorLbl.setVisible(false);
-
-        TextField txtNombre = campoTexto("Ej: Arma de fuego, Arma blanca...");
-        TextField txtDesc = campoTexto("Descripción opcional...");
-
-        if (esEdicion) {
-            txtNombre.setText(ref.getNombre());
-            if (ref.getDescripcion() != null) {
-                txtDesc.setText(ref.getDescripcion());
-            }
-        }
-
-        mostrarFormularioEnRoot(
-                esEdicion ? "Editar tipo de arma" : "Nuevo tipo de arma",
-                esEdicion ? "Modifica los datos del tipo de arma"
-                        : "Registra un nuevo tipo de arma",
-                List.of(
-                        new CampoFormulario("Nombre", txtNombre),
-                        new CampoFormulario("Descripción (opcional)", txtDesc)
-                ),
-                errorLbl,
-                esEdicion ? "💾 Guardar cambios" : "✅ Crear tipo",
-                () -> {
-                    try {
-                        if (esEdicion) {
-                            ref.setNombre(txtNombre.getText().trim());
-                            ref.setDescripcion(txtDesc.getText().trim());
-                            try {
-                                tipoArmaService.actualizar(ref);
-                            } catch (SQLException ex) {
-                                System.getLogger(TiposAdminView.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                            }
-                            mostrarExito("Tipo de arma actualizado.");
-                        } else {
-                            TipoArma nuevo = new TipoArma();
-                            nuevo.setNombre(txtNombre.getText().trim());
-                            nuevo.setDescripcion(txtDesc.getText().trim());
-                            try {
-                                tipoArmaService.insertar(nuevo);
-                            } catch (SQLException ex) {
-                                System.getLogger(TiposAdminView.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-                            }
-                            mostrarExito("Tipo de arma creado.");
-                        }
-                        return true;
-                    } catch (IllegalArgumentException ex) {
-                        errorLbl.setText(ex.getMessage() != null
-                                ? ex.getMessage() : "Datos inválidos.");
-                        errorLbl.setVisible(true);
-                        return false;
-                    }
-                }
-        );
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // FORMULARIOS — MEDIO DE TRANSPORTE
-    // ═══════════════════════════════════════════════════════════════
-    private void abrirFormularioMedio(MedioTransporte existente, VBox panelOrigen) {
+    private void abrirFormularioArma(TipoArma existente) {
         boolean esEdicion = existente != null;
-        Label errorLbl = label("", 12, RED, false);
-        errorLbl.setVisible(false);
 
-        TextField txtNombre = campoTexto("Ej: Motocicleta, Automóvil, A pie...");
-        if (esEdicion) {
-            txtNombre.setText(existente.getNombre());
-        }
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle(esEdicion ? "Editar tipo de arma" : "Nuevo tipo de arma");
+        dlg.setHeaderText(null);
 
-        mostrarFormularioEnRoot(
+        VBox form = buildFormBase(
+                esEdicion ? "Editar tipo de arma" : "Nuevo tipo de arma",
+                esEdicion ? "Modifica los datos del tipo" : "Registra un nuevo tipo de arma");
+
+        TextField txtNombre = dlgField("Ej: Arma de fuego, Arma blanca...",
+                esEdicion ? existente.getNombre() : "");
+        TextField txtDesc   = dlgField("Descripción opcional...",
+                esEdicion && existente.getDescripcion() != null ? existente.getDescripcion() : "");
+        Label lblError = label("", 12, RED, false);
+        lblError.setWrapText(true);
+
+        form.getChildren().addAll(
+                label("Nombre *",               12, GRAY_TEXT, false), txtNombre,
+                label("Descripción (opcional)", 12, GRAY_TEXT, false), txtDesc,
+                lblError);
+
+        dlg.getDialogPane().setContent(form);
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        styleDlgBtn(dlg, ButtonType.OK, esEdicion ? "Guardar cambios" : "Crear tipo");
+
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
+        btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            lblError.setText("");
+            String nombre = txtNombre.getText().trim();
+            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            try {
+                if (esEdicion) {
+                    existente.setNombre(nombre);
+                    existente.setDescripcion(txtDesc.getText().trim());
+                    tipoArmaService.actualizar(existente);
+                } else {
+                    TipoArma n = new TipoArma();
+                    n.setNombre(nombre);
+                    n.setDescripcion(txtDesc.getText().trim());
+                    tipoArmaService.insertar(n);
+                }
+                renderTablaArma(cargarTiposArma());
+            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+        });
+        dlg.showAndWait();
+    }
+
+    private void abrirFormularioMedio(MedioTransporte existente) {
+        boolean esEdicion = existente != null;
+
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle(esEdicion ? "Editar medio de transporte" : "Nuevo medio de transporte");
+        dlg.setHeaderText(null);
+
+        VBox form = buildFormBase(
                 esEdicion ? "Editar medio de transporte" : "Nuevo medio de transporte",
-                esEdicion ? "Modifica el nombre del medio"
-                        : "Registra un nuevo medio de transporte",
-                List.of(new CampoFormulario("Nombre del medio", txtNombre)),
-                errorLbl,
-                esEdicion ? "💾 Guardar cambios" : "✅ Crear medio",
-                () -> {
-                    try {
-                        if (esEdicion) {
-                            existente.setNombre(txtNombre.getText().trim());
-                            medioTransporteService.actualizar(existente);
-                            mostrarExito("Medio de transporte actualizado.");
-                        } else {
-                            MedioTransporte nuevo = new MedioTransporte();
-                            nuevo.setNombre(txtNombre.getText().trim());
-                            medioTransporteService.insertar(nuevo);
-                            mostrarExito("Medio de transporte creado.");
-                        }
-                        return true;
-                    } catch (IllegalArgumentException ex) {
-                        errorLbl.setText(ex.getMessage() != null
-                                ? ex.getMessage() : "Nombre inválido.");
-                        errorLbl.setVisible(true);
-                        return false;
-                    }
-                }
-        );
-    }
+                esEdicion ? "Modifica el nombre del medio" : "Registra un nuevo medio de transporte");
 
-    // ═══════════════════════════════════════════════════════════════
-    // FORMULARIO GENÉRICO — reutilizado por los tres tipos
-    // ═══════════════════════════════════════════════════════════════
-    /**
-     * Interfaz funcional para la acción de guardar de cada formulario.
-     */
-    @FunctionalInterface
-    private interface AccionGuardar {
+        TextField txtNombre = dlgField("Ej: Motocicleta, Automóvil, A pie...",
+                esEdicion ? existente.getNombre() : "");
+        Label lblError = label("", 12, RED, false);
+        lblError.setWrapText(true);
 
-        /**
-         * @return true si guardó con éxito, false si hubo error de validación
-         */
-        boolean ejecutar();
-    }
+        form.getChildren().addAll(
+                label("Nombre del medio *", 12, GRAY_TEXT, false),
+                txtNombre, lblError);
 
-    /**
-     * Par etiqueta + control para construir formularios genéricos.
-     */
-    private record CampoFormulario(String etiqueta, javafx.scene.control.Control control) {
+        dlg.getDialogPane().setContent(form);
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        styleDlgBtn(dlg, ButtonType.OK, esEdicion ? "Guardar cambios" : "Crear medio");
 
-    }
-
-    /**
-     * Muestra un formulario card en el centro del BorderPane padre. Al guardar
-     * con éxito o cancelar, vuelve a getView().
-     */
-    private void mostrarFormularioEnRoot(
-            String titulo,
-            String subtitulo,
-            List<CampoFormulario> campos,
-            Label errorLbl,
-            String textoBtnGuardar,
-            AccionGuardar accionGuardar) {
-
-        VBox wrapper = new VBox(20);
-        wrapper.setPadding(new Insets(32));
-        wrapper.setStyle("-fx-background-color: " + BG + ";");
-        wrapper.setMaxWidth(520);
-
-        Label h1 = new Label(titulo);
-        h1.setFont(Font.font("System", FontWeight.BOLD, 24));
-        h1.setTextFill(Color.web("#111827"));
-        Label sub = label(subtitulo, 13, GRAY_TEXT, false);
-
-        VBox card = new VBox(16);
-        card.setPadding(new Insets(28));
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 14;");
-        card.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
-        card.getChildren().addAll(h1, sub, separadorH());
-
-        for (CampoFormulario cf : campos) {
-            Label lbl = label(cf.etiqueta(), 13, "#374151", true);
-            cf.control().setPrefHeight(40);
-            cf.control().setMaxWidth(Double.MAX_VALUE);
-            card.getChildren().addAll(lbl, cf.control());
-        }
-
-        card.getChildren().addAll(errorLbl, separadorH());
-
-        Button btnGuardar = btnPrimario(textoBtnGuardar);
-        Button btnCancelar = btnSecundario("✕ Cancelar");
-
-        HBox botones = new HBox(12, btnGuardar, btnCancelar);
-        botones.setAlignment(Pos.CENTER_LEFT);
-        card.getChildren().add(botones);
-        wrapper.getChildren().add(card);
-
-        ScrollPane scrollForm = new ScrollPane(wrapper);
-        scrollForm.setFitToWidth(true);
-        scrollForm.setStyle(
-                "-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
-
-        // Navegar al formulario en el BorderPane raíz
-        if (tableBoxAlerta != null && tableBoxAlerta.getScene() != null) {
-            BorderPane bp = (BorderPane) tableBoxAlerta.getScene().getRoot();
-
-            btnCancelar.setOnAction(e -> bp.setCenter(getView()));
-            btnGuardar.setOnAction(e -> {
-                boolean ok = accionGuardar.ejecutar();
-                if (ok) {
-                    bp.setCenter(getView());
-                }
-            });
-
-            bp.setCenter(scrollForm);
-        }
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
+        btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            lblError.setText("");
+            String nombre = txtNombre.getText().trim();
+            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            try {
+                if (esEdicion) { existente.setNombre(nombre); medioTransporteService.actualizar(existente); }
+                else { MedioTransporte n = new MedioTransporte(); n.setNombre(nombre); medioTransporteService.insertar(n); }
+                renderTablaMedio(cargarMedios());
+            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+        });
+        dlg.showAndWait();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -700,43 +673,40 @@ public class TiposAdminView {
     // ═══════════════════════════════════════════════════════════════
     private void confirmarEliminarAlerta(TipoAlerta t) {
         if (!confirmar("¿Eliminar tipo de alerta \"" + t.getNombre() + "\"?",
-                "Las alertas de este tipo quedarán sin categoría.")) {
-            return;
-        }
-        try {
-            tipoAlertaService.eliminar(t.getNombre());
-            mostrarExito("Tipo de alerta eliminado.");
-            renderTablaAlerta(cargarTiposAlerta());
-        } catch (Exception e) {
-            mostrarAlerta("Error al eliminar", e.getMessage());
-        }
+                "Las alertas de este tipo quedarán sin categoría.")) return;
+        try { tipoAlertaService.eliminar(t.getNombre()); renderTablaAlerta(cargarTiposAlerta()); }
+        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
     }
 
     private void confirmarEliminarArma(TipoArma t) {
         if (!confirmar("¿Eliminar tipo de arma \"" + t.getNombre() + "\"?",
-                "Esta acción no se puede deshacer.")) {
-            return;
-        }
-        try {
-            tipoArmaService.eliminar(t.getNombre());
-            mostrarExito("Tipo de arma eliminado.");
-            renderTablaArma(cargarTiposArma());
-        } catch (Exception e) {
-            mostrarAlerta("Error al eliminar", e.getMessage());
-        }
+                "Esta acción no se puede deshacer.")) return;
+        try { tipoArmaService.eliminar(t.getNombre()); renderTablaArma(cargarTiposArma()); }
+        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
     }
 
     private void confirmarEliminarMedio(MedioTransporte m) {
         if (!confirmar("¿Eliminar medio \"" + m.getNombre() + "\"?",
-                "Esta acción no se puede deshacer.")) {
-            return;
-        }
-        try {
-            medioTransporteService.eliminar(m.getNombre());
-            mostrarExito("Medio de transporte eliminado.");
-            renderTablaMedio(cargarMedios());
-        } catch (Exception e) {
-            mostrarAlerta("Error al eliminar", e.getMessage());
+                "Esta acción no se puede deshacer.")) return;
+        try { medioTransporteService.eliminar(m.getNombre()); renderTablaMedio(cargarMedios()); }
+        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FILTRO
+    // ═══════════════════════════════════════════════════════════════
+    private void filtrar(String texto) {
+        String t = texto == null ? "" : texto.toLowerCase().trim();
+        switch (pestanaActiva) {
+            case 0 -> renderTablaAlerta(cargarTiposAlerta().stream()
+                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                    .toList());
+            case 1 -> renderTablaArma(cargarTiposArma().stream()
+                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                    .toList());
+            case 2 -> renderTablaMedio(cargarMedios().stream()
+                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                    .toList());
         }
     }
 
@@ -744,287 +714,224 @@ public class TiposAdminView {
     // HELPERS DE DATOS
     // ═══════════════════════════════════════════════════════════════
     private List<TipoAlerta> cargarTiposAlerta() {
-        if (tipoAlertaService == null) {
-            return List.of();
-        }
-        try {
-            return tipoAlertaService.listar();
-        } catch (Exception e) {
-            return List.of();
-        }
+        if (tipoAlertaService == null) return List.of();
+        try { return tipoAlertaService.listar(); } catch (Exception e) { return List.of(); }
     }
 
     private List<TipoArma> cargarTiposArma() {
-        if (tipoArmaService == null) {
-            return List.of();
-        }
-        try {
-            return tipoArmaService.listar();
-        } catch (Exception e) {
-            return List.of();
-        }
+        if (tipoArmaService == null) return List.of();
+        try { return tipoArmaService.listar(); } catch (Exception e) { return List.of(); }
     }
 
     private List<MedioTransporte> cargarMedios() {
-        if (medioTransporteService == null) {
-            return List.of();
-        }
-        try {
-            return medioTransporteService.listar();
-        } catch (Exception e) {
-            return List.of();
-        }
+        if (medioTransporteService == null) return List.of();
+        try { return medioTransporteService.listar(); } catch (Exception e) { return List.of(); }
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HELPERS UI
+    // HELPERS UI — mismos patrones que ComunaAdminView
     // ═══════════════════════════════════════════════════════════════
-    /**
-     * Toolbar reutilizable: buscador + botón nuevo.
-     */
-    private HBox buildToolbar(String promptBuscar, String textoBtnNuevo,
-            Runnable accionNuevo) {
+
+    /** Toolbar con ícono FA lupa + campo de búsqueda */
+    private HBox buildToolbarPanel(String prompt, TextField existing,
+                                   java.util.function.Consumer<TextField> registro) {
         HBox bar = new HBox(12);
         bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(16, 16, 8, 16));
+        bar.setPadding(new Insets(16, 20, 16, 20));
+        bar.setStyle("-fx-background-color: white;");
 
-        TextField search = new TextField();
-        search.setPromptText(promptBuscar);
-        search.setPrefHeight(38);
-        search.setStyle(
-                "-fx-background-color: " + BG + ";"
-                + "-fx-border-color: " + BORDER + ";"
-                + "-fx-border-radius: 8; -fx-background-radius: 8;"
-                + "-fx-font-size: 13px; -fx-padding: 6 12 6 12;");
-        HBox.setHgrow(search, Priority.ALWAYS);
+        HBox searchBox = new HBox(8);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10; -fx-padding: 0 14;");
+        searchBox.setPrefHeight(42);
+        HBox.setHgrow(searchBox, Priority.ALWAYS);
 
-        // Filtro en tiempo real según pestaña activa
-        search.textProperty().addListener((obs, ov, nv) -> filtrar(nv));
+        Label searchIcon = new Label("\uf002");
+        searchIcon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px; -fx-text-fill: #9ca3af;");
 
-        Button btnNuevo = btnPrimario(textoBtnNuevo);
-        btnNuevo.setOnAction(e -> accionNuevo.run());
+        TextField tf = new TextField();
+        tf.setPromptText(prompt);
+        tf.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;"
+                + "-fx-font-size: 13px; -fx-text-fill: #111827;");
+        tf.setPrefHeight(42);
+        HBox.setHgrow(tf, Priority.ALWAYS);
 
-        bar.getChildren().addAll(search, btnNuevo);
+        registro.accept(tf);
+        searchBox.getChildren().addAll(searchIcon, tf);
+        bar.getChildren().add(searchBox);
         return bar;
     }
 
-    private void filtrar(String texto) {
-        String t = (texto == null) ? "" : texto.toLowerCase();
-        switch (pestanaActiva) {
-            case 0 ->
-                renderTablaAlerta(cargarTiposAlerta().stream()
-                        .filter(x -> x.getNombre() != null
-                        && x.getNombre().toLowerCase().contains(t))
-                        .toList());
-            case 1 ->
-                renderTablaArma(cargarTiposArma().stream()
-                        .filter(x -> x.getNombre() != null
-                        && x.getNombre().toLowerCase().contains(t))
-                        .toList());
-            case 2 ->
-                renderTablaMedio(cargarMedios().stream()
-                        .filter(x -> x.getNombre() != null
-                        && x.getNombre().toLowerCase().contains(t))
-                        .toList());
-        }
-    }
-
-    private HBox buildHeaderRow(Label... cols) {
-        HBox header = new HBox();
+    private HBox buildHeader() {
+        HBox header = new HBox(0);
         header.setPadding(new Insets(12, 16, 12, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
         header.setStyle(
-                "-fx-background-color: #f8f9fc;");
-        header.getChildren().addAll(cols);
+                "-fx-background-color: #f8fafc;"
+                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
+                + "-fx-border-width: 0 0 1 0;");
+        HBox.setHgrow(header, Priority.ALWAYS);
         return header;
     }
 
-    private Label col(String text, double width) {
-        Label lbl = label(text, 11, GRAY_TEXT, true);
-        lbl.setPrefWidth(width);
-        return lbl;
-    }
-
-    private HBox buildFilaBase(boolean alt) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(12, 16, 12, 16));
-        String bg = alt ? "#fafbfc" : WHITE;
-        row.setStyle("-fx-background-color: " + bg + ";");
-        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #f0f4ff;"));
-        row.setOnMouseExited(e -> row.setStyle("-fx-background-color: " + bg + ";"));
-        return row;
-    }
-
-    private HBox buildFooter(int total, String entidad) {
+    private HBox buildFooterBox() {
         HBox footer = new HBox();
-        footer.setPadding(new Insets(10, 16, 10, 16));
+        footer.setPadding(new Insets(12, 16, 12, 16));
         footer.setStyle(
-                "-fx-background-color: #f8f9fc; -fx-background-radius: 0 0 12 12;");
-        footer.getChildren().add(
-                label("Total: " + total + " " + entidad, 12, GRAY_TEXT, false));
+                "-fx-border-color: " + BORDER + " transparent transparent transparent;"
+                + "-fx-border-width: 1 0 0 0;");
         return footer;
     }
 
+    private Label colHeader(String text, double width) {
+        Label l = new Label(text.toUpperCase());
+        l.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;"
+                + "-fx-text-fill: #9ca3af; -fx-letter-spacing: 0.5px;");
+        if (width > 0) { l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width); }
+        return l;
+    }
+
+    private Label colHeaderFixed(String text, double width) {
+        Label l = colHeader(text, 0);
+        l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width);
+        return l;
+    }
+
+    private HBox buildFilaBase(boolean par) {
+        HBox fila = new HBox(0);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        fila.setPadding(new Insets(10, 16, 10, 16));
+        String bgNormal = "-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
+                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
+                + "-fx-border-width: 0 0 1 0;";
+        fila.setStyle(bgNormal);
+        fila.setOnMouseEntered(e -> fila.setStyle(
+                "-fx-background-color: #EEF2FF;"
+                + "-fx-border-color: transparent transparent #e5e7eb transparent;"
+                + "-fx-border-width: 0 0 1 0; -fx-cursor: hand;"));
+        fila.setOnMouseExited(e -> fila.setStyle(bgNormal));
+        return fila;
+    }
+
     private HBox accionesBox(Runnable onEditar, Runnable onEliminar) {
-        HBox box = new HBox(8);
+        HBox box = new HBox(6);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPrefWidth(120);
-
-        Button btnEditar = accionBtn("✏", "#fff8e1", "#b45309");
-        Button btnEliminar = accionBtn("🗑", "#fff0f0", "#b91c1c");
-
-        btnEditar.setOnAction(e -> onEditar.run());
-        btnEliminar.setOnAction(e -> onEliminar.run());
-
-        box.getChildren().addAll(btnEditar, btnEliminar);
+        box.setMinWidth(120);
+        box.setMaxWidth(120);
+        box.getChildren().addAll(
+                btnAccion("\uf044", ORANGE,  "#fff8e1", "Editar",   onEditar),
+                btnAccion("\uf2ed", RED,     RED_LIGHT, "Eliminar", onEliminar)
+        );
         return box;
     }
 
-    private Button accionBtn(String texto, String bg, String color) {
-        Button btn = new Button(texto);
-        String base = "-fx-background-color: " + bg + "; -fx-text-fill: " + color + ";"
-                + "-fx-font-size: 13px; -fx-background-radius: 6;"
-                + "-fx-padding: 5 10 5 10; -fx-cursor: hand;";
-        btn.setStyle(base);
-        btn.setOnMouseEntered(e -> btn.setOpacity(0.8));
-        btn.setOnMouseExited(e -> btn.setOpacity(1.0));
-        return btn;
+    private Button btnAccion(String iconFA, String iconColor,
+                              String bgColor, String tooltip, Runnable accion) {
+        Button b = new Button(iconFA);
+        String base = "-fx-background-color: " + bgColor + ";"
+                + "-fx-text-fill: " + iconColor + ";"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px; -fx-background-radius: 8;"
+                + "-fx-padding: 7 10; -fx-cursor: hand;";
+        String hover = "-fx-background-color: " + iconColor + ";"
+                + "-fx-text-fill: white;"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px; -fx-background-radius: 8;"
+                + "-fx-padding: 7 10; -fx-cursor: hand;";
+        b.setStyle(base);
+        b.setOnMouseEntered(e -> b.setStyle(hover));
+        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnAction(e -> accion.run());
+        Tooltip.install(b, new Tooltip(tooltip));
+        return b;
     }
 
-    private Button btnPrimario(String texto) {
-        Button btn = new Button(texto);
-        btn.setPrefHeight(38);
-        String base = "-fx-background-color: " + BLUE + "; -fx-text-fill: white;"
-                + "-fx-font-size: 13px; -fx-font-weight: bold;"
-                + "-fx-background-radius: 8; -fx-padding: 6 18 6 18; -fx-cursor: hand;";
-        String hover = "-fx-background-color: #1251a3; -fx-text-fill: white;"
-                + "-fx-font-size: 13px; -fx-font-weight: bold;"
-                + "-fx-background-radius: 8; -fx-padding: 6 18 6 18; -fx-cursor: hand;";
-        btn.setStyle(base);
-        btn.setOnMouseEntered(e -> btn.setStyle(hover));
-        btn.setOnMouseExited(e -> btn.setStyle(base));
-        return btn;
+    private VBox buildFormBase(String titulo, String subtitulo) {
+        VBox form = new VBox(12);
+        form.setPadding(new Insets(24));
+        form.setPrefWidth(400);
+        form.setStyle("-fx-background-color: white;");
+
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.setFont(Font.font("System", FontWeight.BOLD, 18));
+        lblTitulo.setTextFill(Color.web("#111827"));
+
+        form.getChildren().addAll(lblTitulo,
+                label(subtitulo, 13, GRAY_TEXT, false),
+                new Separator());
+        return form;
     }
 
-    private Button btnSecundario(String texto) {
-        Button btn = new Button(texto);
-        btn.setPrefHeight(38);
-        btn.setStyle("-fx-background-color: white; -fx-text-fill: #374151;"
-                + "-fx-font-size: 13px; -fx-border-color: " + BORDER + ";"
-                + "-fx-border-radius: 8; -fx-background-radius: 8;"
-                + "-fx-padding: 6 18 6 18; -fx-cursor: hand;");
-        return btn;
+    private TextField dlgField(String prompt, String val) {
+        TextField f = new TextField(val);
+        f.setPromptText(prompt);
+        f.setPrefHeight(40);
+        f.setMaxWidth(Double.MAX_VALUE);
+        f.setStyle("-fx-background-color: #f5f7fb; -fx-background-radius: 8;"
+                + "-fx-border-radius: 8; -fx-border-color: transparent;"
+                + "-fx-padding: 0 14; -fx-font-size: 13px;");
+        return f;
     }
 
-    private TextField campoTexto(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setPrefHeight(40);
-        tf.setStyle("-fx-background-color: white; -fx-border-color: " + BORDER + ";"
-                + "-fx-border-radius: 8; -fx-background-radius: 8;"
-                + "-fx-font-size: 13px; -fx-padding: 6 12 6 12;");
-        return tf;
+    private void styleDlgBtn(Dialog<?> dlg, ButtonType type, String texto) {
+        Button btn = (Button) dlg.getDialogPane().lookupButton(type);
+        btn.setText(texto);
+        btn.setStyle("-fx-background-color: #1565c0; -fx-text-fill: white;"
+                + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
     }
 
-    /**
-     * Badge de color para nombre de TipoAlerta según palabras clave.
-     */
+    /** Badge de color + ícono + categoría para TipoAlerta.
+     *  Retorna: [0]=emoji, [1]=etiqueta, [2]=bgColor, [3]=accentColor */
     private String[] badgeAlerta(String nombre) {
-        if (nombre == null) {
-            return new String[]{"🔔", "#fff0f0", RED};
-        }
+        if (nombre == null) return new String[]{"?", "General",    "#f3f4f6", GRAY_TEXT};
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT")) {
-            return new String[]{"🦹", "#fff0f0", "#b91c1c"};
-        }
-        if (n.contains("SOSPECH")) {
-            return new String[]{"👤", "#fef9c3", "#92400e"};
-        }
-        if (n.contains("ANIMAL")) {
-            return new String[]{"🐕", "#ecfdf5", "#065f46"};
-        }
-        if (n.contains("INCEND")) {
-            return new String[]{"🔥", "#fff7ed", "#c2410c"};
-        }
-        if (n.contains("RUIDO") || n.contains("ALTER")) {
-            return new String[]{"📢", "#fffbeb", "#b45309"};
-        }
-        if (n.contains("MÉDI") || n.contains("MEDIC")) {
-            return new String[]{"➕", "#f0fdf4", "#15803d"};
-        }
-        if (n.contains("ACCID")) {
-            return new String[]{"⚠", "#eff6ff", "#1d4ed8"};
-        }
-        return new String[]{"🔔", "#f3f4f6", "#374151"};
+        if (n.contains("ROB") || n.contains("ASALT"))   return new String[]{"!", "Delito",    RED_LIGHT, RED};
+        if (n.contains("SOSPECH"))                       return new String[]{"?", "Vigilancia","#fef9c3", "#92400e"};
+        if (n.contains("ANIMAL"))                        return new String[]{"A", "Fauna",     "#ecfdf5", "#065f46"};
+        if (n.contains("INCEND"))                        return new String[]{"F", "Incendio",  "#fff7ed", "#c2410c"};
+        if (n.contains("RUIDO") || n.contains("ALTER"))  return new String[]{"R", "Alteración","#fffbeb", "#b45309"};
+        if (n.contains("MÉDI") || n.contains("MEDIC"))   return new String[]{"M", "Médica",   "#f0fdf4", "#15803d"};
+        if (n.contains("ACCID"))                         return new String[]{"!", "Accidente", "#eff6ff", "#1d4ed8"};
+        return new String[]{"·", "General", "#f3f4f6", GRAY_TEXT};
     }
 
-    private VBox statCard(String icon, String bgIcon, String iconColor,
-            String title, String value, String sub, String subColor) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
-        HBox.setHgrow(card, Priority.ALWAYS);
-        card.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
-
-        StackPane iconBox = new StackPane();
-        Rectangle iconBg = new Rectangle(44, 44);
-        iconBg.setArcWidth(10);
-        iconBg.setArcHeight(10);
-        iconBg.setFill(Color.web(bgIcon));
-        Label iconLbl = label(icon, 20, iconColor, false);
-        iconBox.getChildren().addAll(iconBg, iconLbl);
-
-        HBox top = new HBox(12);
-        top.setAlignment(Pos.CENTER_LEFT);
-        top.getChildren().addAll(iconBox, label(title, 13, GRAY_TEXT, false));
-
-        Label valueLbl = new Label(value);
-        valueLbl.setFont(Font.font("System", FontWeight.BOLD, 34));
-        valueLbl.setTextFill(Color.web("#111827"));
-
-        card.getChildren().addAll(top, valueLbl, label(sub, 12, subColor, false));
-        return card;
-    }
-
-    private Region separadorH() {
-        Region sep = new Region();
-        sep.setPrefHeight(1);
-        sep.setStyle("-fx-background-color: " + BORDER + ";");
-        return sep;
+    private void shadow(Region node) {
+        node.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
     }
 
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
-        lbl.setFont(bold
-                ? Font.font("System", FontWeight.BOLD, size)
-                : Font.font("System", size));
+        lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size) : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
 
     private boolean confirmar(String header, String content) {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION);
-        a.setTitle("Confirmar");
-        a.setHeaderText(header);
-        a.setContentText(content);
-        return a.showAndWait()
-                .filter(r -> r == ButtonType.OK)
-                .isPresent();
-    }
-
-    private void mostrarExito(String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle("Éxito");
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
+        a.setTitle("Confirmar"); a.setHeaderText(header); a.setContentText(content);
+        return a.showAndWait().filter(r -> r == ButtonType.OK).isPresent();
     }
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo);
-        a.setHeaderText(null);
-        a.setContentText(msg);
+        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg);
         a.showAndWait();
+    }
+
+    private String btnPrimaryStyle() {
+        return "-fx-background-color: #1565c0; -fx-text-fill: white;"
+                + "-fx-font-size: 13px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
+    }
+
+    private String btnPrimaryHoverStyle() {
+        return "-fx-background-color: #0d47a1; -fx-text-fill: white;"
+                + "-fx-font-size: 13px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
     }
 }

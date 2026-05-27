@@ -66,6 +66,8 @@ public class UsuariosAdminView {
     private Label lblRolesVal;
 
     public UsuariosAdminView() {
+        javafx.scene.text.Font.loadFont(
+                getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
             usuarioService = new UsuarioService();
             rolService = new RolUsuarioService();
@@ -147,19 +149,79 @@ public class UsuariosAdminView {
     // ═══════════════════════════════════════════════════════════════
     private HBox buildStatsRow() {
         HBox row = new HBox(16);
+        HBox.setHgrow(row, Priority.ALWAYS);
 
-        lblTotalVal = boldNum("0");
-        lblActivosVal = boldNum("0");
-        lblInactivosVal = boldNum("0");
-        lblRolesVal = boldNum("0");
+        lblTotalVal = boldNum("0", BLUE);
+        lblActivosVal = boldNum("0", GREEN);
+        lblInactivosVal = boldNum("0", RED);
+        lblRolesVal = boldNum("0", "#7b1fa2");
 
         row.getChildren().addAll(
-                statCard("👥", "#e8f0fe", BLUE, "Total registrados", lblTotalVal, "Total en el sistema", BLUE),
-                statCard("✅", "#e8f5e9", GREEN, "Usuarios ACTIVOS", lblActivosVal, "+18 este mes", GREEN),
-                statCard("🚨", RED_LIGHT, RED, "Inactivos / Suspendidos", lblInactivosVal, "↑ 5% este mes", RED),
-                statCard("🏠", "#f3e5f5", "#7b1fa2", "Roles configurados", lblRolesVal, "Admin · Policía · Usuario", GRAY_TEXT)
+                statCard("#e8f0fe", "#1565c0", "\uf0c0",
+                        "Total registrados", lblTotalVal, "Total en el sistema"),
+                statCard("#e8f5e9", "#43a047", "\uf058",
+                        "Usuarios activos", lblActivosVal, "+18 este mes"),
+                statCard("#fff0f0", "#e53935", "\uf071",
+                        "Inactivos / Suspendidos", lblInactivosVal, "Requieren revisión"),
+                statCard("#f3e5f5", "#7b1fa2", "\uf505",
+                        "Roles configurados", lblRolesVal, "Admin · Policía · Usuario")
         );
         return row;
+    }
+
+    private Label boldNum(String val, String color) {
+        Label l = new Label(val);
+        l.setFont(Font.font("System", FontWeight.BOLD, 36));
+        l.setTextFill(Color.web(color));
+        return l;
+    }
+
+    private VBox statCard(String bgIcon, String accentColor, String iconFA,
+            String title, Label valueLabel, String sub) {
+
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20, 22, 20, 22));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+        HBox.setHgrow(card, Priority.ALWAYS);
+        shadow(card);
+
+        // Rectángulo redondeado + ícono FA
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(52, 52);
+        iconWrap.setMinSize(52, 52);
+        iconWrap.setMaxSize(52, 52);
+
+        Rectangle iconBg = new Rectangle(52, 52);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
+        iconBg.setFill(Color.web(bgIcon));
+
+        Label iconLbl = new Label(iconFA);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px;"
+                + "-fx-text-fill: " + accentColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle(
+                "-fx-font-size: 13px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: #374151;");
+
+        Label subLbl = new Label(sub);
+        subLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
+
+        VBox textBox = new VBox(3, titleLbl, valueLabel, subLbl);
+
+        HBox top = new HBox(16);
+        top.setAlignment(Pos.CENTER_LEFT);
+        top.getChildren().addAll(iconWrap, textBox);
+        card.getChildren().add(top);
+
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
+        return card;
     }
 
     private Label boldNum(String val) {
@@ -198,34 +260,67 @@ public class UsuariosAdminView {
     private HBox buildToolbar() {
         HBox bar = new HBox(12);
         bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(16));
-        bar.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
+        bar.setPadding(new Insets(16, 20, 16, 20));
+        bar.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
         shadow(bar);
 
+        // ── Campo de búsqueda ─────────────────────────────────────────
+        HBox searchBox = new HBox(8);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10;"
+                + "-fx-padding: 0 14;");
+        searchBox.setPrefHeight(42);
+        HBox.setHgrow(searchBox, Priority.ALWAYS);
+
+        Label searchIcon = new Label("\uf002");
+        searchIcon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: #9ca3af;");
+
         campoBusqueda = new TextField();
-        campoBusqueda.setPromptText("🔍 Buscar usuario...");
-        campoBusqueda.setPrefHeight(40);
-        campoBusqueda.setMaxWidth(Double.MAX_VALUE);
+        campoBusqueda.setPromptText("Buscar por nombre, cédula o username...");
+        campoBusqueda.setStyle(
+                "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+                + "-fx-font-size: 13px;"
+                + "-fx-text-fill: #111827;");
+        campoBusqueda.setPrefHeight(42);
         HBox.setHgrow(campoBusqueda, Priority.ALWAYS);
         campoBusqueda.textProperty().addListener((obs, o, n) -> filtrarYMostrar());
+        searchBox.getChildren().addAll(searchIcon, campoBusqueda);
 
-        filtroEstado = new ComboBox<>();
+        // ── Filtros con estilo unificado ──────────────────────────────
+        filtroEstado = styledCombo("Estado");
         cargarEstados();
-        filtroEstado.setPrefHeight(40);
-        filtroEstado.setOnAction(e -> filtrarYMostrar());
 
-        filtroRol = new ComboBox<>();
+        filtroRol = styledCombo("Rol");
         cargarRoles();
-        filtroRol.setPrefHeight(40);
-        filtroRol.setOnAction(e -> filtrarYMostrar());
 
-        filtroBarrio = new ComboBox<>();
+        filtroBarrio = styledCombo("Barrio");
         cargarBarrios(filtroBarrio);
-        filtroBarrio.setPrefHeight(40);
-        filtroBarrio.setOnAction(e -> filtrarYMostrar());
 
-        bar.getChildren().addAll(campoBusqueda, filtroEstado, filtroRol, filtroBarrio);
+        bar.getChildren().addAll(searchBox, filtroEstado, filtroRol, filtroBarrio);
         return bar;
+    }
+
+    private <T> ComboBox<T> styledCombo(String placeholder) {
+        ComboBox<T> combo = new ComboBox<>();
+        combo.setPromptText(placeholder);
+        combo.setPrefHeight(42);
+        combo.setPrefWidth(160);
+        combo.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10;"
+                + "-fx-border-color: transparent;"
+                + "-fx-border-radius: 10;"
+                + "-fx-font-size: 13px;"
+                + "-fx-text-fill: #374151;"
+                + "-fx-cursor: hand;");
+        combo.setOnAction(e -> filtrarYMostrar());
+        return (ComboBox<T>) combo;
     }
 
     private void cargarRoles() {
@@ -269,22 +364,27 @@ public class UsuariosAdminView {
     // ═══════════════════════════════════════════════════════════════
     private VBox buildTabla() {
         VBox card = new VBox(0);
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
         shadow(card);
 
-        HBox header = new HBox();
-        header.setPadding(new Insets(14, 16, 14, 16));
-        header.setStyle("-fx-border-color: transparent transparent "
-                + BORDER + " transparent; -fx-border-width: 0 0 1 0;");
+        // ── Header ────────────────────────────────────────────────────
+        HBox header = new HBox(0);
+        header.setPadding(new Insets(12, 16, 12, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle(
+                "-fx-background-color: #f8fafc;"
+                + "-fx-background-radius: 12 12 0 0;"
+                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
+                + "-fx-border-width: 0 0 1 0;");
+
         header.getChildren().addAll(
-                colHeader("Usuario"),
-                colHeader("Identificación"),
-                colHeader("Correo electrónico"),
-                colHeader("Teléfono"),
-                colHeader("Username"),
-                colHeader("Rol"),
-                colHeader("Estado"),
-                colHeader("Acciones")
+                colHeader("Usuario", 240),
+                colHeader("Identificación", 130),
+                colHeader("Correo electrónico", 200),
+                colHeader("Teléfono", 130),
+                colHeader("Rol", 140),
+                colHeader("Estado", 130),
+                colHeader("Acciones", 120)
         );
         card.getChildren().add(header);
 
@@ -294,12 +394,26 @@ public class UsuariosAdminView {
         lblMostrando = label("Mostrando 0 – 0 de 0 usuarios", 12, GRAY_TEXT, false);
         HBox footer = new HBox();
         footer.setPadding(new Insets(12, 16, 12, 16));
-        footer.setStyle("-fx-border-color: " + BORDER
-                + " transparent transparent transparent; -fx-border-width: 1 0 0 0;");
+        footer.setStyle(
+                "-fx-border-color: " + BORDER + " transparent transparent transparent;"
+                + "-fx-border-width: 1 0 0 0;");
         footer.getChildren().add(lblMostrando);
         card.getChildren().add(footer);
 
         return card;
+    }
+
+    private Label colHeader(String text, double width) {
+        Label l = new Label(text.toUpperCase());
+        l.setStyle(
+                "-fx-font-size: 11px;"
+                + "-fx-font-weight: bold;"
+                + "-fx-text-fill: #9ca3af;"
+                + "-fx-letter-spacing: 0.5px;");
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        return l;
     }
 
     private Label colHeader(String text) {
@@ -323,7 +437,9 @@ public class UsuariosAdminView {
     // CARGA Y FILTRADO
     // ═══════════════════════════════════════════════════════════════
     private void cargarUsuarios() {
-        if (usuarioService == null) return;
+        if (usuarioService == null) {
+            return;
+        }
         try {
             todosLosUsuarios.setAll(usuarioService.listar());
             filtrarYMostrar();
@@ -397,74 +513,108 @@ public class UsuariosAdminView {
     // FILA DE TABLA
     // ═══════════════════════════════════════════════════════════════
     private HBox buildFila(Usuario u, boolean par) {
-        HBox fila = new HBox();
+        HBox fila = new HBox(0);
         fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setPadding(new Insets(12, 16, 12, 16));
+        fila.setPadding(new Insets(10, 16, 10, 16));
         String bgNormal = "-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
                 + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width: 0 0 1 0;";
         fila.setStyle(bgNormal);
-        fila.setOnMouseEntered(e -> fila.setStyle("""
-                -fx-background-color: #EEF2FF;
-                -fx-border-color: transparent transparent #e5e7eb transparent;
-                -fx-border-width: 0 0 1 0; -fx-cursor: hand;
-                """));
+        fila.setOnMouseEntered(e -> fila.setStyle(
+                "-fx-background-color: #EEF2FF;"
+                + "-fx-border-color: transparent transparent #e5e7eb transparent;"
+                + "-fx-border-width: 0 0 1 0; -fx-cursor: hand;"));
         fila.setOnMouseExited(e -> fila.setStyle(bgNormal));
 
-        // Avatar + nombre
+        // ── Col 1: Avatar + nombre (240px) ────────────────────────────
         HBox celdaUsuario = new HBox(10);
         celdaUsuario.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(celdaUsuario, Priority.ALWAYS);
+        celdaUsuario.setPrefWidth(240);
+        celdaUsuario.setMinWidth(240);
+        celdaUsuario.setMaxWidth(240);
 
-        Circle avatar = new Circle(18, Color.web(colorAvatar(u.getPrimer_nombre())));
-        Label avatarLbl = label(iniciales(u), 11, WHITE, true);
-        StackPane avatarBox = new StackPane(avatar, avatarLbl);
+        StackPane avatarBox = new StackPane();
+        Circle avatar = new Circle(20, Color.web(colorAvatar(u.getPrimer_nombre())));
+        Label avatarLbl = label(iniciales(u), 12, WHITE, true);
+        avatarBox.getChildren().addAll(avatar, avatarLbl);
 
-        VBox nombreBox = new VBox(1);
-        nombreBox.getChildren().addAll(
-                label(nombreCompleto(u), 13, "#111827", true),
-                label(apellidoCompleto(u), 11, GRAY_TEXT, false)
-        );
+        VBox nombreBox = new VBox(2);
+        Label nombreLbl = new Label(nombreCompleto(u) + " " + apellidoCompleto(u));
+        nombreLbl.setStyle(
+                "-fx-font-size: 13px; -fx-font-weight: bold;"
+                + "-fx-text-fill: #111827;");
+        nombreLbl.setMaxWidth(170);
+        nombreLbl.setEllipsisString("…");
+        Label usernameSub = label("@" + u.getUsername(), 11, GRAY_TEXT, false);
+        nombreBox.getChildren().addAll(nombreLbl, usernameSub);
         celdaUsuario.getChildren().addAll(avatarBox, nombreBox);
 
-        Label cedula   = celda(u.getIdentificacion());
-        Label correo   = celda(u.getCorreo() != null ? u.getCorreo() : "—");
-        Label telefono = celda(u.getTelefono() != null ? u.getTelefono() : "—");
-        Label username = celda(u.getUsername());
+        // ── Col 2: Cédula (130px) ─────────────────────────────────────
+        Label cedula = celdaFija(u.getIdentificacion(), 130);
 
+        // ── Col 3: Correo (200px) ─────────────────────────────────────
+        Label correo = celdaFija(u.getCorreo() != null ? u.getCorreo() : "—", 200);
+
+        // ── Col 4: Teléfono (130px) ───────────────────────────────────
+        Label telefono = celdaFija(u.getTelefono() != null ? u.getTelefono() : "—", 130);
+
+        // ── Col 5: Rol badge (140px) ──────────────────────────────────
         String rolNombre = u.getRol() != null ? u.getRol().getNombre() : "—";
-        Label rolLbl = label(rolNombre, 11, rolColor(rolNombre), true);
-        rolLbl.setPadding(new Insets(3, 8, 3, 8));
-        rolLbl.setStyle("-fx-background-color: " + rolBg(rolNombre)
-                + "; -fx-background-radius: 20;");
+        Label rolLbl = new Label(rolNombre);
+        rolLbl.setStyle(
+                "-fx-background-color: " + rolBg(rolNombre) + ";"
+                + "-fx-text-fill: " + rolColor(rolNombre) + ";"
+                + "-fx-font-size: 11px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 20; -fx-padding: 4 10 4 10;");
         HBox rolBox = new HBox(rolLbl);
         rolBox.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(rolBox, Priority.ALWAYS);
+        rolBox.setPrefWidth(140);
+        rolBox.setMinWidth(140);
+        rolBox.setMaxWidth(140);
 
-        String estadoStr = u.getEstado() != null ? u.getEstado().name() : "—";
-        Label estadoLbl = label(estadoStr, 11, estadoColor(u.getEstado()), true);
-        estadoLbl.setPadding(new Insets(3, 8, 3, 8));
-        estadoLbl.setStyle("-fx-background-color: " + estadoBg(u.getEstado())
-                + "; -fx-background-radius: 20;");
-        HBox estadoBox = new HBox(estadoLbl);
+        // ── Col 6: Estado badge (130px) ───────────────────────────────
+        HBox estadoBox = new HBox(5);
         estadoBox.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(estadoBox, Priority.ALWAYS);
+        estadoBox.setPrefWidth(130);
+        estadoBox.setMinWidth(130);
+        estadoBox.setMaxWidth(130);
+        Circle estadoDot = new Circle(4, Color.web(estadoColor(u.getEstado())));
+        Label estadoLbl = new Label(u.getEstado() != null ? u.getEstado().name() : "—");
+        estadoLbl.setStyle(
+                "-fx-background-color: " + estadoBg(u.getEstado()) + ";"
+                + "-fx-text-fill: " + estadoColor(u.getEstado()) + ";"
+                + "-fx-font-size: 11px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 20; -fx-padding: 4 10 4 10;");
+        estadoBox.getChildren().addAll(estadoDot, estadoLbl);
 
-        // Acciones: ver, cambiar estado, eliminar
+        // ── Col 7: Acciones (120px) ───────────────────────────────────
         HBox acciones = new HBox(6);
         acciones.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(acciones, Priority.ALWAYS);
+        acciones.setPrefWidth(120);
+        acciones.setMinWidth(120);
+        acciones.setMaxWidth(120);
         acciones.getChildren().addAll(
-                btnAccion("👁", () -> abrirDialogoVer(u)),
-                btnAccion("✏", () -> abrirDialogoCambiarEstado(u)),
-                btnAccion("🗑", () -> confirmarEliminar(u))
+                btnAccion("\uf06e", "#1565c0", "#e8f0fe", "Ver", () -> abrirDialogoVer(u)),
+                btnAccion("\uf044", "#fb8c00", "#fff8e1", "Editar", () -> abrirDialogoCambiarEstado(u)),
+                btnAccion("\uf2ed", "#e53935", "#fff0f0", "Borrar", () -> confirmarEliminar(u))
         );
 
         fila.getChildren().addAll(
                 celdaUsuario, cedula, correo, telefono,
-                username, rolBox, estadoBox, acciones
+                rolBox, estadoBox, acciones
         );
         return fila;
+    }
+
+// ── Nueva celda con ancho fijo ─────────────────────────────────
+    private Label celdaFija(String txt, double width) {
+        Label l = new Label(txt != null ? txt : "—");
+        l.setStyle("-fx-font-size: 13px; -fx-text-fill: #374151;");
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        l.setEllipsisString("…");
+        return l;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -494,13 +644,13 @@ public class UsuariosAdminView {
         content.getChildren().addAll(
                 header,
                 new Separator(),
-                detalleRow("📋 Cédula",     u.getIdentificacion()),
-                detalleRow("📞 Teléfono",   u.getTelefono()  != null ? u.getTelefono()  : "—"),
-                detalleRow("📧 Correo",     u.getCorreo()    != null ? u.getCorreo()    : "—"),
-                detalleRow("👤 Username",   u.getUsername()),
-                detalleRow("🔐 Rol",        u.getRol()       != null ? u.getRol().getNombre() : "—"),
-                detalleRow("📍 Dirección",  direccionTexto(u)),
-                detalleRow("🔘 Estado",     u.getEstado()    != null ? u.getEstado().name() : "—")
+                detalleRow("📋 Cédula", u.getIdentificacion()),
+                detalleRow("📞 Teléfono", u.getTelefono() != null ? u.getTelefono() : "—"),
+                detalleRow("📧 Correo", u.getCorreo() != null ? u.getCorreo() : "—"),
+                detalleRow("👤 Username", u.getUsername()),
+                detalleRow("🔐 Rol", u.getRol() != null ? u.getRol().getNombre() : "—"),
+                detalleRow("📍 Dirección", direccionTexto(u)),
+                detalleRow("🔘 Estado", u.getEstado() != null ? u.getEstado().name() : "—")
         );
 
         dlg.getDialogPane().setContent(content);
@@ -526,8 +676,8 @@ public class UsuariosAdminView {
         lblNombre.setTextFill(Color.web("#111827"));
 
         Label lblCedula = label("Cédula: " + u.getIdentificacion(), 12, GRAY_TEXT, false);
-        Label lblRol    = label("Rol: " + (u.getRol() != null ? u.getRol().getNombre() : "—"),
-                                12, GRAY_TEXT, false);
+        Label lblRol = label("Rol: " + (u.getRol() != null ? u.getRol().getNombre() : "—"),
+                12, GRAY_TEXT, false);
 
         // Selector de estado
         Label lblTitulo = label("Nuevo estado *", 12, GRAY_TEXT, false);
@@ -608,15 +758,15 @@ public class UsuariosAdminView {
         form.setPadding(new Insets(20));
         form.setStyle("-fx-background-color: white;");
 
-        TextField fPrimerNombre    = dlgField("Primer Nombre *",    "");
-        TextField fSegundoNombre   = dlgField("Segundo Nombre",     "");
-        TextField fPrimerApellido  = dlgField("Primer Apellido *",  "");
-        TextField fSegundoApellido = dlgField("Segundo Apellido",   "");
-        TextField fCedula          = dlgField("Cédula *",           "");
-        TextField fTelefono        = dlgField("Teléfono",           "");
-        TextField fCorreo          = dlgField("Correo",             "");
-        TextField fUsername        = dlgField("Username *",         "");
-        PasswordField fPassword    = dlgPassword("Contraseña *");
+        TextField fPrimerNombre = dlgField("Primer Nombre *", "");
+        TextField fSegundoNombre = dlgField("Segundo Nombre", "");
+        TextField fPrimerApellido = dlgField("Primer Apellido *", "");
+        TextField fSegundoApellido = dlgField("Segundo Apellido", "");
+        TextField fCedula = dlgField("Cédula *", "");
+        TextField fTelefono = dlgField("Teléfono", "");
+        TextField fCorreo = dlgField("Correo", "");
+        TextField fUsername = dlgField("Username *", "");
+        PasswordField fPassword = dlgPassword("Contraseña *");
 
         // Campos policiales — visibles solo si el rol es ADMINISTRADOR_POLICIA
         TextField fPlaca = dlgField("Placa policial *", "");
@@ -704,7 +854,7 @@ public class UsuariosAdminView {
             }
 
             boolean esPolicia = cmbRol.getValue().toUpperCase()
-                                       .equals("ADMINISTRADOR_POLICIA");
+                    .equals("ADMINISTRADOR_POLICIA");
             if (esPolicia && (fPlaca.getText().isBlank() || fRango.getText().isBlank())) {
                 lblError.setText("Completa los datos policiales obligatorios (*).");
                 ev.consume();
@@ -786,12 +936,16 @@ public class UsuariosAdminView {
     // PAGINACIÓN
     // ═══════════════════════════════════════════════════════════════
     private void actualizarPaginacion() {
-        if (paginacionBox == null) return;
+        if (paginacionBox == null) {
+            return;
+        }
         paginacionBox.getChildren().clear();
 
-        int total       = usuariosFiltrados.size();
+        int total = usuariosFiltrados.size();
         int totalPaginas = (int) Math.ceil((double) total / FILAS_POR_PAGINA);
-        if (totalPaginas <= 1) return;
+        if (totalPaginas <= 1) {
+            return;
+        }
 
         paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1, () -> {
             paginaActual--;
@@ -799,11 +953,14 @@ public class UsuariosAdminView {
         }));
 
         int inicio = Math.max(1, paginaActual - 2);
-        int fin    = Math.min(totalPaginas, paginaActual + 2);
+        int fin = Math.min(totalPaginas, paginaActual + 2);
 
         if (inicio > 1) {
             paginacionBox.getChildren().addAll(
-                    btnPag("1", true, () -> { paginaActual = 1; renderizarPagina(); }),
+                    btnPag("1", true, () -> {
+                        paginaActual = 1;
+                        renderizarPagina();
+                    }),
                     label("...", 13, GRAY_TEXT, false));
         }
         for (int i = inicio; i <= fin; i++) {
@@ -818,7 +975,10 @@ public class UsuariosAdminView {
             paginacionBox.getChildren().addAll(
                     label("...", 13, GRAY_TEXT, false),
                     btnPag(String.valueOf(totalPaginas), true,
-                            () -> { paginaActual = totalPaginas; renderizarPagina(); }));
+                            () -> {
+                                paginaActual = totalPaginas;
+                                renderizarPagina();
+                            }));
         }
 
         paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPaginas, () -> {
@@ -843,20 +1003,30 @@ public class UsuariosAdminView {
     // STATS
     // ═══════════════════════════════════════════════════════════════
     private void actualizarStats() {
-        long total    = todosLosUsuarios.size();
-        long activos  = todosLosUsuarios.stream()
+        long total = todosLosUsuarios.size();
+        long activos = todosLosUsuarios.stream()
                 .filter(u -> u.getEstado() != null
-                        && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
+                && "ACTIVO".equalsIgnoreCase(u.getEstado().name()))
                 .count();
         long inactivos = total - activos;
 
         lblTotalVal.setText(String.valueOf(total));
+        lblTotalVal.setStyle(
+                "-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + BLUE + ";");
+
         lblActivosVal.setText(String.valueOf(activos));
+        lblActivosVal.setStyle(
+                "-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + GREEN + ";");
+
         lblInactivosVal.setText(String.valueOf(inactivos));
+        lblInactivosVal.setStyle(
+                "-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + RED + ";");
 
         if (rolService != null) {
             try {
                 lblRolesVal.setText(String.valueOf(rolService.listar().size()));
+                lblRolesVal.setStyle(
+                        "-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #7b1fa2;");
             } catch (Exception e) {
                 lblRolesVal.setText("0");
             }
@@ -875,16 +1045,32 @@ public class UsuariosAdminView {
         return l;
     }
 
-    private Button btnAccion(String icon, Runnable accion) {
-        Button b = new Button(icon);
-        b.setStyle("-fx-background-color: transparent; -fx-font-size: 14px; "
-                + "-fx-cursor: hand; -fx-padding: 4 6;");
-        b.setOnMouseEntered(e -> b.setStyle("-fx-background-color: #f0f0f0; "
-                + "-fx-font-size: 14px; -fx-cursor: hand; "
-                + "-fx-background-radius: 6; -fx-padding: 4 6;"));
-        b.setOnMouseExited(e -> b.setStyle("-fx-background-color: transparent; "
-                + "-fx-font-size: 14px; -fx-cursor: hand; -fx-padding: 4 6;"));
+    private Button btnAccion(String iconFA, String iconColor,
+            String bgColor, String tooltip, Runnable accion) {
+
+        Button b = new Button(iconFA);
+        String base = "-fx-background-color: " + bgColor + ";"
+                + "-fx-text-fill: " + iconColor + ";"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px;"
+                + "-fx-background-radius: 8;"
+                + "-fx-padding: 7 10;"
+                + "-fx-cursor: hand;";
+        String hover = "-fx-background-color: " + iconColor + ";"
+                + "-fx-text-fill: white;"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px;"
+                + "-fx-background-radius: 8;"
+                + "-fx-padding: 7 10;"
+                + "-fx-cursor: hand;";
+
+        b.setStyle(base);
+        b.setOnMouseEntered(e -> b.setStyle(hover));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
+
+        Tooltip tp = new Tooltip(tooltip);
+        Tooltip.install(b, tp);
         return b;
     }
 
@@ -958,13 +1144,13 @@ public class UsuariosAdminView {
     private String nombreCompleto(Usuario u) {
         return (u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "")
                 + (u.getSegundo_nombre() != null && !u.getSegundo_nombre().isBlank()
-                        ? " " + u.getSegundo_nombre() : "");
+                ? " " + u.getSegundo_nombre() : "");
     }
 
     private String apellidoCompleto(Usuario u) {
         return (u.getPrimer_apellido() != null ? u.getPrimer_apellido() : "")
                 + (u.getSegundo_apellido() != null && !u.getSegundo_apellido().isBlank()
-                        ? " " + u.getSegundo_apellido() : "");
+                ? " " + u.getSegundo_apellido() : "");
     }
 
     private String iniciales(Usuario u) {
@@ -976,7 +1162,9 @@ public class UsuariosAdminView {
     }
 
     private String direccionTexto(Usuario u) {
-        if (u.getDireccion() == null) return "—";
+        if (u.getDireccion() == null) {
+            return "—";
+        }
         var d = u.getDireccion();
         String bar = d.getBarrio() != null ? d.getBarrio().getNombre() : "";
         return bar + " · Calle " + d.getCalle() + " Cra " + d.getCarrera();
@@ -989,45 +1177,69 @@ public class UsuariosAdminView {
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String rolColor(String rol) {
-        if (rol == null) return GRAY_TEXT;
+        if (rol == null) {
+            return GRAY_TEXT;
+        }
         return switch (rol.toUpperCase()) {
-            case "ADMIN"                  -> BLUE;
-            case "ADMINISTRADOR_POLICIA"  -> "#7b1fa2";
-            case "RESIDENTE"              -> GREEN;
-            default                       -> GRAY_TEXT;
+            case "ADMIN" ->
+                BLUE;
+            case "ADMINISTRADOR_POLICIA" ->
+                "#7b1fa2";
+            case "RESIDENTE" ->
+                GREEN;
+            default ->
+                GRAY_TEXT;
         };
     }
 
     private String rolBg(String rol) {
-        if (rol == null) return "#f3f4f6";
+        if (rol == null) {
+            return "#f3f4f6";
+        }
         return switch (rol.toUpperCase()) {
-            case "ADMIN"                  -> "#e8f0fe";
-            case "ADMINISTRADOR_POLICIA"  -> "#f3e5f5";
-            case "RESIDENTE"              -> "#e8f5e9";
-            default                       -> "#f3f4f6";
+            case "ADMIN" ->
+                "#e8f0fe";
+            case "ADMINISTRADOR_POLICIA" ->
+                "#f3e5f5";
+            case "RESIDENTE" ->
+                "#e8f5e9";
+            default ->
+                "#f3f4f6";
         };
     }
 
     private String estadoColor(EstadoUsuario estado) {
-        if (estado == null) return GRAY_TEXT;
+        if (estado == null) {
+            return GRAY_TEXT;
+        }
         return switch (estado) {
-            case ACTIVO     -> GREEN;
-            case INACTIVO   -> RED;
-            case SUSPENDIDO -> ORANGE;
+            case ACTIVO ->
+                GREEN;
+            case INACTIVO ->
+                RED;
+            case SUSPENDIDO ->
+                ORANGE;
         };
     }
 
     private String estadoBg(EstadoUsuario estado) {
-        if (estado == null) return "#f3f4f6";
+        if (estado == null) {
+            return "#f3f4f6";
+        }
         return switch (estado) {
-            case ACTIVO     -> "#e8f5e9";
-            case INACTIVO   -> RED_LIGHT;
-            case SUSPENDIDO -> "#fff8e1";
+            case ACTIVO ->
+                "#e8f5e9";
+            case INACTIVO ->
+                RED_LIGHT;
+            case SUSPENDIDO ->
+                "#fff8e1";
         };
     }
 }
