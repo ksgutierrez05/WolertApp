@@ -27,16 +27,19 @@ public class UnidadPolicialDAO {
     }
 
     public UnidadPolicialDAO() throws SQLException {
-         
+
     }
 
     // pr_insertar_unidad(nombre, estado, nombre_barrio)
-    public boolean insertar(String nombre, String estado, String nombreBarrio) {
-        String sql = "{call pkg_alertas.pr_insertar_unidad(?, ?, ?)}";
+    public boolean insertar(String nombre, String estado, String nombreBarrio,
+            double latitud, double longitud) {
+        String sql = "{call pkg_alertas.pr_insertar_unidad(?, ?, ?, ?, ?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
             cs.setString(2, estado);
             cs.setString(3, nombreBarrio);
+            cs.setDouble(4, latitud);
+            cs.setDouble(5, longitud);
             cs.execute();
             return true;
         } catch (SQLException e) {
@@ -137,6 +140,8 @@ public class UnidadPolicialDAO {
         UnidadPolicial u = new UnidadPolicial();
         u.setNombre(rs.getString("NOMBRE"));
         u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
+        u.setLatitud(rs.getDouble("LATITUD"));
+        u.setLongitud(rs.getDouble("LONGITUD"));
 
         Comuna c = new Comuna();
         c.setNombre(rs.getString("COMUNA"));
