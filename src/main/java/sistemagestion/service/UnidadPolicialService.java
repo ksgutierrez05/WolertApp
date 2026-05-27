@@ -23,16 +23,16 @@ public class UnidadPolicialService {
     }
 
     public void insertar(UnidadPolicial u) throws SQLException {
-
         Validador.validarObjeto(u);
         Validador.validarCampoVacio(u.getNombre());
         Validador.validarEnum(u.getEstado());
         Validador.validarObjeto(u.getBarrio());
-
         dao.insertar(
                 u.getNombre(),
                 u.getEstado().name(),
-                u.getBarrio().getNombre()
+                u.getBarrio().getNombre(),
+                u.getLatitud(),
+                u.getLongitud()
         );
     }
 
