@@ -9,7 +9,13 @@ import sistemagestion.view.LoginApp;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import sistemagestion.view.MapaView;
+import sistemagestion.model.Usuario;
+import sistemagestion.service.AlertaService;
+import sistemagestion.view.MapaAlarmas;
+import sistemagestion.view.MapaAlarmasRegistada;
+import sistemagestion.view.MapaAlarmasRegistradas;
+import sistemagestion.view.MapaAlerta;
+import sistemagestion.view.MapaUnidadesPoliciales;
 
 
 /**
@@ -21,16 +27,24 @@ public class WolertAppSistemaAlertas extends Application {
            @Override
     public void start(Stage stage) {
         
-        LoginApp login = new LoginApp();
+       
+        /*LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
         stage.setTitle("WolertApp");
         stage.setScene(scene);
-        stage.setResizable(false);
-        stage.show();
-        // Temporalmente abre el mapa directo, sin login ni dashboard
-        //new MapaView().mostrar();
+        stage.setResizable(true);
+        stage.show();  */
+
+        //Temporalmente abre el mapa directo, sin login ni dashboard
+        //new MapaAlarmas().mostrar();
+       //new MapaAlarmasRegistradas().mostrar();
+        new MapaAlarmasRegistada().mostrar();
+        //Usuario usuario = new Usuario();
+
+        //new MapaAlerta(null, null, null, null).mostrar();
+        new MapaUnidadesPoliciales().mostrar();
     }
 
     public static void main(String[] args) {

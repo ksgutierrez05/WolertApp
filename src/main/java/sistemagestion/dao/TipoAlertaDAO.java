@@ -120,6 +120,7 @@ public class TipoAlertaDAO {
     
     private TipoAlerta mapear(ResultSet rs) throws SQLException {
         TipoAlerta t = new TipoAlerta();
+        t.setId_tipoalerta(rs.getInt("ID_TIPO_ALERTA"));
         t.setNombre(rs.getString("NOMBRE"));
         return t;
     }

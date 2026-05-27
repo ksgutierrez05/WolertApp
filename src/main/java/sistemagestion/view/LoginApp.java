@@ -16,6 +16,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.*;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import sistemagestion.model.Direccion;
 import sistemagestion.model.EstadoUsuario;
@@ -29,60 +30,46 @@ import sistemagestion.model.Barrio;
 import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.stage.Stage;
 
 public class LoginApp {
 
-    // ── Constantes de layout ──────────────────────────────────────────────────
     private static final double PANEL_W = 500;
     private static final double PANEL_H = 650;
-    private static final double EXTRA = 40;
-    private static final double RADIUS = 50;
+    private static final double EXTRA   = 40;
+    private static final double RADIUS  = 50;
 
-    // ── Estado ────────────────────────────────────────────────────────────────
-    private AnchorPane root;
-    private VBox loginForm;
-    private VBox registerForm;
-    private StackPane overlayPanel;
-    private boolean signUpMode = false;
+    private AnchorPane  root;
+    private VBox        loginForm;
+    private VBox        registerForm;
+    private StackPane   overlayPanel;
+    private boolean     signUpMode = false;
     private UsuarioService usuarioService;
-    private ComunaService comunaService;
-    private BarrioService barrioService;
+    private ComunaService  comunaService;
+    private BarrioService  barrioService;
 
-    // ── Campos del login (para limpiar) ───────────────────────────────────────
-    private TextField loginUsername;
+    private TextField     loginUsername;
     private PasswordField loginPassword;
-    private Label loginMsg;
+    private Label         loginMsg;
 
-    // ── Campos del registro (para limpiar) ────────────────────────────────────
-    private TextField regPrimerNombre, regSegundoNombre;
-    private TextField regPrimerApellido, regSegundoApellido;
-    private TextField regCedula, regTelefono, regEmail;
-    private TextField regUsername;
+    private TextField     regPrimerNombre, regSegundoNombre;
+    private TextField     regPrimerApellido, regSegundoApellido;
+    private TextField     regCedula, regTelefono, regEmail;
+    private TextField     regUsername;
     private PasswordField regPassword;
     private ComboBox<String> regComuna;
     private ComboBox<String> regBarrio;
-    private TextField regCalle, regCarrera;
-    private TextField regEtapa, regManzana, regCasa;
-    private Label regMsg;
+    private TextField     regCalle, regCarrera;
+    private TextField     regEtapa, regManzana, regCasa;
+    private Label         regMsg;
 
     // ─────────────────────────────────────────────────────────────────────────
     public Parent getView() {
-        try {
-            usuarioService = new UsuarioService();
-        } catch (SQLException ex) {
-            throw new RuntimeException("Error iniciando UsuarioService: " + ex.getMessage(), ex);
-        }
-        try {
-            comunaService = new ComunaService();
-        } catch (SQLException ex) {
-            throw new RuntimeException("Error iniciando ComunaService: " + ex.getMessage(), ex);
-        }
-        try {
-            barrioService = new BarrioService();
-        } catch (SQLException ex) {
-            throw new RuntimeException("Error iniciando BarrioService: " + ex.getMessage(), ex);
-        }
+        try { usuarioService = new UsuarioService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error UsuarioService: " + ex.getMessage(), ex); }
+        try { comunaService = new ComunaService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error ComunaService: " + ex.getMessage(), ex); }
+        try { barrioService = new BarrioService(); }
+        catch (SQLException ex) { throw new RuntimeException("Error BarrioService: " + ex.getMessage(), ex); }
 
         root = new AnchorPane();
         root.setPrefSize(1000, PANEL_H);
@@ -108,34 +95,24 @@ public class LoginApp {
         return root;
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // REDIRECCIÓN POR ROL
+    // ════════════════════════════════════════════════════════════════════════
     private void redirigirSegunRol(Usuario u, Stage stage) {
-
-        String rol = u.getRol() != null
-                ? u.getRol().getNombre().toUpperCase().trim()
-                : "";
-
+        String rol = u.getRol() != null ? u.getRol().getNombre().toUpperCase().trim() : "";
         switch (rol) {
-
             case "ADMIN":
-
                 AdministradorApp admin = new AdministradorApp();
                 admin.show(stage);
                 break;
-
             case "CIUDADANO":
-
                 UsuarioApp ciudadano = new UsuarioApp(u);
                 ciudadano.show(stage);
                 break;
-
             default:
-
-                setMsg(
-                        loginMsg,
+                setMsg(loginMsg,
                         "Tu cuenta no tiene acceso configurado. Contacta al administrador.",
-                        false
-                );
-
+                        false);
                 loginPassword.clear();
                 loginUsername.requestFocus();
                 break;
@@ -182,11 +159,8 @@ public class LoginApp {
                 -fx-padding: 10 35; -fx-cursor: hand;
                 """);
         switchBtn.setOnAction(e -> {
-            if (!signUpMode) {
-                animateToRegister(switchBtn);
-            } else {
-                animateToLogin(switchBtn);
-            }
+            if (!signUpMode) animateToRegister(switchBtn);
+            else             animateToLogin(switchBtn);
             signUpMode = !signUpMode;
         });
 
@@ -205,7 +179,7 @@ public class LoginApp {
     private VBox createLoginForm() {
         loginUsername = createField("👤 Usuario");
         loginPassword = createPassword("🔒 Contraseña");
-        loginMsg = new Label();
+        loginMsg      = new Label();
         Button btnLogin = createButton("LOGIN");
 
         loginUsername.setOnAction(e -> loginPassword.requestFocus());
@@ -223,15 +197,12 @@ public class LoginApp {
 
                 if (u != null) {
                     setMsg(loginMsg, "¡Bienvenido, " + u.getPrimer_nombre() + "!", true);
-
-                    // Pequeña pausa para que el usuario vea el mensaje de bienvenida
                     PauseTransition pausa = new PauseTransition(Duration.millis(800));
                     pausa.setOnFinished(ev -> {
                         Stage stage = (Stage) loginUsername.getScene().getWindow();
                         redirigirSegunRol(u, stage);
                     });
                     pausa.play();
-
                 } else {
                     setMsg(loginMsg, "Usuario o contraseña incorrectos", false);
                     loginPassword.clear();
@@ -257,17 +228,16 @@ public class LoginApp {
     // FORMULARIO REGISTRO
     // ════════════════════════════════════════════════════════════════════════
     private VBox createRegisterForm() {
-        // Campos
-        regPrimerNombre = modernField("Primer Nombre");
-        regSegundoNombre = modernField("Segundo Nombre");
-        regPrimerApellido = modernField("Primer Apellido");
+        regPrimerNombre    = modernField("Primer Nombre");
+        regSegundoNombre   = modernField("Segundo Nombre");
+        regPrimerApellido  = modernField("Primer Apellido");
         regSegundoApellido = modernField("Segundo Apellido");
-        regCedula = modernField("Cédula");
-        regTelefono = modernField("Teléfono");
-        regEmail = modernField("Correo Electrónico");
-        regUsername = modernField("Username");
-        regPassword = modernPassword("Contraseña");
-        // ComboBox Comuna
+        regCedula          = modernField("Cédula");
+        regTelefono        = modernField("Teléfono");
+        regEmail           = modernField("Correo Electrónico");
+        regUsername        = modernField("Username");
+        regPassword        = modernPassword("Contraseña");
+
         regComuna = new ComboBox<>();
         regComuna.setPromptText("Seleccione una comuna");
         regComuna.setMaxWidth(Double.MAX_VALUE);
@@ -278,15 +248,10 @@ public class LoginApp {
         try {
             List<Comuna> comunas = comunaService.listar();
             ObservableList<String> nombresComunas = FXCollections.observableArrayList();
-            for (Comuna c : comunas) {
-                nombresComunas.add(c.getNombre());
-            }
+            for (Comuna c : comunas) nombresComunas.add(c.getNombre());
             regComuna.setItems(nombresComunas);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        } catch (Exception ex) { ex.printStackTrace(); }
 
-        // ComboBox Barrio (se llena al seleccionar comuna)
         regBarrio = new ComboBox<>();
         regBarrio.setPromptText("Seleccione un barrio");
         regBarrio.setMaxWidth(Double.MAX_VALUE);
@@ -298,9 +263,7 @@ public class LoginApp {
 
         regComuna.setOnAction(e -> {
             String comunaSeleccionada = regComuna.getValue();
-            if (comunaSeleccionada == null) {
-                return;
-            }
+            if (comunaSeleccionada == null) return;
             regBarrio.getItems().clear();
             regBarrio.setDisable(true);
             try {
@@ -314,43 +277,38 @@ public class LoginApp {
                 }
                 regBarrio.setItems(nombresBarrios);
                 regBarrio.setDisable(nombresBarrios.isEmpty());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            } catch (Exception ex) { ex.printStackTrace(); }
         });
 
-        regCalle = modernField("Calle");
+        regCalle   = modernField("Calle");
         regCarrera = modernField("Carrera");
-        regEtapa = modernField("Etapa");
+        regEtapa   = modernField("Etapa");
         regManzana = modernField("Manzana");
-        regCasa = modernField("Casa");
-        regMsg = new Label();
+        regCasa    = modernField("Casa");
+        regMsg     = new Label();
         regMsg.setStyle("-fx-font-size: 13px;");
 
-        // Scroll automático al pasar de contraseña a dirección
         ScrollPane scroll = buildScroll();
 
-        // Cadena de foco con Tab/Enter
         chain(regPrimerNombre, regSegundoNombre, regPrimerApellido, regSegundoApellido,
-                regCedula, regTelefono, regEmail, regUsername);
+              regCedula, regTelefono, regEmail, regUsername);
         regPassword.setOnAction(e -> {
             regBarrio.requestFocus();
             animateScroll(scroll, 0.90);
         });
         chain(regCalle, regCarrera, regEtapa, regManzana, regCasa);
 
-        // Botón
         Button btnRegister = new Button("CREAR CUENTA");
         btnRegister.setPrefWidth(250);
         String btnNormal = "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
                 + "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;";
-        String btnHover = "-fx-background-color: linear-gradient(to right, #0f1c2b, #16283d);"
+        String btnHover  = "-fx-background-color: linear-gradient(to right, #0f1c2b, #16283d);"
                 + "-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 30; -fx-padding: 14 20; -fx-cursor: hand;";
         btnRegister.setStyle(btnNormal);
         btnRegister.setOnMouseEntered(e -> btnRegister.setStyle(btnHover));
-        btnRegister.setOnMouseExited(e -> btnRegister.setStyle(btnNormal));
+        btnRegister.setOnMouseExited(e  -> btnRegister.setStyle(btnNormal));
         regCasa.setOnAction(e -> btnRegister.fire());
 
         btnRegister.setOnAction(e -> {
@@ -370,8 +328,7 @@ public class LoginApp {
             }
         });
 
-        // Contenido del formulario
-        Label title = new Label("Crear Cuenta");
+        Label title    = new Label("Crear Cuenta");
         title.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #444;");
         Label subtitle = new Label("Completa la información para registrarte");
         subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 13px;");
@@ -379,16 +336,16 @@ public class LoginApp {
         VBox form = new VBox(14,
                 title, subtitle, new Separator(),
                 sectionTitle("DATOS PERSONALES"),
-                modernRow(regPrimerNombre, regSegundoNombre),
+                modernRow(regPrimerNombre,   regSegundoNombre),
                 modernRow(regPrimerApellido, regSegundoApellido),
-                modernRow(regCedula, regTelefono),
+                modernRow(regCedula,         regTelefono),
                 regEmail,
                 sectionTitle("CUENTA"),
                 regUsername, regPassword,
                 sectionTitle("DIRECCIÓN"),
                 regComuna, regBarrio,
-                modernRow(regCalle, regCarrera),
-                modernRow(regEtapa, regManzana),
+                modernRow(regCalle,  regCarrera),
+                modernRow(regEtapa,  regManzana),
                 regCasa,
                 new Separator(),
                 btnRegister, regMsg
@@ -467,9 +424,7 @@ public class LoginApp {
             regPrimerNombre, regSegundoNombre, regPrimerApellido, regSegundoApellido,
             regCedula, regTelefono, regEmail, regUsername,
             regCalle, regCarrera, regEtapa, regManzana, regCasa
-        }) {
-            tf.clear();
-        }
+        }) { tf.clear(); }
         regComuna.setValue(null);
         regBarrio.getItems().clear();
         regBarrio.setValue(null);
@@ -554,10 +509,10 @@ public class LoginApp {
                     "-fx-background-color: transparent; -fx-border-color: transparent;"));
             scroll.lookupAll(".thumb").forEach(n -> n.setStyle(
                     "-fx-background-color: rgba(120,120,120,0.45); -fx-background-radius: 8;"));
-            scroll.lookupAll(".increment-button, .decrement-button").forEach(n
-                    -> n.setStyle("-fx-padding: 0; -fx-opacity: 0;"));
-            scroll.lookupAll(".increment-arrow, .decrement-arrow").forEach(n
-                    -> n.setStyle("-fx-shape: ''; -fx-padding: 0;"));
+            scroll.lookupAll(".increment-button, .decrement-button").forEach(n ->
+                    n.setStyle("-fx-padding: 0; -fx-opacity: 0;"));
+            scroll.lookupAll(".increment-arrow, .decrement-arrow").forEach(n ->
+                    n.setStyle("-fx-shape: ''; -fx-padding: 0;"));
         });
         return scroll;
     }
@@ -567,9 +522,6 @@ public class LoginApp {
         lbl.setText(msg);
     }
 
-    /**
-     * Encadena campos para que Enter pase al siguiente
-     */
     private void chain(TextField... fields) {
         for (int i = 0; i < fields.length - 1; i++) {
             final TextField next = fields[i + 1];
@@ -596,7 +548,7 @@ public class LoginApp {
         u.setEstado(EstadoUsuario.ACTIVO);
 
         RolUsuario rol = new RolUsuario();
-        rol.setNombre("ciudadano");
+        rol.setNombre("CIUDADANO");
         u.setRol(rol);
 
         Barrio b = new Barrio();
@@ -604,11 +556,11 @@ public class LoginApp {
 
         Direccion d = new Direccion();
         d.setBarrio(b);
-        d.setCalle(regCalle.getText().isBlank() ? null : regCalle.getText());
+        d.setCalle(regCalle.getText().isBlank()    ? null : regCalle.getText());
         d.setCarrera(regCarrera.getText().isBlank() ? null : regCarrera.getText());
-        d.setEtapa(regEtapa.getText().isBlank() ? null : regEtapa.getText());
+        d.setEtapa(regEtapa.getText().isBlank()    ? null : regEtapa.getText());
         d.setManzana(regManzana.getText().isBlank() ? null : regManzana.getText());
-        d.setCasa(regCasa.getText().isBlank() ? null : regCasa.getText());
+        d.setCasa(regCasa.getText().isBlank()      ? null : regCasa.getText());
         u.setDireccion(d);
 
         return u;
@@ -646,10 +598,8 @@ public class LoginApp {
 
     private ScaleTransition createScale(Node node, double from, double to, int delayMs) {
         ScaleTransition st = new ScaleTransition(Duration.seconds(0.7), node);
-        st.setFromX(from);
-        st.setFromY(from);
-        st.setToX(to);
-        st.setToY(to);
+        st.setFromX(from); st.setFromY(from);
+        st.setToX(to);     st.setToY(to);
         st.setInterpolator(Interpolator.EASE_BOTH);
         st.setDelay(Duration.millis(delayMs));
         return st;
@@ -661,8 +611,7 @@ public class LoginApp {
         out.setOnFinished(e -> {
             btn.setText(newText);
             FadeTransition in = new FadeTransition(Duration.millis(200), btn);
-            in.setFromValue(0);
-            in.setToValue(1);
+            in.setFromValue(0); in.setToValue(1);
             in.play();
         });
         return out;
