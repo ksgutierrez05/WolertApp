@@ -8,9 +8,6 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
-
-
-
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
@@ -38,8 +35,8 @@ import sistemagestion.service.AlertaService;
 import sistemagestion.service.BarrioService;
 
 /**
- * Diálogo de emergencia.
- * Al confirmar, llama a AlertaService.insertar() para guardar la alerta en BD.
+ * Diálogo de emergencia. Al confirmar, llama a AlertaService.insertar() para
+ * guardar la alerta en BD.
  *
  * @author Maria Cristina
  */
@@ -49,17 +46,17 @@ public class EmergencyDialog {
     private static VBox panelActivo = null;
 
     // ── Selecciones del usuario ───────────────────────────────────
-    private static String tipoAlertaSeleccionado  = null;
-    private static String tipoArmaSeleccionada    = null;
+    private static String tipoAlertaSeleccionado = null;
+    private static String tipoArmaSeleccionada = null;
     private static String medioTranspSeleccionado = null;
 
     /**
      * Abre el diálogo de emergencia.
      *
-     * @param owner          Stage padre
-     * @param usuario        Usuario logueado (para username y datos)
-     * @param alertaService  Servicio para insertar la alerta
-     * @param barrioService  Servicio para cargar barrios disponibles
+     * @param owner Stage padre
+     * @param usuario Usuario logueado (para username y datos)
+     * @param alertaService Servicio para insertar la alerta
+     * @param barrioService Servicio para cargar barrios disponibles
      */
     public static void show(
             Stage owner,
@@ -68,10 +65,10 @@ public class EmergencyDialog {
             BarrioService barrioService
     ) {
         // Reset selecciones
-        tipoAlertaSeleccionado  = null;
-        tipoArmaSeleccionada    = null;
+        tipoAlertaSeleccionado = null;
+        tipoArmaSeleccionada = null;
         medioTranspSeleccionado = null;
-        panelActivo             = null;
+        panelActivo = null;
 
         // ── Root transparente ─────────────────────────────────────
         StackPane root = new StackPane();
@@ -90,7 +87,8 @@ public class EmergencyDialog {
                 """);
 
         // ── Botón cerrar ──────────────────────────────────────────
-        HBox topBar = new HBox(); topBar.setAlignment(Pos.TOP_RIGHT);
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.TOP_RIGHT);
         Button close = new Button("✕");
         close.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-font-size: 16px; -fx-text-fill: #1a2340;");
         topBar.getChildren().add(close);
@@ -110,45 +108,57 @@ public class EmergencyDialog {
             ImageView shield = new ImageView(
                     new Image(EmergencyDialog.class.getResource("/shield-Photoroom.png").toExternalForm())
             );
-            shield.setFitWidth(70); shield.setFitHeight(70); shield.setPreserveRatio(true);
+            shield.setFitWidth(70);
+            shield.setFitHeight(70);
+            shield.setPreserveRatio(true);
             panicButton.setGraphic(shield);
         } catch (Exception ignored) {
-            Label shieldLbl = new Label("🛡"); shieldLbl.setFont(Font.font(40)); panicButton.setGraphic(shieldLbl);
+            Label shieldLbl = new Label("🛡");
+            shieldLbl.setFont(Font.font(40));
+            panicButton.setGraphic(shieldLbl);
         }
 
         for (int i = 0; i < 3; i++) {
-            Circle wave = new Circle(60); wave.setFill(Color.web("#ff1f2d", 0.3)); wave.setStroke(null);
+            Circle wave = new Circle(60);
+            wave.setFill(Color.web("#ff1f2d", 0.3));
+            wave.setStroke(null);
             panicCenter.getChildren().add(0, wave);
             ScaleTransition scale = new ScaleTransition(Duration.seconds(2), wave);
-            scale.setFromX(1); scale.setFromY(1); scale.setToX(2.5); scale.setToY(2.5);
-            scale.setCycleCount(Timeline.INDEFINITE); scale.setDelay(Duration.seconds(i * 0.6)); scale.play();
+            scale.setFromX(1);
+            scale.setFromY(1);
+            scale.setToX(2.5);
+            scale.setToY(2.5);
+            scale.setCycleCount(Timeline.INDEFINITE);
+            scale.setDelay(Duration.seconds(i * 0.6));
+            scale.play();
             FadeTransition fade = new FadeTransition(Duration.seconds(2), wave);
-            fade.setFromValue(0.6); fade.setToValue(0);
-            fade.setCycleCount(Timeline.INDEFINITE); fade.setDelay(Duration.seconds(i * 0.6)); fade.play();
+            fade.setFromValue(0.6);
+            fade.setToValue(0);
+            fade.setCycleCount(Timeline.INDEFINITE);
+            fade.setDelay(Duration.seconds(i * 0.6));
+            fade.play();
         }
         panicCenter.getChildren().add(panicButton);
 
-        // ── Descripción libre ─────────────────────────────────────
-        TextArea txtDescripcion = new TextArea();
-        txtDescripcion.setPromptText("Describe brevemente la emergencia...");
-        txtDescripcion.setWrapText(true);
-        txtDescripcion.setPrefHeight(80);
-        txtDescripcion.setStyle("-fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #dbe3ea; -fx-font-size: 13px;");
-
-        // ── ComboBox barrio ───────────────────────────────────────
+     
+                // ── ComboBox barrio ───────────────────────────────────────
         ComboBox<Barrio> cmbBarrio = new ComboBox<>();
         cmbBarrio.setPromptText("Selecciona el barrio del incidente");
         cmbBarrio.setMaxWidth(Double.MAX_VALUE);
         cmbBarrio.setPrefHeight(40);
         cmbBarrio.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
         cmbBarrio.setCellFactory(lv -> new ListCell<>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
-                super.updateItem(item, empty); setText(empty || item == null ? null : item.getNombre());
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNombre());
             }
         });
         cmbBarrio.setButtonCell(new ListCell<>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
-                super.updateItem(item, empty); setText(empty || item == null ? null : item.getNombre());
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNombre());
             }
         });
         // Pre-cargar barrio del usuario si lo tiene
@@ -161,217 +171,153 @@ public class EmergencyDialog {
                     barrios.stream().filter(b -> b.getNombre().equalsIgnoreCase(miBarrio)).findFirst()
                             .ifPresent(cmbBarrio::setValue);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
-        // ── Label feedback ────────────────────────────────────────
-        Label lblFeedback = new Label();
-        lblFeedback.setWrapText(true); lblFeedback.setMaxWidth(400);
-
-        // ── Botón ENVIAR ALERTA ───────────────────────────────────
-        Button btnEnviar = new Button("🚨  ENVIAR ALERTA");
-        btnEnviar.setPrefWidth(280);
-        btnEnviar.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 13 20; -fx-cursor: hand;");
-        btnEnviar.setOnMouseEntered(e -> btnEnviar.setStyle("-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 13 20; -fx-cursor: hand;"));
-        btnEnviar.setOnMouseExited(e  -> btnEnviar.setStyle("-fx-background-color: #e53935; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 13 20; -fx-cursor: hand;"));
-
-        btnEnviar.setOnAction(e -> {
-            lblFeedback.setText("");
-
-            // Validaciones UI
-            if (tipoAlertaSeleccionado == null) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Selecciona el tipo de emergencia");
-                return;
-            }
-            if (txtDescripcion.getText().isBlank()) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Escribe una descripción del incidente");
-                return;
-            }
-            if (cmbBarrio.getValue() == null) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Selecciona el barrio del incidente");
-                return;
-            }
-            if (usuario == null || usuario.getUsername() == null) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Error: usuario no identificado");
-                return;
-            }
-            if (alertaService == null) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Sin conexión al servicio de alertas");
-                return;
-            }
-
-            // Construir alerta
-            try {
-                Alerta alerta = new Alerta();
-
-                alerta.setDescripcion(txtDescripcion.getText().trim());
-
-                // Usuario
-                alerta.setUsuario(usuario);
-
-                // Tipo alerta
-                TipoAlerta ta = new TipoAlerta();
-                ta.setNombre(tipoAlertaSeleccionado);
-                alerta.setTipoalerta(ta);
-
-                // Barrio
-                alerta.setBarrio(cmbBarrio.getValue());
-
-                // Tipo arma (opcional)
-                if (tipoArmaSeleccionada != null) {
-                    TipoArma arma = new TipoArma();
-                    arma.setNombre(tipoArmaSeleccionada);
-                    alerta.setTipoarma(arma);
-                }
-
-                // Medio transporte (opcional)
-                if (medioTranspSeleccionado != null) {
-                    MedioTransporte medio = new MedioTransporte();
-                    medio.setNombre(medioTranspSeleccionado);
-                    alerta.setMediotransporte(medio);
-                }
-
-                // Dirección del usuario como referencia
-                if (usuario.getDireccion() != null) {
-                    alerta.setDireccion(usuario.getDireccion());
-                }
-
-                // Insertar
-                boolean ok = alertaService.insertar(alerta);
-
-                if (ok) {
-                    lblFeedback.setStyle("-fx-text-fill: #43a047;");
-                    lblFeedback.setText("✅ Alerta enviada correctamente. Las autoridades han sido notificadas.");
-                    btnEnviar.setDisable(true);
-                    // Cerrar automáticamente tras 2 segundos
-                    new Timeline(new KeyFrame(Duration.seconds(2.5), ev -> {
-                        ((Stage) btnEnviar.getScene().getWindow()).close();
-                    })).play();
-                } else {
-                    lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                    lblFeedback.setText("Error al enviar la alerta. Intenta nuevamente.");
-                }
-
-            } catch (IllegalArgumentException ex) {
-                lblFeedback.setStyle("-fx-text-fill: #e53935;");
-                lblFeedback.setText("Datos inválidos: " + ex.getMessage());
-            }
-        });
+     
+       
 
         // ── Subpaneles de detalle ─────────────────────────────────
-
         // ROBO / ASALTO — selecciona tipo arma y medio transporte
         VBox subRobo = crearSubpanel("Detalles del incidente",
                 List.of(
-                        new OpcionCard("fas-crosshairs",  "#ef4444", "#fff1f2", "Arma de fuego",  "ARMA"),
-                        new OpcionCard("fas-user-slash",  "#f97316", "#fff7ed", "Arma blanca",     "ARMA"),
-                        new OpcionCard("mdi2m-motorbike", "#3b82f6", "#eff6ff", "Motocicleta",     "TRANSPORTE"),
-                        new OpcionCard("fas-car",         "#22c55e", "#ecfdf3", "Automóvil",       "TRANSPORTE")
+                        new OpcionCard("fas-crosshairs", "#ef4444", "#fff1f2", "Arma de fuego", "ARMA"),
+                        new OpcionCard("fas-user-slash", "#f97316", "#fff7ed", "Arma blanca", "ARMA"),
+                        new OpcionCard("mdi2m-motorbike", "#3b82f6", "#eff6ff", "Motocicleta", "TRANSPORTE"),
+                        new OpcionCard("fas-car", "#22c55e", "#ecfdf3", "Automóvil", "TRANSPORTE")
                 ), null);
 
         // PERSONA SOSPECHOSA — descripción libre
         TextArea descSospechoso = new TextArea();
         descSospechoso.setPromptText("Ej: camiseta negra, gorra roja, aprox. 1.80m...");
-        descSospechoso.setWrapText(true); descSospechoso.setPrefHeight(100);
+        descSospechoso.setWrapText(true);
+        descSospechoso.setPrefHeight(100);
         descSospechoso.setStyle("-fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #dbe3ea; -fx-font-size: 13px;");
-        descSospechoso.textProperty().addListener((obs, o, n) -> {
-            if (!n.isBlank()) txtDescripcion.setText("Persona sospechosa: " + n);
-        });
+      
         VBox subSospechoso = crearSubpanel("Descripción del sospechoso", List.of(), descSospechoso);
 
         // INCENDIO
         CheckBox chkAtrapados = new CheckBox("Hay personas atrapadas");
         chkAtrapados.setStyle("-fx-font-size: 13px;");
-        chkAtrapados.selectedProperty().addListener((obs, o, n) -> {
-            if (n) txtDescripcion.setText((txtDescripcion.getText() + " · Personas atrapadas").trim());
-        });
+       
         VBox subIncendio = crearSubpanel("Tipo de incendio",
                 List.of(
-                        new OpcionCard("fas-home",     "#ef4444", "#fff1f2", "Vivienda",        "TIPO"),
-                        new OpcionCard("fas-car",      "#f97316", "#fff7ed", "Vehículo",         "TIPO"),
-                        new OpcionCard("fas-tree",     "#ca8a04", "#fef9c3", "Zona verde",       "TIPO"),
-                        new OpcionCard("fas-industry", "#ef4444", "#fff1f2", "Local comercial",  "TIPO")
+                        new OpcionCard("fas-home", "#ef4444", "#fff1f2", "Vivienda", "TIPO"),
+                        new OpcionCard("fas-car", "#f97316", "#fff7ed", "Vehículo", "TIPO"),
+                        new OpcionCard("fas-tree", "#ca8a04", "#fef9c3", "Zona verde", "TIPO"),
+                        new OpcionCard("fas-industry", "#ef4444", "#fff1f2", "Local comercial", "TIPO")
                 ), chkAtrapados);
 
         // RUIDO / ALTERACIÓN
         VBox subRuido = crearSubpanel("Tipo de alteración",
                 List.of(
-                        new OpcionCard("fas-music",    "#d97706", "#fffbeb", "Música / fiesta",    "TIPO"),
-                        new OpcionCard("fas-fist-raised","#ef4444","#fff1f2","Riña / pelea",       "TIPO"),
-                        new OpcionCard("fas-dog",      "#3b82f6", "#eff6ff", "Animal agresivo",    "TIPO"),
-                        new OpcionCard("fas-hard-hat", "#16a34a", "#f0fdf4", "Obra / construcción","TIPO"),
-                        new OpcionCard("fas-bullhorn", "#9333ea", "#faf5ff", "Escándalo público",  "TIPO"),
-                        new OpcionCard("fas-bomb",     "#f97316", "#fff7ed", "Detonación / disparo","TIPO")
+                        new OpcionCard("fas-music", "#d97706", "#fffbeb", "Música / fiesta", "TIPO"),
+                        new OpcionCard("fas-fist-raised", "#ef4444", "#fff1f2", "Riña / pelea", "TIPO"),
+                        new OpcionCard("fas-dog", "#3b82f6", "#eff6ff", "Animal agresivo", "TIPO"),
+                        new OpcionCard("fas-hard-hat", "#16a34a", "#f0fdf4", "Obra / construcción", "TIPO"),
+                        new OpcionCard("fas-bullhorn", "#9333ea", "#faf5ff", "Escándalo público", "TIPO"),
+                        new OpcionCard("fas-bomb", "#f97316", "#fff7ed", "Detonación / disparo", "TIPO")
                 ), null);
 
         // EMERGENCIA MÉDICA
         VBox subMedica = crearSubpanel("Tipo de emergencia médica",
                 List.of(
-                        new OpcionCard("fas-heartbeat",      "#ef4444", "#fff1f2", "Paro cardíaco",         "TIPO"),
-                        new OpcionCard("fas-lungs",          "#3b82f6", "#eff6ff", "Dific. respiratoria",   "TIPO"),
-                        new OpcionCard("fas-user-injured",   "#d97706", "#fffbeb", "Persona herida",        "TIPO"),
-                        new OpcionCard("fas-head-side-mask", "#9333ea", "#faf5ff", "Desmayo / convulsión",  "TIPO"),
-                        new OpcionCard("fas-baby",           "#16a34a", "#f0fdf4", "Parto de emergencia",   "TIPO"),
-                        new OpcionCard("fas-flask",          "#f97316", "#fff7ed", "Intoxicación",          "TIPO")
+                        new OpcionCard("fas-heartbeat", "#ef4444", "#fff1f2", "Paro cardíaco", "TIPO"),
+                        new OpcionCard("fas-lungs", "#3b82f6", "#eff6ff", "Dific. respiratoria", "TIPO"),
+                        new OpcionCard("fas-user-injured", "#d97706", "#fffbeb", "Persona herida", "TIPO"),
+                        new OpcionCard("fas-head-side-mask", "#9333ea", "#faf5ff", "Desmayo / convulsión", "TIPO"),
+                        new OpcionCard("fas-baby", "#16a34a", "#f0fdf4", "Parto de emergencia", "TIPO"),
+                        new OpcionCard("fas-flask", "#f97316", "#fff7ed", "Intoxicación", "TIPO")
                 ), null);
 
         // ACCIDENTE
         CheckBox chkHeridos = new CheckBox("Hay personas heridas");
         chkHeridos.setStyle("-fx-font-size: 13px;");
         chkHeridos.selectedProperty().addListener((obs, o, n) -> {
-            if (n) txtDescripcion.setText((txtDescripcion.getText() + " · Personas heridas").trim());
+           
         });
         VBox subAccidente = crearSubpanel("Tipo de accidente",
                 List.of(
-                        new OpcionCard("fas-car-crash",  "#3b82f6", "#eff6ff", "Choque de vehículos", "TIPO"),
-                        new OpcionCard("fas-walking",    "#ef4444", "#fff1f2", "Atropello",            "TIPO"),
-                        new OpcionCard("fas-bolt",       "#d97706", "#fffbeb", "Cable eléctrico",      "TIPO"),
-                        new OpcionCard("fas-water",      "#16a34a", "#f0fdf4", "Inundación",           "TIPO"),
-                        new OpcionCard("fas-building",   "#9333ea", "#faf5ff", "Derrumbamiento",       "TIPO"),
-                        new OpcionCard("fas-road",       "#16a34a", "#f0fdf4", "Vía obstruida",        "TIPO")
+                        new OpcionCard("fas-car-crash", "#3b82f6", "#eff6ff", "Choque de vehículos", "TIPO"),
+                        new OpcionCard("fas-walking", "#ef4444", "#fff1f2", "Atropello", "TIPO"),
+                        new OpcionCard("fas-bolt", "#d97706", "#fffbeb", "Cable eléctrico", "TIPO"),
+                        new OpcionCard("fas-water", "#16a34a", "#f0fdf4", "Inundación", "TIPO"),
+                        new OpcionCard("fas-building", "#9333ea", "#faf5ff", "Derrumbamiento", "TIPO"),
+                        new OpcionCard("fas-road", "#16a34a", "#f0fdf4", "Vía obstruida", "TIPO")
                 ), chkHeridos);
 
         List<VBox> todosPaneles = List.of(subRobo, subSospechoso, subIncendio, subRuido, subMedica, subAccidente);
 
         // ── Tarjetas principales ──────────────────────────────────
-        HBox roboCard      = createOption("fas-user-slash",          "#ff2d2d", "#ffefef", "Robo / Asalto");
-        HBox sospechosoCard= createOption("fas-user-secret",         "#16a34a", "#ecfdf3", "Sospechoso");
-        HBox ruidoCard     = createOption("fas-volume-up",           "#f59e0b", "#fff7ed", "Ruido / Alteración");
-        HBox incendioCard  = createOption("fas-fire",                "#ef4444", "#fff1f2", "Incendio");
-        HBox medicaCard    = createOption("fas-plus",                "#22c55e", "#ecfdf3", "Emergencia médica");
-        HBox accidenteCard = createOption("fas-exclamation-triangle","#3b82f6", "#eff6ff", "Accidente");
+        HBox roboCard = createOption("fas-user-slash", "#ff2d2d", "#ffefef", "Robo / Asalto");
+        HBox sospechosoCard = createOption("fas-user-secret", "#16a34a", "#ecfdf3", "Sospechoso");
+        HBox ruidoCard = createOption("fas-volume-up", "#f59e0b", "#fff7ed", "Ruido / Alteración");
+        HBox incendioCard = createOption("fas-fire", "#ef4444", "#fff1f2", "Incendio");
+        HBox medicaCard = createOption("fas-plus", "#22c55e", "#ecfdf3", "Emergencia médica");
+        HBox accidenteCard = createOption("fas-exclamation-triangle", "#3b82f6", "#eff6ff", "Accidente");
 
         // Al hacer clic: fija el tipo de alerta y muestra subpanel
-        roboCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "ROBO";                mostrarSubpanel(subRobo, todosPaneles); });
-        sospechosoCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "PERSONA_SOSPECHOSA"; mostrarSubpanel(subSospechoso, todosPaneles); });
-        incendioCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "INCENDIO";            mostrarSubpanel(subIncendio, todosPaneles); });
-        ruidoCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "RUIDO";                  mostrarSubpanel(subRuido, todosPaneles); });
-        medicaCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "EMERGENCIA_MEDICA";     mostrarSubpanel(subMedica, todosPaneles); });
-        accidenteCard.setOnMouseClicked(e -> { tipoAlertaSeleccionado = "ACCIDENTE";           mostrarSubpanel(subAccidente, todosPaneles); });
+        roboCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "ROBO";
+            mostrarSubpanel(subRobo, todosPaneles);
+        });
+        sospechosoCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "PERSONA_SOSPECHOSA";
+            mostrarSubpanel(subSospechoso, todosPaneles);
+        });
+        incendioCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "INCENDIO";
+            mostrarSubpanel(subIncendio, todosPaneles);
+        });
+        ruidoCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "RUIDO";
+            mostrarSubpanel(subRuido, todosPaneles);
+        });
+        medicaCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "EMERGENCIA_MEDICA";
+            mostrarSubpanel(subMedica, todosPaneles);
+        });
+        accidenteCard.setOnMouseClicked(e -> {
+            tipoAlertaSeleccionado = "ACCIDENTE";
+            mostrarSubpanel(subAccidente, todosPaneles);
+        });
 
-        GridPane grid = new GridPane(); grid.setHgap(10); grid.setVgap(10);
-        grid.add(roboCard,       0, 0); grid.add(sospechosoCard, 1, 0);
-        grid.add(ruidoCard,      0, 1); grid.add(incendioCard,   1, 1);
-        grid.add(medicaCard,     0, 2); grid.add(accidenteCard,  1, 2);
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(roboCard, 0, 0);
+        grid.add(sospechosoCard, 1, 0);
+        grid.add(ruidoCard, 0, 1);
+        grid.add(incendioCard, 1, 1);
+        grid.add(medicaCard, 0, 2);
+        grid.add(accidenteCard, 1, 2);
 
         // Separador visual
-        Region sep = new Region(); sep.setPrefHeight(1); sep.setStyle("-fx-background-color: #e5e7eb;");
+        Region sep = new Region();
+        sep.setPrefHeight(1);
+        sep.setStyle("-fx-background-color: #e5e7eb;");
 
         modal.getChildren().addAll(
-                topBar, title, panicCenter, grid,
-                subRobo, subSospechoso, subIncendio, subRuido, subMedica, subAccidente,
+                topBar,
+                title,
+                panicCenter,
+                grid,
+                subRobo,
+                subSospechoso,
+                subIncendio,
+                subRuido,
+                subMedica,
+                subAccidente,
                 sep,
-                new Label("Descripción del incidente:") {{ setFont(Font.font("System", FontWeight.BOLD, 13)); setTextFill(Color.web("#374151")); }},
-                txtDescripcion,
-                new Label("Ubicación del incidente:") {{ setFont(Font.font("System", FontWeight.BOLD, 13)); setTextFill(Color.web("#374151")); }},
-                cmbBarrio,
-                btnEnviar,
-                lblFeedback
+                new Label("Ubicación del incidente:") {
+            {
+                setFont(Font.font("System", FontWeight.BOLD, 13));
+                setTextFill(Color.web("#374151"));
+            }
+        },
+                cmbBarrio
+               
         );
 
         ScrollPane scroll = new ScrollPane(modal);
@@ -400,18 +346,24 @@ public class EmergencyDialog {
 
     // ── Toggle subpanel ───────────────────────────────────────────
     private static void mostrarSubpanel(VBox nuevo, List<VBox> todos) {
-        for (VBox p : todos) { p.setVisible(false); p.setManaged(false); }
+        for (VBox p : todos) {
+            p.setVisible(false);
+            p.setManaged(false);
+        }
         if (panelActivo == nuevo) {
             panelActivo = null;
         } else {
-            nuevo.setVisible(true); nuevo.setManaged(true); panelActivo = nuevo;
+            nuevo.setVisible(true);
+            nuevo.setManaged(true);
+            panelActivo = nuevo;
         }
     }
 
     // ── Constructor de subpanel ───────────────────────────────────
     private static VBox crearSubpanel(String tituloTexto, List<OpcionCard> opciones, javafx.scene.Node extraNodo) {
         VBox panel = new VBox(12);
-        panel.setVisible(false); panel.setManaged(false);
+        panel.setVisible(false);
+        panel.setManaged(false);
         panel.setPadding(new Insets(10, 0, 0, 0));
 
         Label titulo = new Label(tituloTexto);
@@ -420,7 +372,9 @@ public class EmergencyDialog {
         panel.getChildren().add(titulo);
 
         if (!opciones.isEmpty()) {
-            GridPane grid = new GridPane(); grid.setHgap(10); grid.setVgap(10);
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
             int col = 0, row = 0;
             for (OpcionCard op : opciones) {
                 HBox card = createOption(op.iconCode, op.iconColor, op.bg, op.label);
@@ -428,35 +382,49 @@ public class EmergencyDialog {
                 final String val = op.label;
                 final String tipo = op.tipo;
                 card.setOnMouseClicked(e -> {
-                    if ("ARMA".equals(tipo))        tipoArmaSeleccionada    = val;
-                    else if ("TRANSPORTE".equals(tipo)) medioTranspSeleccionado = val;
+                    if ("ARMA".equals(tipo)) {
+                        tipoArmaSeleccionada = val;
+                    } else if ("TRANSPORTE".equals(tipo)) {
+                        medioTranspSeleccionado = val;
+                    }
                     // Para TIPO simplemente queda como detalle en descripción
                     resaltarSeleccion(card, grid);
                 });
                 grid.add(card, col, row);
-                col++; if (col == 2) { col = 0; row++; }
+                col++;
+                if (col == 2) {
+                    col = 0;
+                    row++;
+                }
             }
             panel.getChildren().add(grid);
         }
-        if (extraNodo != null) panel.getChildren().add(extraNodo);
+        if (extraNodo != null) {
+            panel.getChildren().add(extraNodo);
+        }
         return panel;
     }
 
     // ── Resalta la tarjeta seleccionada ───────────────────────────
     private static void resaltarSeleccion(HBox seleccionada, GridPane grid) {
         grid.getChildren().forEach(n -> {
-            if (n instanceof HBox h) h.setStyle(cardStyle(false));
+            if (n instanceof HBox h) {
+                h.setStyle(cardStyle(false));
+            }
         });
         seleccionada.setStyle(cardStyle(true));
     }
 
     // ── Tarjeta con emoji (sin dependencia ikonli) ────────────────
     private static HBox createOption(String iconCode, String iconColor, String bg, String text) {
-        HBox card = new HBox(14); card.setAlignment(Pos.CENTER_LEFT);
-        card.setPadding(new Insets(10)); card.setPrefSize(200, 65);
+        HBox card = new HBox(14);
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(10));
+        card.setPrefSize(200, 65);
         card.setStyle(cardStyle(false));
 
-        StackPane iconBox = new StackPane(); iconBox.setPrefSize(38, 38);
+        StackPane iconBox = new StackPane();
+        iconBox.setPrefSize(38, 38);
         iconBox.setStyle("-fx-background-radius: 14; -fx-background-color: " + bg + ";");
 
         // Mapeo FontAwesome code → emoji
@@ -465,48 +433,85 @@ public class EmergencyDialog {
         iconLbl.setFont(Font.font(18));
         iconBox.getChildren().add(iconLbl);
 
-        Label txt = new Label(text); txt.setFont(Font.font("System", FontWeight.BOLD, 13));
-        txt.setTextFill(Color.web("#111827")); txt.setWrapText(true); txt.setMaxWidth(130);
+        Label txt = new Label(text);
+        txt.setFont(Font.font("System", FontWeight.BOLD, 13));
+        txt.setTextFill(Color.web("#111827"));
+        txt.setWrapText(true);
+        txt.setMaxWidth(130);
         card.getChildren().addAll(iconBox, txt);
         card.setOnMouseEntered(e -> card.setStyle(cardStyle(true)));
-        card.setOnMouseExited(e  -> card.setStyle(cardStyle(false)));
+        card.setOnMouseExited(e -> card.setStyle(cardStyle(false)));
         return card;
     }
 
-    /** Convierte códigos FontAwesome usados en este diálogo a emojis equivalentes. */
+    /**
+     * Convierte códigos FontAwesome usados en este diálogo a emojis
+     * equivalentes.
+     */
     private static String iconToEmoji(String code) {
         return switch (code) {
-            case "fas-user-slash"           -> "🚫";
-            case "fas-user-secret"          -> "🕵";
-            case "fas-crosshairs"           -> "🎯";
-            case "fas-volume-up"            -> "📢";
-            case "fas-fire"                 -> "🔥";
-            case "fas-plus"                 -> "➕";
-            case "fas-exclamation-triangle" -> "⚠";
-            case "fas-home"                 -> "🏠";
-            case "fas-car"                  -> "🚗";
-            case "fas-car-crash"            -> "💥";
-            case "fas-tree"                 -> "🌳";
-            case "fas-industry"             -> "🏭";
-            case "fas-music"                -> "🎵";
-            case "fas-fist-raised"          -> "✊";
-            case "fas-dog"                  -> "🐕";
-            case "fas-hard-hat"             -> "⛑";
-            case "fas-bullhorn"             -> "📣";
-            case "fas-bomb"                 -> "💣";
-            case "fas-heartbeat"            -> "❤";
-            case "fas-lungs"                -> "🫁";
-            case "fas-user-injured"         -> "🤕";
-            case "fas-head-side-mask"       -> "😷";
-            case "fas-baby"                 -> "👶";
-            case "fas-flask"                -> "⚗";
-            case "fas-walking"              -> "🚶";
-            case "fas-bolt"                 -> "⚡";
-            case "fas-water"                -> "🌊";
-            case "fas-building"             -> "🏗";
-            case "fas-road"                 -> "🛣";
-            case "mdi2m-motorbike"          -> "🏍";
-            default                         -> "🔴";
+            case "fas-user-slash" ->
+                "🚫";
+            case "fas-user-secret" ->
+                "🕵";
+            case "fas-crosshairs" ->
+                "🎯";
+            case "fas-volume-up" ->
+                "📢";
+            case "fas-fire" ->
+                "🔥";
+            case "fas-plus" ->
+                "➕";
+            case "fas-exclamation-triangle" ->
+                "⚠";
+            case "fas-home" ->
+                "🏠";
+            case "fas-car" ->
+                "🚗";
+            case "fas-car-crash" ->
+                "💥";
+            case "fas-tree" ->
+                "🌳";
+            case "fas-industry" ->
+                "🏭";
+            case "fas-music" ->
+                "🎵";
+            case "fas-fist-raised" ->
+                "✊";
+            case "fas-dog" ->
+                "🐕";
+            case "fas-hard-hat" ->
+                "⛑";
+            case "fas-bullhorn" ->
+                "📣";
+            case "fas-bomb" ->
+                "💣";
+            case "fas-heartbeat" ->
+                "❤";
+            case "fas-lungs" ->
+                "🫁";
+            case "fas-user-injured" ->
+                "🤕";
+            case "fas-head-side-mask" ->
+                "😷";
+            case "fas-baby" ->
+                "👶";
+            case "fas-flask" ->
+                "⚗";
+            case "fas-walking" ->
+                "🚶";
+            case "fas-bolt" ->
+                "⚡";
+            case "fas-water" ->
+                "🌊";
+            case "fas-building" ->
+                "🏗";
+            case "fas-road" ->
+                "🛣";
+            case "mdi2m-motorbike" ->
+                "🏍";
+            default ->
+                "🔴";
         };
     }
 
@@ -517,5 +522,7 @@ public class EmergencyDialog {
     }
 
     // ── Record auxiliar ───────────────────────────────────────────
-    private record OpcionCard(String iconCode, String iconColor, String bg, String label, String tipo) {}
+    private record OpcionCard(String iconCode, String iconColor, String bg, String label, String tipo) {
+
+    }
 }

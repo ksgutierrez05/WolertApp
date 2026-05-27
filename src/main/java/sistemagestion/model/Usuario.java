@@ -8,7 +8,8 @@ package sistemagestion.model;
  *
  * @author Maria Cristina
  */
-public class Usuario extends Persona{
+public class Usuario extends Persona {
+
     private int id_usuario;
     RolUsuario rol;
 
@@ -28,12 +29,4 @@ public class Usuario extends Persona{
         this.rol = rol;
     }
 
-    public void setPolicia(Policia policia) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-  
-
-    
-    
 }

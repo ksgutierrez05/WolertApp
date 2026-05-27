@@ -32,13 +32,14 @@ import java.util.List;
 import java.util.Locale;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
 /**
- * 
- * 
+ *
+ *
  *
  * @author Maria Cristina
  */
@@ -91,11 +92,15 @@ public class UsuarioApp {
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
+        root.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
+        BorderPane.setAlignment(root.getLeft(), Pos.TOP_LEFT);
         root.setStyle("-fx-background-color: " + BG + ";");
 
         Scene scene = new Scene(root, 1200, 620);
         stage.setTitle("WolertApp – Sistema de Alertas Comunitarias");
         stage.setScene(scene);
+        stage.setResizable(true);   // permite redimensionar
+        stage.setMaximized(false);  // inicia normal
         stage.show();
     }
 
@@ -104,12 +109,12 @@ public class UsuarioApp {
     // =========================================================================
     private VBox buildSidebar() {
         VBox sidebar = new VBox();
-        sidebar.setPrefWidth(240);
+        sidebar.setPrefWidth(250);
         sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);");
 
         // Logo
         HBox logoBox = new HBox(15);
-        logoBox.setPadding(new Insets(25, 20, 25, 20));
+        logoBox.setPadding(new Insets(25, 16, 25, 16));
         logoBox.setAlignment(Pos.CENTER_LEFT);
         ImageView logoView = new ImageView(
                 new Image(getClass().getResourceAsStream("/LogoWolertAPP.png"))
@@ -118,14 +123,14 @@ public class UsuarioApp {
         logoView.setFitWidth(70);
         logoView.setFitHeight(70);
         logoView.setPreserveRatio(true);
-        logoView.setTranslateX(-8);
+        logoView.setTranslateX(-2);
 
         StackPane wolfIcon = new StackPane(logoView);
         VBox logoText = new VBox(2);
         logoText.setTranslateX(-5);
         logoText.getChildren().addAll(
                 label("WolertApp", 22, WHITE, true),
-                label("Sistema de Alertas Comunitarias", 11, "#8899bb", false)
+                label("Sistema de Alertas Comunitarias", 9, "#8899bb", false)
         );
         logoBox.getChildren().addAll(wolfIcon, logoText);
 
@@ -173,28 +178,28 @@ public class UsuarioApp {
         );
 
         // Logout
-        String styleLogout =
-                "-fx-background-color: white; " +
-                "-fx-border-color: white; " +
-                "-fx-border-width: 2; " +
-                "-fx-text-fill: #16283d; " +
-                "-fx-font-size: 13px; " +
-                "-fx-font-weight: bold; " +
-                "-fx-background-radius: 30; " +
-                "-fx-border-radius: 30; " +
-                "-fx-padding: 10 35; " +
-                "-fx-cursor: hand;";
-        String styleLogoutHover =
-                "-fx-background-color: #f0f4ff; " +
-                "-fx-border-color: white; " +
-                "-fx-border-width: 2; " +
-                "-fx-text-fill: #16283d; " +
-                "-fx-font-size: 13px; " +
-                "-fx-font-weight: bold; " +
-                "-fx-background-radius: 30; " +
-                "-fx-border-radius: 30; " +
-                "-fx-padding: 10 35; " +
-                "-fx-cursor: hand;";
+        String styleLogout
+                = "-fx-background-color: white; "
+                + "-fx-border-color: white; "
+                + "-fx-border-width: 2; "
+                + "-fx-text-fill: #16283d; "
+                + "-fx-font-size: 13px; "
+                + "-fx-font-weight: bold; "
+                + "-fx-background-radius: 30; "
+                + "-fx-border-radius: 30; "
+                + "-fx-padding: 10 35; "
+                + "-fx-cursor: hand;";
+        String styleLogoutHover
+                = "-fx-background-color: #f0f4ff; "
+                + "-fx-border-color: white; "
+                + "-fx-border-width: 2; "
+                + "-fx-text-fill: #16283d; "
+                + "-fx-font-size: 13px; "
+                + "-fx-font-weight: bold; "
+                + "-fx-background-radius: 30; "
+                + "-fx-border-radius: 30; "
+                + "-fx-padding: 10 35; "
+                + "-fx-cursor: hand;";
 
         Button logoutBtn = new Button("🚪  Cerrar sesión");
         logoutBtn.setStyle(styleLogout);
@@ -208,41 +213,117 @@ public class UsuarioApp {
         logoutBox.setAlignment(Pos.CENTER);
 
         VBox spacer = new VBox();
+
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        sidebar.getChildren().addAll(logoBox, userCard, nav, spacer, logoutBox);
+
+        sidebar.getChildren().addAll(
+                logoBox,
+                userCard,
+                nav,
+                spacer,
+                logoutBox
+        );
+
+        sidebar.setPrefHeight(Double.MAX_VALUE);
+        sidebar.setMaxHeight(Double.MAX_VALUE);
+
         return sidebar;
     }
 
     private HBox navItem(String icon, String text) {
-        HBox item = new HBox(10);
-        item.setPadding(new Insets(10, 12, 10, 12));
+
+        HBox item = new HBox(12);
+        item.setPadding(new Insets(12, 16, 12, 16));
         item.setAlignment(Pos.CENTER_LEFT);
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
-        item.setStyle("-fx-background-radius: 8;");
-        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: #ffffff18; -fx-background-radius: 8;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
-        item.getChildren().addAll(label(icon, 14, "#8899bb", false), label(text, 13, "#8899bb", false));
-        item.setOnMouseClicked(e -> {
-            if ("Dashboard".equals(text)) {
-                root.setCenter(buildMainContent());
-            } else {
-                root.setCenter(buildPlaceholder(text));
+
+        String normalStyle = """
+        -fx-background-radius: 10;
+        -fx-background-color: transparent;
+    """;
+
+        String hoverStyle = """
+        -fx-background-color: #ffffff18;
+        -fx-background-radius: 10;
+    """;
+
+        String activeStyle = """
+        -fx-background-color: #2563eb;
+        -fx-background-radius: 10;
+    """;
+
+        item.setStyle(normalStyle);
+
+        Label iconLabel = new Label(icon);
+        iconLabel.setStyle("""
+        -fx-font-size: 18px;
+        -fx-font-weight: bold;
+        -fx-text-fill: white;
+    """);
+
+        Label textLabel = new Label(text);
+        textLabel.setStyle("""
+        -fx-font-size: 14px;
+        -fx-font-weight: bold;
+        -fx-text-fill: white;
+    """);
+
+        item.getChildren().addAll(iconLabel, textLabel);
+
+        item.setOnMouseEntered(e -> {
+            if (!item.getStyle().equals(activeStyle)) {
+                item.setStyle(hoverStyle);
             }
         });
-        return item;
-    }
 
-    private HBox navItemBadge(String icon, String text, int count) {
-        HBox item = navItem(icon, text);
-        if (count > 0) {
-            Label badge = label(String.valueOf(count), 9, WHITE, true);
-            badge.setPadding(new Insets(1, 5, 1, 5));
-            badge.setStyle("-fx-background-color: " + RED + "; -fx-background-radius: 10;");
-            HBox spacer = new HBox();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-            item.getChildren().addAll(spacer, badge);
-        }
+        item.setOnMouseExited(e -> {
+            if (!item.getStyle().equals(activeStyle)) {
+                item.setStyle(normalStyle);
+            }
+        });
+
+        item.setOnMouseClicked((MouseEvent e) -> {
+
+            item.setStyle(activeStyle);
+
+            switch (text) {
+
+                case "Dashboard" ->
+                    root.setCenter(buildMainContent());
+
+                case "Alertas" -> {
+                    AlertasView alertasView = new AlertasView(
+                            usuarioActual,
+                            alertaService,
+                            barrioService
+                    );
+                    root.setCenter(alertasView.getView());
+                }
+
+                case "Mis Alertas" -> {
+                    MisAlertasView misAlertasView = new MisAlertasView(
+                            usuarioActual,
+                            alertaService,
+                            barrioService,
+                            root
+                    );
+                    root.setCenter(misAlertasView.getView());
+                }
+
+                case "Mapa" -> {
+                    toggleMapaSubMenu(item);
+                }
+                case "Vecinos" -> {
+                    VecinosView vecinosView = new VecinosView(usuarioActual, alertaService);
+                    root.setCenter(vecinosView.getView());
+                }
+
+                default ->
+                    root.setCenter(buildPlaceholder(text));
+            }
+        });
+
         return item;
     }
 
@@ -434,25 +515,74 @@ public class UsuarioApp {
 
     private VBox statCard(String icon, String bgIcon, String iconColor,
             String title, long value, String sub, String subColor) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(20));
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
-        card.setPrefWidth(220);
+
+        VBox card = new VBox(6);
+
+        card.setPadding(new Insets(14));
+
+        card.setStyle("""
+        -fx-background-color: white;
+        -fx-background-radius: 18;
+        -fx-border-radius: 18;
+    """);
+
+        card.setPrefWidth(210);
+
+        card.setMinHeight(100);
+        card.setMaxHeight(100);
+
         HBox.setHgrow(card, Priority.ALWAYS);
+
         shadow(card);
-        HBox top = new HBox(12);
-        top.setAlignment(Pos.CENTER_LEFT);
+
+        // CUADRADO ICONO
         StackPane iconBox = new StackPane();
-        Rectangle iconBg = new Rectangle(44, 44);
-        iconBg.setArcWidth(10);
-        iconBg.setArcHeight(10);
+
+        Rectangle iconBg = new Rectangle(48, 48);
+
+        iconBg.setArcWidth(14);
+        iconBg.setArcHeight(14);
+
         iconBg.setFill(Color.web(bgIcon));
-        iconBox.getChildren().addAll(iconBg, label(icon, 20, iconColor, false));
-        top.getChildren().addAll(iconBox, label(title, 13, GRAY_TEXT, false));
+
+        Label iconLbl = label(icon, 20, iconColor, false);
+
+        iconBox.getChildren().addAll(iconBg, iconLbl);
+
+        // TITULO
+        Label titleLbl = label(title, 13, "#374151", true);
+
+        // NUMERO
         Label val = new Label(String.valueOf(value));
-        val.setFont(Font.font("System", FontWeight.BOLD, 34));
+
+        val.setFont(Font.font("System", FontWeight.BOLD, 28));
+
         val.setTextFill(Color.web("#111827"));
-        card.getChildren().addAll(top, val, label(sub, 12, subColor, false));
+
+        // SUBTEXTO
+        Label subLbl = label(sub, 11, subColor, false);
+
+        VBox textBox = new VBox(3);
+
+        textBox.getChildren().addAll(
+                titleLbl,
+                val,
+                subLbl
+        );
+
+        HBox top = new HBox(14);
+
+        top.setAlignment(Pos.CENTER_LEFT);
+
+        top.getChildren().addAll(iconBox, textBox);
+
+        card.getChildren().add(top);
+
+        // Hover
+        card.setOnMouseEntered(e -> card.setTranslateY(-2));
+
+        card.setOnMouseExited(e -> card.setTranslateY(0));
+
         return card;
     }
 
@@ -520,10 +650,14 @@ public class UsuarioApp {
 
         String estado = a.getEstado() != null ? a.getEstado().name() : "—";
         String dotColor = switch (estado) {
-            case "PENDIENTE" -> RED;
-            case "EN_PROCESO" -> ORANGE;
-            case "RESUELTA" -> GREEN;
-            default -> GRAY_TEXT;
+            case "PENDIENTE" ->
+                RED;
+            case "EN_PROCESO" ->
+                ORANGE;
+            case "RESUELTA" ->
+                GREEN;
+            default ->
+                GRAY_TEXT;
         };
         Circle dotCircle = new Circle(5, Color.web(dotColor));
 
@@ -734,10 +868,14 @@ public class UsuarioApp {
 
     private String estadoBg(String estado) {
         return switch (estado) {
-            case "PENDIENTE" -> RED_LIGHT;
-            case "EN_PROCESO" -> "#fff8e1";
-            case "RESUELTA" -> "#e8f5e9";
-            default -> "#f3f4f6";
+            case "PENDIENTE" ->
+                RED_LIGHT;
+            case "EN_PROCESO" ->
+                "#fff8e1";
+            case "RESUELTA" ->
+                "#e8f5e9";
+            default ->
+                "#f3f4f6";
         };
     }
 
@@ -756,7 +894,16 @@ public class UsuarioApp {
     }
 
     private void shadow(Region node) {
-        node.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
+
+        DropShadow shadow = new DropShadow();
+
+        shadow.setRadius(18);
+
+        shadow.setOffsetY(4);
+
+        shadow.setColor(Color.rgb(15, 23, 42, 0.10));
+
+        node.setEffect(shadow);
     }
 
     private void mostrarAlerta(String titulo, String msg) {
