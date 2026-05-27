@@ -59,7 +59,7 @@ public class MapaAlarmas {
     private ComunaService comunaService;
     private BarrioService barrioService;
 
-    // ── Estado del mapa ───────────────────────────────────────────────────────
+    // ── Estado del mapa ─────────────────────────────────────────────────────── a
     private JXMapViewer mapa;
     private GeoPosition posicionSeleccionada;
 
