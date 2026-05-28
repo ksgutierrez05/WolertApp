@@ -165,7 +165,7 @@ public class AdministradorApp {
         VBox logoText = new VBox(1);
         logoText.setAlignment(Pos.CENTER_LEFT);
 
-        Label appName = label("WolertApp", 1, WHITE, true);
+        Label appName = label("WolertApp", 18, WHITE, true);
         Label appSub = label("Panel Administrativo", 9, SIDEBAR_NAV_TEXT, false);
 
         logoText.getChildren().addAll(appName, appSub);
