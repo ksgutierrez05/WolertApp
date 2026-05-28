@@ -161,20 +161,20 @@ public class UsuarioApp {
         userCard.getChildren().addAll(avatarStack, userInfo);
 
         // Nav — todos los ítems van a placeholder excepto Dashboard
-        nav = new VBox(2);
+      nav = new VBox(2);
         nav.setPadding(new Insets(16, 8, 16, 8));
         nav.getChildren().addAll(
                 navItem("🏠", "Dashboard"),
                 navItem("🔔", "Alertas"),
-                navItem("🗺", "Mapa"),
+                navItem("🗺️", "Mapa"),
                 navItem("👥", "Vecinos"),
                 navItem("🔔", "Mis Alertas"),
                 navItem("📋", "Mis Suscripciones"),
                 navItem("💬", "Notificaciones"),
                 navItem("📄", "Mis Reportes"),
-                navItem("ℹ", "Información Útil"),
+                navItem("ℹ️", "Información Útil"),
                 navItem("👤", "Perfil"),
-                navItem("⚙", "Configuración")
+                navItem("⚙️", "Configuración")
         );
 
         // Logout
@@ -239,19 +239,25 @@ public class UsuarioApp {
         item.setMaxWidth(Double.MAX_VALUE);
 
         String normalStyle = """
-        -fx-background-radius: 10;
-        -fx-background-color: transparent;
-    """;
+    -fx-background-radius: 10;
+    -fx-background-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         String hoverStyle = """
-        -fx-background-color: #ffffff18;
-        -fx-background-radius: 10;
-    """;
+    -fx-background-color: #ffffff18;
+    -fx-background-radius: 10;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         String activeStyle = """
-        -fx-background-color: #2563eb;
-        -fx-background-radius: 10;
-    """;
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 10;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         item.setStyle(normalStyle);
 
@@ -356,8 +362,10 @@ public class UsuarioApp {
         lbl.setTextFill(Color.web("#cbd5e1"));
         lbl.setFont(Font.font(12));
         item.getChildren().add(lbl);
-        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: #ffffff15; -fx-background-radius: 6;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-color: transparent;"));
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-background-color: #ffffff15; -fx-background-radius: 6; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
+        item.setOnMouseExited(e -> item.setStyle(
+                "-fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
         item.setOnMouseClicked(e -> root.setCenter(buildPlaceholder(text)));
         return item;
     }
@@ -535,19 +543,16 @@ public class UsuarioApp {
 
         shadow(card);
 
-        // CUADRADO ICONO
+        
+        // ICONO sin rectángulo
         StackPane iconBox = new StackPane();
-
-        Rectangle iconBg = new Rectangle(48, 48);
-
-        iconBg.setArcWidth(14);
-        iconBg.setArcHeight(14);
-
-        iconBg.setFill(Color.web(bgIcon));
+        iconBox.setPrefSize(48, 48);
+        iconBox.setMaxSize(48, 48);
+        iconBox.setStyle("-fx-background-color: " + bgIcon + ";"
+                + "-fx-background-radius: 14;");
 
         Label iconLbl = label(icon, 20, iconColor, false);
-
-        iconBox.getChildren().addAll(iconBg, iconLbl);
+        iconBox.getChildren().add(iconLbl);
 
         // TITULO
         Label titleLbl = label(title, 13, "#374151", true);
