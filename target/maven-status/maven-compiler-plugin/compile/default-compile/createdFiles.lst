@@ -41,12 +41,10 @@ sistemagestion\view\AlertasAdminView.class
 sistemagestion\view\NotificacionesAdminPoliciaView.class
 sistemagestion\service\TipoArmaService.class
 sistemagestion\view\AdministradorPoliciaApp.class
-sistemagestion\view\TiposAdminView$AccionGuardar.class
 sistemagestion\view\MapaAlerta$2.class
 sistemagestion\view\MapaAdminPoliciaView.class
 sistemagestion\view\MapaAlarmasRegistada$5.class
 sistemagestion\view\AdministradorPoliciaApp$1.class
-sistemagestion\view\TiposAdminView$CampoFormulario.class
 sistemagestion\service\AtencionAlertaService.class
 sistemagestion\view\MapaAlarmas$2.class
 sistemagestion\dao\PoliciaDAO.class
@@ -65,6 +63,7 @@ sistemagestion\dao\AlarmaDAO.class
 sistemagestion\model\TipoArma.class
 sistemagestion\view\MapaAlarmas$1.class
 sistemagestion\view\AlarmaAdminView.class
+sistemagestion\view\UnidadesAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmasRegistada$6.class
 sistemagestion\model\EstadoAlerta.class
 sistemagestion\model\AsignacionUnidad.class
@@ -125,6 +124,7 @@ sistemagestion\view\MapaUnidadesPoliciales.class
 sistemagestion\dao\TipoAlertaDAO.class
 sistemagestion\view\UnidadesAdminPoliciaView.class
 sistemagestion\view\PoliciaApp.class
+sistemagestion\view\AlarmasAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmas$5.class
 sistemagestion\model\Alarma.class
 sistemagestion\model\Direccion.class

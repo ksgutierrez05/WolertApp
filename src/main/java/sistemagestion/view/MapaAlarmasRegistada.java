@@ -42,6 +42,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Point2D;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapaAlarmasRegistada {
@@ -67,6 +68,8 @@ public class MapaAlarmasRegistada {
 
     // ── Estado de edición (null = modo Registrar) ─────────────────────────────
     private Alarma alarmaEnEdicion = null;
+    private List<Alarma> todasLasAlarmas = new ArrayList<>();
+    private List<Alarma> alarmasFiltradas = new ArrayList<>();
 
     // ── Controles ─────────────────────────────────────────────────────────────
     private TextField txtNombre;
@@ -78,6 +81,7 @@ public class MapaAlarmasRegistada {
     private Label lblCoordenadas;
     private Label lblCoordFooter;
     private Label lblInstruccionHeader;
+    private Label lblContador;
 
     // ── Botones y encabezado que cambian según el modo ────────────────────────
     private Button btnAccionPrincipal;
@@ -104,6 +108,10 @@ public class MapaAlarmasRegistada {
         }
     }
 
+    public void cargarAlarmaPublico(Alarma a) {
+        cargarAlarmaEnFormulario(a);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     public void mostrar() {
         Stage stage = new Stage();
@@ -116,6 +124,8 @@ public class MapaAlarmasRegistada {
 
         stage.setScene(new Scene(root, 1100, 680));
         stage.setResizable(true);
+        cargarAlarmas();
+
         stage.show();
     }
 
@@ -123,6 +133,7 @@ public class MapaAlarmasRegistada {
     // BARRA SUPERIOR  — se agrega el botón "Ver alarmas"
     // ════════════════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
+        // Logo
         javafx.scene.image.ImageView logoImg = new javafx.scene.image.ImageView();
         try {
             java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(
@@ -147,36 +158,51 @@ public class MapaAlarmasRegistada {
         sep.setStyle("-fx-background-color:" + C_SEPARATOR + ";");
         sep.setPrefSize(1, 20);
 
-        lblInstruccionHeader = new Label("Haz clic en el mapa para ubicar la alarma");
-        lblInstruccionHeader.setFont(Font.font("Arial", 13));
-        lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
+        Label titulo = new Label("Mapa de Alarmas Registradas");
+        titulo.setFont(Font.font("Arial", 13));
+        titulo.setTextFill(Color.web("#6b7280"));
 
-        // ── NUEVO: botón para abrir la lista de alarmas ───────────────────────
-        Button btnVerAlarmas = new Button("🔍  Ver alarmas");
-        btnVerAlarmas.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        String estNormal = "-fx-background-color:white;-fx-text-fill:#16283d;"
-                + "-fx-border-color:#c7d7fd;-fx-border-width:1.5;"
-                + "-fx-border-radius:8;-fx-background-radius:8;"
-                + "-fx-cursor:hand;-fx-padding:7 16 7 16;";
-        String estHover = "-fx-background-color:#f0f4ff;-fx-text-fill:#16283d;"
-                + "-fx-border-color:#93c5fd;-fx-border-width:1.5;"
-                + "-fx-border-radius:8;-fx-background-radius:8;"
-                + "-fx-cursor:hand;-fx-padding:7 16 7 16;";
-        btnVerAlarmas.setStyle(estNormal);
-        btnVerAlarmas.setOnMouseEntered(e -> btnVerAlarmas.setStyle(estHover));
-        btnVerAlarmas.setOnMouseExited(e -> btnVerAlarmas.setStyle(estNormal));
-        btnVerAlarmas.setOnAction(e -> abrirListaAlarmas());
+        // Leyenda de estados
+        HBox leyenda = buildLeyenda();
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox bar = new HBox(10, logoBox, logoText, sep,
-                new Label("📍"), lblInstruccionHeader, spacer, btnVerAlarmas);
+        // Contador
+        lblContador = new Label("0 alarmas");
+        lblContador.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        lblContador.setTextFill(Color.WHITE);
+        lblContador.setStyle(
+                "-fx-background-color:" + C_DARK_GRAD + ";"
+                + "-fx-background-radius:20;-fx-padding:4 14 4 14;");
+
+        HBox bar = new HBox(10, logoBox, logoText, sep, new Label("🗺️"), titulo,
+                spacer, leyenda, lblContador);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
                 + ";-fx-border-width:0 0 1 0;");
         return bar;
+    }
+
+    private HBox buildLeyenda() {
+        HBox leyenda = new HBox(14,
+                puntito("#22c55e", "Activa"),
+                puntito("#9ca3af", "Inactiva"),
+                puntito("#fbbf24", "Mantenimiento"));
+        leyenda.setAlignment(Pos.CENTER_LEFT);
+        return leyenda;
+    }
+
+    private HBox puntito(String color, String texto) {
+        javafx.scene.shape.Circle c = new javafx.scene.shape.Circle(5);
+        c.setFill(Color.web(color));
+        Label lbl = new Label(texto);
+        lbl.setFont(Font.font("Arial", 11));
+        lbl.setTextFill(Color.web("#6b7280"));
+        HBox h = new HBox(5, c, lbl);
+        h.setAlignment(Pos.CENTER_LEFT);
+        return h;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -621,6 +647,24 @@ public class MapaAlarmasRegistada {
         btnAccionPrincipal.setText("💾  Actualizar alarma");
         btnEliminar.setVisible(true);
         btnEliminar.setManaged(true);
+    }
+
+    private void cargarAlarmas() {
+        try {
+            todasLasAlarmas = alarmaService.listar();
+        } catch (Exception e) {
+            System.out.println("Error cargando alarmas: " + e.getMessage());
+            todasLasAlarmas = new ArrayList<>();
+        }
+        aplicarFiltros();
+
+    }
+
+    private void aplicarFiltros() {
+        alarmasFiltradas = new ArrayList<>(todasLasAlarmas);
+        int count = alarmasFiltradas.size();
+        Platform.runLater(()
+                -> lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
     }
 
     // ════════════════════════════════════════════════════════════════════════

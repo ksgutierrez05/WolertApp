@@ -14,6 +14,8 @@ import javafx.stage.Stage;
 import sistemagestion.model.Usuario;
 import sistemagestion.view.AdministradorPoliciaApp;
 import sistemagestion.view.LoginApp;
+import sistemagestion.view.MapaAlarmas;
+import sistemagestion.view.MapaAlarmasRegistradas;
 //import sistemagestion.view.MapaAlarmas;
 //import sistemagestion.view.MapaAlarmasRegistradas;
 //import sistemagestion.view.MapaAlarmasRegistada;
@@ -26,14 +28,14 @@ public class WolertAppSistemaAlertas extends Application {
     @Override
     public void start(Stage stage) {
 
-        LoginApp login = new LoginApp();
+       /* LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
         stage.setTitle("WolertApp");
         stage.setScene(scene);
         stage.setResizable(true);
-        stage.show(); 
+        stage.show(); */
 
         //Temporalmente abre el mapa directo, sin login ni dashboard
         //new MapaAlarmas().mostrar();
@@ -47,7 +49,7 @@ public class WolertAppSistemaAlertas extends Application {
     
 
         // ── Dashboard administrador ──────────────────
-        /*
+        
         Usuario usuario = new Usuario();
         usuario.setPrimer_nombre("Katherine");
         usuario.setPrimer_apellido("Gutierrez");
@@ -57,7 +59,7 @@ public class WolertAppSistemaAlertas extends Application {
                 new AdministradorPoliciaApp(usuario);
 
         app.show(stage);
-        */
+        
 
         // ── Dashboard policía ──────────────────────
         /*
@@ -71,7 +73,7 @@ public class WolertAppSistemaAlertas extends Application {
 
         // ── Mapas de prueba ──────────────────────
         //new MapaAlarmas().mostrar();
-        //new MapaAlarmasRegistradas().mostrar();
+        new MapaAlarmasRegistradas().mostrar();
         //new MapaAlarmasRegistada().mostrar();
         //new MapaAlerta(null, null, null, null).mostrar();
         //new MapaUnidadesPoliciales().mostrar();

@@ -85,6 +85,7 @@ public class AdministradorPoliciaApp {
     // ── Constructor ───────────────────────────────────────────────
     public AdministradorPoliciaApp(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
             alertaService       = new AlertaService();
             policiaService      = new PoliciaService();
@@ -102,6 +103,7 @@ public class AdministradorPoliciaApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
+        
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
@@ -264,7 +266,7 @@ public class AdministradorPoliciaApp {
         Label arrowLbl = label("▶", 10, WHITE, false);
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        item.getChildren().addAll(label("📍", 14, WHITE, false), label("Mapa tiempo real", 13, "#f8fafc", true), sp, arrowLbl);
+        item.getChildren().addAll(label("📍", 14, WHITE, false), label("Mapas", 13, "#f8fafc", true), sp, arrowLbl);
         item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
         item.setOnMouseExited(e  -> item.setStyle("-fx-background-radius: 8;"));
         item.setOnMouseClicked(e -> toggleMapaSubMenu(item, arrowLbl));
