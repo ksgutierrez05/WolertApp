@@ -108,7 +108,7 @@ public class UsuarioApp {
     // =========================================================================
     // SIDEBAR
     // =========================================================================
-    private VBox buildSidebar() {
+    private ScrollPane buildSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPrefWidth(250);
         sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);");
@@ -225,15 +225,36 @@ public class UsuarioApp {
                 logoutBox
         );
 
-        sidebar.setPrefHeight(Double.MAX_VALUE);
-        sidebar.setMaxHeight(Double.MAX_VALUE);
+        sidebar.setMinHeight(Region.USE_PREF_SIZE);
 
-        return sidebar;
+        ScrollPane scroll = new ScrollPane(sidebar);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        scroll.setStyle(
+                "-fx-background: transparent;"
+                + "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+        );
+
+        scroll.skinProperty().addListener((obs, oldSkin, newSkin) -> {
+            scroll.lookupAll(".scroll-bar").forEach(node
+                    -> node.setStyle(
+                            "-fx-opacity: 0.05;"
+                            + "-fx-pref-width: 3;"
+                    )
+            );
+        });
+
+        return scroll;
+
     }
 
     private HBox navItem(String icon, String text) {
 
         HBox item = new HBox(12);
+
         item.setPadding(new Insets(12, 16, 12, 16));
         item.setAlignment(Pos.CENTER_LEFT);
         item.setCursor(javafx.scene.Cursor.HAND);
@@ -252,9 +273,8 @@ public class UsuarioApp {
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 """;
-
         String activeStyle = """
-    -fx-background-color: #2563eb;
+    -fx-background-color: rgba(255,255,255,0.05);
     -fx-background-radius: 10;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
@@ -292,7 +312,11 @@ public class UsuarioApp {
 
         item.setOnMouseClicked((MouseEvent e) -> {
 
-            item.setStyle(activeStyle);
+            for (javafx.scene.Node node : nav.getChildren()) {
+                if (node instanceof HBox hbox) {
+                    hbox.setStyle(normalStyle);
+                }
+            }
 
             switch (text) {
 
@@ -387,9 +411,19 @@ public class UsuarioApp {
         );
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
+        scroll.setPannable(true); // permite desplazamiento más fluido
+        scroll.setFocusTraversable(false);
+
+        scroll.setStyle(
+                "-fx-background-color: " + BG + ";"
+                + "-fx-background: " + BG + ";"
+        );
+
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
         return scroll;
+
     }
 
     // ── Top bar ───────────────────────────────────────────────────
@@ -687,9 +721,18 @@ public class UsuarioApp {
 
         Label verTodas = label("Ver todas  >", 12, BLUE, false);
         verTodas.setCursor(javafx.scene.Cursor.HAND);
-        verTodas.setOnMouseClicked(e -> root.setCenter(buildPlaceholder("Mis Alertas")));
-        header.getChildren().addAll(titleRow, verTodas);
+       
 
+        verTodas.setOnMouseClicked(e -> {
+            AlertasView alertasView = new AlertasView(
+                    usuarioActual,
+                    alertaService,
+                    barrioService
+            );
+            root.setCenter(alertasView.getView());
+        });
+
+        header.getChildren().addAll(titleRow, verTodas);
         card.getChildren().addAll(header, separator());
 
         // ── Contenido ─────────────────────────────────────────────────
@@ -1228,7 +1271,4 @@ public class UsuarioApp {
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
 
-
 }
-
-
