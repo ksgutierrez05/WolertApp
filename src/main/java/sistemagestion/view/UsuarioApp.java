@@ -2,7 +2,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-
 package sistemagestion.view;
 
 /**
@@ -168,15 +167,15 @@ public class UsuarioApp {
         nav.getChildren().addAll(
                 navItem("🏠", "Dashboard"),
                 navItem("🔔", "Alertas"),
-                navItem("🗺", "Mapa"),
+                navItem("🗺️", "Mapa"),
                 navItem("👥", "Vecinos"),
                 navItem("🔔", "Mis Alertas"),
                 navItem("📋", "Mis Suscripciones"),
                 navItem("💬", "Notificaciones"),
                 navItem("📄", "Mis Reportes"),
-                navItem("ℹ", "Información Útil"),
+                navItem("ℹ️", "Información Útil"),
                 navItem("👤", "Perfil"),
-                navItem("⚙", "Configuración")
+                navItem("⚙️", "Configuración")
         );
 
         // Logout
@@ -241,19 +240,25 @@ public class UsuarioApp {
         item.setMaxWidth(Double.MAX_VALUE);
 
         String normalStyle = """
-        -fx-background-radius: 10;
-        -fx-background-color: transparent;
-    """;
+    -fx-background-radius: 10;
+    -fx-background-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         String hoverStyle = """
-        -fx-background-color: #ffffff18;
-        -fx-background-radius: 10;
-    """;
+    -fx-background-color: #ffffff18;
+    -fx-background-radius: 10;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         String activeStyle = """
-        -fx-background-color: #2563eb;
-        -fx-background-radius: 10;
-    """;
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 10;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+""";
 
         item.setStyle(normalStyle);
 
@@ -358,8 +363,10 @@ public class UsuarioApp {
         lbl.setTextFill(Color.web("#cbd5e1"));
         lbl.setFont(Font.font(12));
         item.getChildren().add(lbl);
-        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: #ffffff15; -fx-background-radius: 6;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-color: transparent;"));
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-background-color: #ffffff15; -fx-background-radius: 6; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
+        item.setOnMouseExited(e -> item.setStyle(
+                "-fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
         item.setOnMouseClicked(e -> root.setCenter(buildPlaceholder(text)));
         return item;
     }
@@ -563,24 +570,23 @@ public class UsuarioApp {
                 : accentColor.equals("#fb8c00") ? "AlertasPendientesPin"
                 : "VecinoPin";
 
-        // ── Cuadrado de color (fondo) + PNG encima ─────────────────────
+        // ── Fondo + icono PNG ──────────────────────────────────────────
         StackPane iconWrap = new StackPane();
         iconWrap.setPrefSize(52, 52);
         iconWrap.setMinSize(52, 52);
         iconWrap.setMaxSize(52, 52);
 
-        // Fondo de color siempre visible
         Region colorBg = new Region();
         colorBg.setPrefSize(52, 52);
         colorBg.setStyle(
                 "-fx-background-color:" + bgIcon + ";"
                 + "-fx-background-radius:14;");
 
-        // PNG encima — si no carga simplemente no aparece, el fondo queda
         ImageView iv = new ImageView();
         iv.setFitWidth(28);
         iv.setFitHeight(28);
         iv.setPreserveRatio(true);
+
         try {
 
             java.io.InputStream is = getClass()
@@ -588,15 +594,12 @@ public class UsuarioApp {
 
             if (is != null) {
 
-                // Leer PNG
                 java.awt.image.BufferedImage original
                         = javax.imageio.ImageIO.read(is);
 
-                // Recortar transparencia
                 java.awt.image.BufferedImage recortada
                         = recortarTransparencia(original);
 
-                // Convertir a JavaFX
                 javafx.scene.image.WritableImage fxImage
                         = javafx.embed.swing.SwingFXUtils
                                 .toFXImage(recortada, null);
@@ -608,9 +611,9 @@ public class UsuarioApp {
             ex.printStackTrace();
         }
 
-        iconWrap.getChildren().addAll(colorBg, iv);  // fondo primero, PNG encima
+        iconWrap.getChildren().addAll(colorBg, iv);
 
-        // ── Número grande ──────────────────────────────────────────────
+        // ── Número ─────────────────────────────────────────────────────
         Label valLbl = new Label(String.valueOf(value));
         valLbl.setStyle(
                 "-fx-font-size:36px;"
@@ -631,12 +634,15 @@ public class UsuarioApp {
                 + "-fx-text-fill:" + GRAY_TEXT + ";");
 
         VBox textBlock = new VBox(3, titleLbl, valLbl, subLbl);
+
         HBox topRow = new HBox(16, iconWrap, textBlock);
         topRow.setAlignment(Pos.CENTER_LEFT);
+
         card.getChildren().add(topRow);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
         card.setOnMouseExited(e -> card.setTranslateY(0));
+
         return card;
     }
 
@@ -1193,9 +1199,9 @@ public class UsuarioApp {
         a.setContentText(msg);
         a.showAndWait();
     }
-    
-     // ── Utilidad AWT ──────────────────────────────────────────────────────────
-        private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
+
+    // ── Utilidad AWT ──────────────────────────────────────────────────────────
+    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight();
         int top = h, bottom = 0, left = w, right = 0;
         for (int y = 0; y < h; y++) {
@@ -1221,8 +1227,8 @@ public class UsuarioApp {
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
-<<<<<<< HEAD
+
+
 }
-=======
-}
->>>>>>> origin/develop
+
+
