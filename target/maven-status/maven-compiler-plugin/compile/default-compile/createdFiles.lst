@@ -41,12 +41,10 @@ sistemagestion\view\AlertasAdminView.class
 sistemagestion\view\NotificacionesAdminPoliciaView.class
 sistemagestion\service\TipoArmaService.class
 sistemagestion\view\AdministradorPoliciaApp.class
-sistemagestion\view\TiposAdminView$AccionGuardar.class
 sistemagestion\view\MapaAlerta$2.class
 sistemagestion\view\MapaAdminPoliciaView.class
 sistemagestion\view\MapaAlarmasRegistada$5.class
 sistemagestion\view\AdministradorPoliciaApp$1.class
-sistemagestion\view\TiposAdminView$CampoFormulario.class
 sistemagestion\service\AtencionAlertaService.class
 sistemagestion\view\MapaAlarmas$2.class
 sistemagestion\dao\PoliciaDAO.class
