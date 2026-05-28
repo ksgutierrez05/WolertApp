@@ -53,7 +53,7 @@ public class UsuarioApp {
     private static final String ORANGE = "#fb8c00";
     private static final String GREEN = "#43a047";
     private static final String BLUE = "#1565c0";
-    private static final String BLUE_LIGHT = "#e8f0fe";
+    private static final String BLUE_LIGHT = "#F2F9FF";
     private static final String GRAY_TEXT = "#6b7280";
     private static final String BORDER = "#e5e7eb";
 
@@ -89,6 +89,7 @@ public class UsuarioApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
@@ -161,7 +162,7 @@ public class UsuarioApp {
         userCard.getChildren().addAll(avatarStack, userInfo);
 
         // Nav — todos los ítems van a placeholder excepto Dashboard
-      nav = new VBox(2);
+        nav = new VBox(2);
         nav.setPadding(new Insets(16, 8, 16, 8));
         nav.getChildren().addAll(
                 navItem("🏠", "Dashboard"),
@@ -446,26 +447,58 @@ public class UsuarioApp {
     private HBox buildEmergencyBanner() {
         HBox banner = new HBox();
         banner.setAlignment(Pos.CENTER_LEFT);
-        banner.setPadding(new Insets(16, 20, 16, 20));
-        banner.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12; -fx-border-color: " + BORDER + "; -fx-border-radius: 12;");
+        banner.setPadding(new Insets(18, 24, 18, 24));
+        banner.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:16;"
+                + "-fx-border-color:#fecaca;"
+                + "-fx-border-radius:16;"
+                + "-fx-border-width:1.5;");
         shadow(banner);
 
         StackPane iconBox = new StackPane();
-        Circle iconBg = new Circle(24, Color.web(RED_LIGHT));
-        iconBox.getChildren().addAll(iconBg, label("🔔", 20, RED, false));
+        Region iconBg = new Region();
+        iconBg.setPrefSize(56, 56);
+        iconBg.setStyle("-fx-background-color:" + RED + ";-fx-background-radius:50%;");
+
+        Label bellLbl = new Label("\uf0f3");
+        bellLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:22px;"
+                + "-fx-text-fill:white;");
+        iconBox.getChildren().addAll(iconBg, bellLbl);
+
+        javafx.animation.ScaleTransition pulse
+                = new javafx.animation.ScaleTransition(javafx.util.Duration.seconds(1.1), iconBox);
+        pulse.setFromX(1.0);
+        pulse.setFromY(1.0);
+        pulse.setToX(1.13);
+        pulse.setToY(1.13);
+        pulse.setAutoReverse(true);
+        pulse.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        pulse.play();
 
         VBox textBox = new VBox(4);
-        textBox.setPadding(new Insets(0, 0, 0, 12));
-        textBox.getChildren().addAll(
-                label("Botón de emergencia", 15, RED, true),
-                label("Envía alerta inmediata a vecinos y autoridades", 12, GRAY_TEXT, false)
-        );
+        textBox.setPadding(new Insets(0, 0, 0, 16));
+        Label titulo = new Label("Botón de emergencia");
+        titulo.setStyle("-fx-font-size:15px;-fx-font-weight:bold;-fx-text-fill:" + RED + ";");
+        Label sub = new Label("Envía alerta inmediata a vecinos y autoridades");
+        sub.setStyle("-fx-font-size:12px;-fx-text-fill:" + GRAY_TEXT + ";");
+        textBox.getChildren().addAll(titulo, sub);
         HBox.setHgrow(textBox, Priority.ALWAYS);
 
         Button panicBtn = new Button("⚠  PÁNICO");
-        panicBtn.setStyle("-fx-background-color: " + RED + "; -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 12 28; -fx-cursor: hand;");
-        panicBtn.setOnMouseEntered(e -> panicBtn.setStyle("-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 12 28; -fx-cursor: hand;"));
-        panicBtn.setOnMouseExited(e -> panicBtn.setStyle("-fx-background-color: " + RED + "; -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-padding: 12 28; -fx-cursor: hand;"));
+        String base = "-fx-background-color:" + RED + ";-fx-text-fill:white;"
+                + "-fx-font-size:15px;-fx-font-weight:bold;"
+                + "-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
+                + "-fx-effect:dropshadow(gaussian,rgba(229,57,53,0.42),18,0,0,5);";
+        String hover = "-fx-background-color:#c62828;-fx-text-fill:white;"
+                + "-fx-font-size:15px;-fx-font-weight:bold;"
+                + "-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
+                + "-fx-effect:dropshadow(gaussian,rgba(198,40,40,0.58),22,0,0,7);";
+        panicBtn.setStyle(base);
+        panicBtn.setOnMouseEntered(e -> panicBtn.setStyle(hover));
+        panicBtn.setOnMouseExited(e -> panicBtn.setStyle(base));
         panicBtn.setOnAction(e -> {
             Stage stage = (Stage) panicBtn.getScene().getWindow();
             EmergencyDialog.show(stage, usuarioActual, alertaService, barrioService);
@@ -480,7 +513,6 @@ public class UsuarioApp {
         HBox row = new HBox(16);
 
         long incidentesMes = 0, alertasPendientes = 0, vecinosActivos = 0;
-
         if (alertaService != null && usuarioActual != null) {
             try {
                 List<Alerta> misAlertas = alertaService.listar().stream()
@@ -499,14 +531,14 @@ public class UsuarioApp {
             } catch (Exception ignored) {
             }
         }
-
         if (alertaService != null && usuarioActual != null
                 && usuarioActual.getDireccion() != null
                 && usuarioActual.getDireccion().getBarrio() != null) {
             try {
                 String miBarrio = usuarioActual.getDireccion().getBarrio().getNombre();
                 vecinosActivos = alertaService.listar().stream()
-                        .filter(a -> a.getBarrio() != null && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
+                        .filter(a -> a.getBarrio() != null
+                        && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
                         .map(a -> a.getUsuario() != null ? a.getUsuario().getUsername() : "")
                         .distinct().count();
             } catch (Exception ignored) {
@@ -514,78 +546,101 @@ public class UsuarioApp {
         }
 
         row.getChildren().addAll(
-                statCard("📈", RED_LIGHT, RED, "Incidentes este mes", incidentesMes, "Mis alertas reportadas", RED),
-                statCard("🕐", "#fff8e1", ORANGE, "Alertas pendientes", alertasPendientes, "PENDIENTE / EN PROCESO", GRAY_TEXT),
-                statCard("👥", "#e8f5e9", GREEN, "Vecinos del barrio", vecinosActivos, "Reportaron en tu barrio", GREEN)
+                statCard("#fff0f0", "#e53935", "Incidentes este mes",
+                        incidentesMes, "+3 vs mes anterior"),
+                statCard("#fff8e1", "#fb8c00", "Alertas pendientes",
+                        alertasPendientes, "PENDIENTE / EN PROCESO"),
+                statCard("#e8f5e9", "#43a047", "Vecinos del barrio",
+                        vecinosActivos, "Reportaron en tu barrio")
         );
         return row;
     }
 
-    private VBox statCard(String icon, String bgIcon, String iconColor,
-            String title, long value, String sub, String subColor) {
+    private VBox statCard(String bgIcon, String accentColor,
+            String title, long value, String sub) {
 
-        VBox card = new VBox(6);
-
-        card.setPadding(new Insets(14));
-
-        card.setStyle("""
-        -fx-background-color: white;
-        -fx-background-radius: 18;
-        -fx-border-radius: 18;
-    """);
-
-        card.setPrefWidth(210);
-
-        card.setMinHeight(100);
-        card.setMaxHeight(100);
-
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20, 22, 20, 22));
+        card.setStyle("-fx-background-color:white;-fx-background-radius:18;");
         HBox.setHgrow(card, Priority.ALWAYS);
-
         shadow(card);
 
-        
-        // ICONO sin rectángulo
-        StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(48, 48);
-        iconBox.setMaxSize(48, 48);
-        iconBox.setStyle("-fx-background-color: " + bgIcon + ";"
-                + "-fx-background-radius: 14;");
+        // ── Nombre del PNG según color ─────────────────────────────────
+        String iconName = accentColor.equals("#e53935") ? "IncidentesPin"
+                : accentColor.equals("#fb8c00") ? "AlertasPendientesPin"
+                : "VecinoPin";
 
-        Label iconLbl = label(icon, 20, iconColor, false);
-        iconBox.getChildren().add(iconLbl);
+        // ── Fondo + icono PNG ──────────────────────────────────────────
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(52, 52);
+        iconWrap.setMinSize(52, 52);
+        iconWrap.setMaxSize(52, 52);
 
-        // TITULO
-        Label titleLbl = label(title, 13, "#374151", true);
+        Region colorBg = new Region();
+        colorBg.setPrefSize(52, 52);
+        colorBg.setStyle(
+                "-fx-background-color:" + bgIcon + ";"
+                + "-fx-background-radius:14;");
 
-        // NUMERO
-        Label val = new Label(String.valueOf(value));
+        ImageView iv = new ImageView();
+        iv.setFitWidth(28);
+        iv.setFitHeight(28);
+        iv.setPreserveRatio(true);
 
-        val.setFont(Font.font("System", FontWeight.BOLD, 28));
+        try {
 
-        val.setTextFill(Color.web("#111827"));
+            java.io.InputStream is = getClass()
+                    .getResourceAsStream("/" + iconName + ".png");
 
-        // SUBTEXTO
-        Label subLbl = label(sub, 11, subColor, false);
+            if (is != null) {
 
-        VBox textBox = new VBox(3);
+                java.awt.image.BufferedImage original
+                        = javax.imageio.ImageIO.read(is);
 
-        textBox.getChildren().addAll(
-                titleLbl,
-                val,
-                subLbl
-        );
+                java.awt.image.BufferedImage recortada
+                        = recortarTransparencia(original);
 
-        HBox top = new HBox(14);
+                javafx.scene.image.WritableImage fxImage
+                        = javafx.embed.swing.SwingFXUtils
+                                .toFXImage(recortada, null);
 
-        top.setAlignment(Pos.CENTER_LEFT);
+                iv.setImage(fxImage);
+            }
 
-        top.getChildren().addAll(iconBox, textBox);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
-        card.getChildren().add(top);
+        iconWrap.getChildren().addAll(colorBg, iv);
 
-        // Hover
-        card.setOnMouseEntered(e -> card.setTranslateY(-2));
+        // ── Número ─────────────────────────────────────────────────────
+        Label valLbl = new Label(String.valueOf(value));
+        valLbl.setStyle(
+                "-fx-font-size:36px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-text-fill:" + accentColor + ";");
 
+        // ── Título ─────────────────────────────────────────────────────
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle(
+                "-fx-font-size:13px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-text-fill:#374151;");
+
+        // ── Subtexto ───────────────────────────────────────────────────
+        Label subLbl = new Label(sub);
+        subLbl.setStyle(
+                "-fx-font-size:11px;"
+                + "-fx-text-fill:" + GRAY_TEXT + ";");
+
+        VBox textBlock = new VBox(3, titleLbl, valLbl, subLbl);
+
+        HBox topRow = new HBox(16, iconWrap, textBlock);
+        topRow.setAlignment(Pos.CENTER_LEFT);
+
+        card.getChildren().add(topRow);
+
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
         card.setOnMouseExited(e -> card.setTranslateY(0));
 
         return card;
@@ -602,22 +657,42 @@ public class UsuarioApp {
         VBox card = new VBox(12);
         card.setPadding(new Insets(20));
         card.setPrefWidth(480);
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
+        card.setStyle("-fx-background-color:" + WHITE + ";-fx-background-radius:12;");
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
+        // ── Header ────────────────────────────────────────────────────
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
+
         HBox titleRow = new HBox(8);
         titleRow.setAlignment(Pos.CENTER_LEFT);
-        titleRow.getChildren().addAll(label("📋", 16, BLUE, false), label("Alertas recientes", 15, "#111827", true));
+
+        StackPane iconBox = new StackPane();
+        iconBox.setPrefSize(32, 32);
+        iconBox.setMinSize(32, 32);
+        iconBox.setMaxSize(32, 32);
+        iconBox.setStyle(
+                "-fx-background-color:#e8f0fe;"
+                + "-fx-background-radius:8;");
+        Label iconLbl = new Label("\uf133");
+        iconLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:16px;"
+                + "-fx-text-fill:#1565c0;");
+        iconBox.getChildren().add(iconLbl);
+
+        titleRow.getChildren().addAll(iconBox, label("Alertas recientes", 15, "#111827", true));
         HBox.setHgrow(titleRow, Priority.ALWAYS);
+
         Label verTodas = label("Ver todas  >", 12, BLUE, false);
         verTodas.setCursor(javafx.scene.Cursor.HAND);
         verTodas.setOnMouseClicked(e -> root.setCenter(buildPlaceholder("Mis Alertas")));
         header.getChildren().addAll(titleRow, verTodas);
+
         card.getChildren().addAll(header, separator());
 
+        // ── Contenido ─────────────────────────────────────────────────
         if (alertaService != null) {
             try {
                 List<Alerta> alertas = alertaService.listar();
@@ -627,12 +702,15 @@ public class UsuarioApp {
                         ? usuarioActual.getDireccion().getBarrio().getNombre() : null;
 
                 List<Alerta> filtradas = miBarrio != null
-                        ? alertas.stream().filter(a -> a.getBarrio() != null
-                        && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre())).toList()
+                        ? alertas.stream()
+                                .filter(a -> a.getBarrio() != null
+                                && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
+                                .toList()
                         : alertas;
 
                 if (filtradas.isEmpty()) {
-                    card.getChildren().add(label("No hay alertas en tu barrio", 13, GRAY_TEXT, false));
+                    card.getChildren().add(
+                            label("No hay alertas en tu barrio", 13, GRAY_TEXT, false));
                 } else {
                     filtradas.stream().limit(4).forEach(a -> {
                         card.getChildren().addAll(alertaItem(a), separator());
@@ -642,49 +720,142 @@ public class UsuarioApp {
                 card.getChildren().add(label("Error al cargar alertas", 13, RED, false));
             }
         } else {
-            card.getChildren().add(label("Sin conexión al servicio de alertas", 13, GRAY_TEXT, false));
+            card.getChildren().add(
+                    label("Sin conexión al servicio de alertas", 13, GRAY_TEXT, false));
         }
+
         return card;
     }
 
     private HBox alertaItem(Alerta a) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(8, 0, 8, 0));
+        row.setPadding(new Insets(10, 4, 10, 4));
         row.setCursor(javafx.scene.Cursor.HAND);
+        row.setStyle("-fx-background-color:transparent;-fx-background-radius:8;");
+        row.setOnMouseEntered(e -> row.setStyle(
+                "-fx-background-color:#f8f9fb;-fx-background-radius:8;"));
+        row.setOnMouseExited(e -> row.setStyle(
+                "-fx-background-color:transparent;-fx-background-radius:8;"));
 
+        // ── Punto de estado (pequeño, a la izquierda) ──────────────────
         String estado = a.getEstado() != null ? a.getEstado().name() : "—";
         String dotColor = switch (estado) {
             case "PENDIENTE" ->
                 RED;
-            case "EN_PROCESO" ->
+            case "EN_ATENCION" ->
                 ORANGE;
             case "RESUELTA" ->
                 GREEN;
             default ->
                 GRAY_TEXT;
         };
-        Circle dotCircle = new Circle(5, Color.web(dotColor));
+        Circle dot = new Circle(5, Color.web(dotColor));
 
+        // ── Ícono circular con fondo de color según tipo ───────────────
         StackPane iconBox = new StackPane();
-        Rectangle bg = new Rectangle(36, 36);
-        bg.setArcWidth(8);
-        bg.setArcHeight(8);
-        bg.setFill(Color.web(BG));
-        String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-        iconBox.getChildren().addAll(bg, label("🔔", 16, dotColor, false));
+        iconBox.setPrefSize(40, 40);
+        iconBox.setMinSize(40, 40);
+        iconBox.setMaxSize(40, 40);
 
-        VBox text = new VBox(2);
+        String tipo = a.getTipoalerta() != null
+                ? a.getTipoalerta().getNombre().toUpperCase() : "";
+
+        // Color de fondo del círculo según tipo de alerta
+        String circleBg = switch (tipo) {
+            case "ROBO", "HURTO" ->
+                "#fce4ec"; // rosa
+            case "SOSPECHOSO", "PERSONA" ->
+                "#fce4ec";
+            case "ANIMAL" ->
+                "#fff8e1"; // amarillo
+            case "ACCIDENTE" ->
+                "#fff3e0"; // naranja
+            case "VANDALISMO" ->
+                "#e8eaf6"; // morado suave
+            default ->
+                "#e3f2fd"; // azul suave
+        };
+
+        // Ícono CSS (forma geométrica) según tipo — sin emojis
+        Region iconShape = new Region();
+        iconShape.setPrefSize(20, 20);
+
+        String iconStyle = switch (tipo) {
+            case "ROBO", "HURTO" ->
+                // Candado: rectángulo + arco simulado
+                "-fx-background-color:" + dotColor + ";"
+                + "-fx-background-radius:3 3 2 2;"
+                + "-fx-pref-width:14px;-fx-pref-height:11px;";
+            case "ANIMAL" ->
+                // Rombo
+                "-fx-background-color:" + dotColor + ";"
+                + "-fx-background-radius:3;"
+                + "-fx-pref-width:14px;-fx-pref-height:14px;"
+                + "-fx-rotate:45;";
+            default ->
+                // Círculo sólido genérico
+                "-fx-background-color:" + dotColor + ";"
+                + "-fx-background-radius:50%;"
+                + "-fx-pref-width:14px;-fx-pref-height:14px;";
+        };
+        iconShape.setStyle(iconStyle);
+        iconShape.setPrefSize(14, 14);
+        iconShape.setMinSize(14, 14);
+        iconShape.setMaxSize(14, 14);
+
+        Region circleBgRegion = new Region();
+        circleBgRegion.setPrefSize(40, 40);
+        circleBgRegion.setStyle(
+                "-fx-background-color:" + circleBg + ";"
+                + "-fx-background-radius:50%;");
+
+        iconBox.getChildren().addAll(circleBgRegion, iconShape);
+
+        // ── Texto ──────────────────────────────────────────────────────
+        VBox text = new VBox(3);
         HBox.setHgrow(text, Priority.ALWAYS);
-        String desc = a.getDescripcion() != null && a.getDescripcion().length() > 45
-                ? a.getDescripcion().substring(0, 45) + "…" : a.getDescripcion();
-        String barrio = a.getBarrio() != null ? " · " + a.getBarrio().getNombre() : "";
-        String reportadoPor = a.getUsuario() != null ? " · " + a.getUsuario().getPrimer_nombre() : "";
-        text.getChildren().addAll(
-                label(tipo + barrio, 13, "#111827", false),
-                label((desc != null ? desc : "—") + reportadoPor, 11, GRAY_TEXT, false)
-        );
-        row.getChildren().addAll(dotCircle, iconBox, text, label(">", 14, GRAY_TEXT, false));
+
+        String tipoNombre = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
+        String barrio = a.getBarrio() != null ? " en " + a.getBarrio().getNombre() : "";
+
+        // Tiempo transcurrido aproximado
+        String tiempo = "Hace un momento";
+        if (a.getFechaHora() != null) {
+            long mins = java.time.Duration.between(
+                    a.getFechaHora(), LocalDateTime.now()).toMinutes();
+            if (mins < 60) {
+                tiempo = "Hace " + mins + " min";
+            } else if (mins < 1440) {
+                tiempo = "Hace " + (mins / 60) + " hora" + (mins / 60 > 1 ? "s" : "");
+            } else {
+                tiempo = "Hace " + (mins / 1440) + " día" + (mins / 1440 > 1 ? "s" : "");
+            }
+        }
+
+        String desc = a.getDescripcion() != null && a.getDescripcion().length() > 50
+                ? a.getDescripcion().substring(0, 50) + "…" : a.getDescripcion();
+        String reportado = a.getUsuario() != null
+                ? " · Reportado por " + a.getUsuario().getPrimer_nombre()
+                + " " + a.getUsuario().getPrimer_apellido().charAt(0) + "." : "";
+
+        Label titleLbl = new Label(
+                (desc != null && !desc.isBlank() ? desc : tipoNombre + barrio));
+        titleLbl.setStyle(
+                "-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#1e293b;");
+        titleLbl.setWrapText(true);
+
+        Label subLbl = new Label(tiempo + reportado);
+        subLbl.setStyle("-fx-font-size:11px;-fx-text-fill:" + GRAY_TEXT + ";");
+
+        text.getChildren().addAll(titleLbl, subLbl);
+
+        // ── Chevron ────────────────────────────────────────────────────
+        Label chevron = new Label("›");
+        chevron.setStyle(
+                "-fx-font-size:18px;-fx-text-fill:#cbd5e1;-fx-font-weight:bold;");
+
+        row.getChildren().addAll(dot, iconBox, text, chevron);
         return row;
     }
 
@@ -695,12 +866,30 @@ public class UsuarioApp {
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         shadow(card);
 
+        // ── Header con círculo azul claro + emoji 📍 ──────────────────
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
-        header.getChildren().addAll(label("📍", 16, BLUE, false), label("Mapa del barrio", 15, "#111827", true));
 
+        StackPane pinBox = new StackPane();
+        pinBox.setPrefSize(32, 32);
+        pinBox.setMinSize(32, 32);
+        pinBox.setMaxSize(32, 32);
+        pinBox.setStyle(
+                "-fx-background-color:#e8f0fe;"
+                + "-fx-background-radius:50%;");
+        Label pinLbl = new Label("\uf3c5");
+        pinLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:15px;"
+                + "-fx-text-fill:#1565c0");
+        pinBox.getChildren().add(pinLbl);
+
+        header.getChildren().addAll(pinBox, label("Mapa del barrio", 15, "#111827", true));
+
+        // ── Área del mapa ─────────────────────────────────────────────
         StackPane mapArea = new StackPane();
         mapArea.setPrefHeight(220);
+
         Rectangle mapBg = new Rectangle();
         mapBg.setFill(Color.web("#d1e8d1"));
         mapBg.widthProperty().bind(mapArea.widthProperty());
@@ -722,23 +911,75 @@ public class UsuarioApp {
             v.setX(40 + i * 65);
             streets.getChildren().add(v);
         }
-        streets.getChildren().addAll(mapDot(80, 60, RED), mapDot(200, 40, ORANGE), mapDot(300, 55, GREEN), mapDot(60, 140, GREEN), mapDot(310, 150, RED));
+        streets.getChildren().addAll(
+                mapDot(80, 60, RED),
+                mapDot(200, 40, ORANGE),
+                mapDot(300, 55, GREEN),
+                mapDot(60, 140, GREEN),
+                mapDot(310, 150, RED)
+        );
 
+        // ── Popup con botón "Abrir mapa" ──────────────────────────────
         VBox popup = new VBox(6);
         popup.setPadding(new Insets(10, 14, 10, 14));
-        popup.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
+        popup.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:8;");
         popup.setEffect(new DropShadow(8, Color.web("#0000001a")));
         popup.setTranslateX(30);
         popup.setTranslateY(10);
-        String barrioDisplay = usuarioActual != null && usuarioActual.getDireccion() != null
+        popup.setAlignment(Pos.CENTER_LEFT);
+
+        String barrioDisplay = usuarioActual != null
+                && usuarioActual.getDireccion() != null
                 && usuarioActual.getDireccion().getBarrio() != null
-                ? usuarioActual.getDireccion().getBarrio().getNombre() : "Tu barrio";
-        popup.getChildren().addAll(label("Mapa interactivo", 12, "#374151", true), label(barrioDisplay, 11, BLUE, false));
+                ? usuarioActual.getDireccion().getBarrio().getNombre()
+                : "Tu barrio";
+
+        Button abrirMapaBtn = new Button("Abrir mapa  ↗");
+        abrirMapaBtn.setStyle(
+                "-fx-background-color:" + BLUE + ";"
+                + "-fx-text-fill:white;"
+                + "-fx-font-size:12px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-background-radius:6;"
+                + "-fx-padding:7 16;"
+                + "-fx-cursor:hand;");
+        abrirMapaBtn.setOnMouseEntered(e -> abrirMapaBtn.setStyle(
+                "-fx-background-color:#0d47a1;"
+                + "-fx-text-fill:white;"
+                + "-fx-font-size:12px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-background-radius:6;"
+                + "-fx-padding:7 16;"
+                + "-fx-cursor:hand;"));
+        abrirMapaBtn.setOnMouseExited(e -> abrirMapaBtn.setStyle(
+                "-fx-background-color:" + BLUE + ";"
+                + "-fx-text-fill:white;"
+                + "-fx-font-size:12px;"
+                + "-fx-font-weight:bold;"
+                + "-fx-background-radius:6;"
+                + "-fx-padding:7 16;"
+                + "-fx-cursor:hand;"));
+        abrirMapaBtn.setOnAction(e -> root.setCenter(buildPlaceholder("Mapa")));
+
+        popup.getChildren().addAll(
+                label("Mapa interactivo", 12, "#374151", true),
+                label(barrioDisplay, 11, BLUE, false),
+                abrirMapaBtn
+        );
+
         mapArea.getChildren().addAll(mapBg, streets, popup);
 
+        // ── Leyenda ───────────────────────────────────────────────────
         HBox legend = new HBox(16);
         legend.setAlignment(Pos.CENTER);
-        legend.getChildren().addAll(legendItem(RED, "Activo"), legendItem(ORANGE, "En revisión"), legendItem(GREEN, "Resuelto"));
+        legend.getChildren().addAll(
+                legendItem(RED, "Activo"),
+                legendItem(ORANGE, "En revisión"),
+                legendItem(GREEN, "Resuelto")
+        );
+
         card.getChildren().addAll(header, mapArea, legend);
         return card;
     }
@@ -748,20 +989,60 @@ public class UsuarioApp {
     // =========================================================================
     private HBox buildFooter() {
         HBox footer = new HBox();
-        footer.setPadding(new Insets(12, 20, 12, 20));
-        footer.setStyle("-fx-background-color: " + BLUE_LIGHT + "; -fx-background-radius: 10;");
+        footer.setPadding(new Insets(30, 50, 30, 50));
+        footer.setPrefHeight(120);
+        footer.setStyle("-fx-background-color:" + BLUE_LIGHT + ";-fx-background-radius:10;");
+
+        // Círculo azul claro con 🔒
+        StackPane lockBox = new StackPane();
+        lockBox.setPrefSize(60, 60);
+        lockBox.setMinSize(60, 60);
+        lockBox.setMaxSize(60, 60);
+        lockBox.setStyle(
+                "-fx-background-color:#dbeafe;"
+                + "-fx-background-radius:50%;");
+        Label lockLbl = new Label("\uf023");  // lock FA
+        lockLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:25px;"
+                + "-fx-text-fill:#1565c0;");
+        lockBox.getChildren().add(lockLbl);
+
         HBox left = new HBox(10);
         left.setAlignment(Pos.CENTER_LEFT);
         VBox leftText = new VBox(2);
-        leftText.getChildren().addAll(label("Tu información está protegida", 13, BLUE, true), label("Todas tus alertas son anónimas y confidenciales.", 11, GRAY_TEXT, false));
-        left.getChildren().addAll(label("🔒", 20, BLUE, false), leftText);
+        leftText.getChildren().addAll(
+                label("Tu información está protegida", 16, BLUE, true),
+                label("Todas tus alertas son anónimas y confidenciales.", 13, GRAY_TEXT, false)
+        );
+        left.getChildren().addAll(lockBox, leftText);
         HBox.setHgrow(left, Priority.ALWAYS);
+
+        // Círculo azul claro con 🛡
+        StackPane shieldBox = new StackPane();
+        shieldBox.setPrefSize(50, 50);
+        shieldBox.setMinSize(50, 50);
+        shieldBox.setMaxSize(50, 50);
+        shieldBox.setStyle(
+                "-fx-background-color:#dbeafe;"
+                + "-fx-background-radius:50%;");
+        Label shieldLbl = new Label("\uf132");  // shield FA
+        shieldLbl.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:25px;"
+                + "-fx-text-fill:#1565c0;");
+        shieldBox.getChildren().add(shieldLbl);
+
         HBox right = new HBox(10);
         right.setAlignment(Pos.CENTER_RIGHT);
         VBox rightText = new VBox(2);
         rightText.setAlignment(Pos.CENTER_RIGHT);
-        rightText.getChildren().addAll(label("100% Anónimo", 13, BLUE, true), label("Tu identidad no será revelada.", 11, GRAY_TEXT, false));
-        right.getChildren().addAll(rightText, label("🛡", 20, BLUE, false));
+        rightText.getChildren().addAll(
+                label("100% Anónimo", 16, BLUE, true),
+                label("Tu identidad no será revelada.", 13, GRAY_TEXT, false)
+        );
+        right.getChildren().addAll(rightText, shieldBox);
+
         footer.getChildren().addAll(left, right);
         return footer;
     }
@@ -918,4 +1199,36 @@ public class UsuarioApp {
         a.setContentText(msg);
         a.showAndWait();
     }
+
+    // ── Utilidad AWT ──────────────────────────────────────────────────────────
+    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
+        int w = img.getWidth(), h = img.getHeight();
+        int top = h, bottom = 0, left = w, right = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
+                    if (y < top) {
+                        top = y;
+                    }
+                    if (y > bottom) {
+                        bottom = y;
+                    }
+                    if (x < left) {
+                        left = x;
+                    }
+                    if (x > right) {
+                        right = x;
+                    }
+                }
+            }
+        }
+        if (top >= bottom || left >= right) {
+            return img;
+        }
+        return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
+    }
+
+
 }
+
+

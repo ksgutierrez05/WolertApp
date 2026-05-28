@@ -570,7 +570,7 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         u.setLongitud(posicionSeleccionada.getLongitude());
         try {
             unidadService.insertar(u);
-            mostrarExito("✅  Unidad registrada", "La unidad fue guardada correctamente.");
+            mostrarExito("Unidad registrada", "La unidad fue guardada correctamente.");
             salirModoEdicion();
         } catch (SQLException e) {
             alerta("Error al guardar: " + e.getMessage());
@@ -594,7 +594,7 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
 
         try {
             unidadService.actualizar(unidadEditando);
-            mostrarExito("✅  Unidad actualizada", "Los cambios fueron guardados correctamente.");
+            mostrarExito("Unidad actualizada", "Los cambios fueron guardados correctamente.");
             salirModoEdicion();
         } catch (SQLException e) {
             alerta("Error al actualizar: " + e.getMessage());
