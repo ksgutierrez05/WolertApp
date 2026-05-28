@@ -5,6 +5,7 @@
 package sistemagestion.view;
 
 import java.util.List;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -14,23 +15,24 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import sistemagestion.model.*;
 import sistemagestion.service.UnidadPolicialService;
 
 public class UnidadesAdminPoliciaView {
 
-    private static final String WHITE        = "#ffffff";
-    private static final String BG           = "#f4f6fb";
-    private static final String BLUE         = "#1565c0";
-    private static final String BLUE_LIGHT   = "#e8f0fe";
-    private static final String GREEN        = "#43a047";
-    private static final String GREEN_LIGHT  = "#e8f5e9";
-    private static final String RED          = "#e53935";
-    private static final String RED_LIGHT    = "#fff0f0";
-    private static final String ORANGE       = "#fb8c00";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
+    private static final String BLUE_LIGHT = "#e8f0fe";
+    private static final String GREEN = "#43a047";
+    private static final String GREEN_LIGHT = "#e8f5e9";
+    private static final String RED = "#e53935";
+    private static final String RED_LIGHT = "#fff0f0";
+    private static final String ORANGE = "#fb8c00";
     private static final String ORANGE_LIGHT = "#fff8e1";
-    private static final String GRAY_TEXT    = "#6b7280";
-    private static final String BORDER       = "#e5e7eb";
+    private static final String GRAY_TEXT = "#6b7280";
+    private static final String BORDER = "#e5e7eb";
 
     private final UnidadPolicialService unidadService;
     private VBox tablaContainer;
@@ -93,7 +95,15 @@ public class UnidadesAdminPoliciaView {
         btnNueva.setOnMouseExited(e -> btnNueva.setStyle(base));
         btnNueva.setOnAction(e -> {
             MapaUnidadesPoliciales mapa = new MapaUnidadesPoliciales();
-            mapa.mostrar();
+            Stage stage = mapa.mostrar();
+            stage.setOnHidden(ev -> {
+                try {
+                    todasLasUnidades = unidadService.listar();
+                    renderizarLista(todasLasUnidades);
+                } catch (Exception ex) {
+                    mostrarAlerta("Error", "No se pudo recargar: " + ex.getMessage());
+                }
+            });
         });
 
         HBox right = new HBox();
@@ -109,23 +119,23 @@ public class UnidadesAdminPoliciaView {
     private HBox buildStats() {
         HBox row = new HBox(16);
 
-        long total      = todasLasUnidades.size();
+        long total = todasLasUnidades.size();
         long operativas = todasLasUnidades.stream()
                 .filter(u -> u.getEstado() == EstadoUnidadPolicial.OPERATIVA).count();
-        long activas    = todasLasUnidades.stream()
+        long activas = todasLasUnidades.stream()
                 .filter(u -> u.getEstado() == EstadoUnidadPolicial.ACTIVA).count();
-        long inactivas  = todasLasUnidades.stream()
+        long inactivas = todasLasUnidades.stream()
                 .filter(u -> u.getEstado() == EstadoUnidadPolicial.INACTIVA).count();
 
         row.getChildren().addAll(
-                statCard(BLUE_LIGHT,   BLUE,      "\uf505", "Total unidades",
-                        boldNum(String.valueOf(total),      BLUE),      "Registradas en el sistema"),
-                statCard(GREEN_LIGHT,  GREEN,     "\uf058", "Operativas",
-                        boldNum(String.valueOf(operativas), GREEN),     "Listas para asignación"),
-                statCard(ORANGE_LIGHT, ORANGE,    "\uf017", "Activas",
-                        boldNum(String.valueOf(activas),    ORANGE),    "Atendiendo alertas"),
-                statCard("#f3f4f6",    GRAY_TEXT, "\uf057", "Inactivas",
-                        boldNum(String.valueOf(inactivas),  GRAY_TEXT), "Fuera de servicio")
+                statCard(BLUE_LIGHT, BLUE, "\uf505", "Total unidades",
+                        boldNum(String.valueOf(total), BLUE), "Registradas en el sistema"),
+                statCard(GREEN_LIGHT, GREEN, "\uf058", "Operativas",
+                        boldNum(String.valueOf(operativas), GREEN), "Listas para asignación"),
+                statCard(ORANGE_LIGHT, ORANGE, "\uf017", "Activas",
+                        boldNum(String.valueOf(activas), ORANGE), "Atendiendo alertas"),
+                statCard("#f3f4f6", GRAY_TEXT, "\uf057", "Inactivas",
+                        boldNum(String.valueOf(inactivas), GRAY_TEXT), "Fuera de servicio")
         );
         return row;
     }
@@ -137,7 +147,7 @@ public class UnidadesAdminPoliciaView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color:white;-fx-background-radius:18;");
@@ -150,7 +160,8 @@ public class UnidadesAdminPoliciaView {
         iconWrap.setMaxSize(52, 52);
 
         javafx.scene.shape.Rectangle iconBg = new javafx.scene.shape.Rectangle(52, 52);
-        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
 
         Label iconLbl = new Label(iconFA);
@@ -169,7 +180,7 @@ public class UnidadesAdminPoliciaView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -215,7 +226,7 @@ public class UnidadesAdminPoliciaView {
                     ? todasLasUnidades
                     : todasLasUnidades.stream()
                             .filter(u -> u.getEstado() != null
-                                    && u.getEstado().name().equals(val))
+                            && u.getEstado().name().equals(val))
                             .toList();
             renderizarLista(filtradas);
         });
@@ -245,8 +256,8 @@ public class UnidadesAdminPoliciaView {
 
         header.getChildren().addAll(
                 nombreWrap,
-                colHFixed("Barrio",   160),
-                colHFixed("Estado",   130),
+                colHFixed("Barrio", 160),
+                colHFixed("Estado", 130),
                 colHFixed("Lat / Lng", 180),
                 colHFixed("Acciones", 160)
         );
@@ -270,25 +281,32 @@ public class UnidadesAdminPoliciaView {
         Label l = new Label(text.toUpperCase());
         l.setStyle("-fx-font-size:11px;-fx-font-weight:bold;"
                 + "-fx-text-fill:#9ca3af;-fx-letter-spacing:0.5;");
-        if (grow) HBox.setHgrow(l, Priority.ALWAYS);
+        if (grow) {
+            HBox.setHgrow(l, Priority.ALWAYS);
+        }
         return l;
     }
 
     private Label colHFixed(String text, double width) {
         Label l = colH(text, false);
-        l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width);
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
         return l;
     }
 
     // ── Filtrar ───────────────────────────────────────────────────
     private void filtrarYMostrar() {
         String txt = campoBusqueda.getText().toLowerCase().trim();
-        if (txt.isEmpty()) { renderizarLista(todasLasUnidades); return; }
+        if (txt.isEmpty()) {
+            renderizarLista(todasLasUnidades);
+            return;
+        }
         List<UnidadPolicial> filtradas = todasLasUnidades.stream()
                 .filter(u -> (u.getNombre() != null
-                        && u.getNombre().toLowerCase().contains(txt))
-                        || (u.getBarrio() != null
-                        && u.getBarrio().getNombre().toLowerCase().contains(txt)))
+                && u.getNombre().toLowerCase().contains(txt))
+                || (u.getBarrio() != null
+                && u.getBarrio().getNombre().toLowerCase().contains(txt)))
                 .toList();
         renderizarLista(filtradas);
     }
@@ -362,14 +380,16 @@ public class UnidadesAdminPoliciaView {
                 u.getBarrio() != null ? u.getBarrio().getNombre() : "—", 160);
 
         // ── Estado badge (130px) ──────────────────────────────────
-        String estNom   = u.getEstado() != null
+        String estNom = u.getEstado() != null
                 ? u.getEstado().name() : "—";
         String colorEst = colorEstado(u.getEstado());
-        String bgEst    = bgEstado(u.getEstado());
-        Label estBadge  = badge(estNom, bgEst, colorEst);
+        String bgEst = bgEstado(u.getEstado());
+        Label estBadge = badge(estNom, bgEst, colorEst);
         HBox estBox = new HBox(estBadge);
         estBox.setAlignment(Pos.CENTER_LEFT);
-        estBox.setPrefWidth(130); estBox.setMinWidth(130); estBox.setMaxWidth(130);
+        estBox.setPrefWidth(130);
+        estBox.setMinWidth(130);
+        estBox.setMaxWidth(130);
 
         // ── Coordenadas (180px) ───────────────────────────────────
         String coords = (u.getLatitud() != 0 || u.getLongitud() != 0)
@@ -379,11 +399,13 @@ public class UnidadesAdminPoliciaView {
         // ── Acciones (160px) ─────────────────────────────────────
         HBox acciones = new HBox(6);
         acciones.setAlignment(Pos.CENTER_LEFT);
-        acciones.setPrefWidth(160); acciones.setMinWidth(160); acciones.setMaxWidth(160);
+        acciones.setPrefWidth(160);
+        acciones.setMinWidth(160);
+        acciones.setMaxWidth(160);
         acciones.getChildren().addAll(
-                btnAccion("\uf06e", BLUE,   BLUE_LIGHT,   "Ver",     () -> verUnidad(u)),
-                btnAccion("\uf044", ORANGE, ORANGE_LIGHT, "Editar",  () -> editarUnidad(u)),
-                btnAccion("\uf2ed", RED,    RED_LIGHT,    "Eliminar",() -> eliminarUnidad(u))
+                btnAccion("\uf06e", BLUE, BLUE_LIGHT, "Ver", () -> verUnidad(u)),
+                btnAccion("\uf044", ORANGE, ORANGE_LIGHT, "Editar", () -> editarUnidad(u)),
+                btnAccion("\uf2ed", RED, RED_LIGHT, "Eliminar", () -> eliminarUnidad(u))
         );
 
         fila.getChildren().addAll(celdaNombre, barrioLbl, estBox, coordLbl, acciones);
@@ -397,11 +419,22 @@ public class UnidadesAdminPoliciaView {
     }
 
     // ── Editar ────────────────────────────────────────────────────
-    private void editarUnidad(UnidadPolicial u) {
-        MapaUnidadesPoliciales mapa = new MapaUnidadesPoliciales();
-        mapa.mostrar();
-        javafx.application.Platform.runLater(() -> mapa.cargarUnidadPublico(u));
-    }
+   private void editarUnidad(UnidadPolicial u) {
+    MapaUnidadesPoliciales mapa = new MapaUnidadesPoliciales();
+    Stage stage = mapa.mostrar();
+
+    // Platform.runLater garantiza que corre DESPUÉS de que el Stage ya está montado
+    Platform.runLater(() -> mapa.cargarUnidadPublico(u));
+
+    stage.setOnHidden(e -> {
+        try {
+            todasLasUnidades = unidadService.listar();
+            renderizarLista(todasLasUnidades);
+        } catch (Exception ex) {
+            mostrarAlerta("Error", "No se pudo recargar la lista: " + ex.getMessage());
+        }
+    });
+}
 
     // ── Eliminar ──────────────────────────────────────────────────
     private void eliminarUnidad(UnidadPolicial u) {
@@ -411,7 +444,7 @@ public class UnidadesAdminPoliciaView {
         confirm.setContentText("Esta acción no se puede deshacer.");
 
         ButtonType btnSi = new ButtonType("Sí, eliminar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType btnNo = new ButtonType("Cancelar",      ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType btnNo = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(btnSi, btnNo);
 
         confirm.showAndWait().ifPresent(resp -> {
@@ -431,7 +464,9 @@ public class UnidadesAdminPoliciaView {
     // ── Helpers UI ────────────────────────────────────────────────
     private Label celda(String txt, double width) {
         Label l = label(txt != null ? txt : "—", 12, "#374151", false);
-        l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width);
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
         l.setEllipsisString("…");
         return l;
     }
@@ -445,54 +480,68 @@ public class UnidadesAdminPoliciaView {
     }
 
     private Button btnAccion(String iconFA, String iconColor,
-                              String bgColor, String tooltip, Runnable accion) {
+            String bgColor, String tooltip, Runnable accion) {
         Button b = new Button(iconFA);
         String base = "-fx-background-color:" + bgColor + ";-fx-text-fill:" + iconColor + ";"
                 + "-fx-font-family:'Font Awesome 6 Free Solid';"
                 + "-fx-font-size:13px;-fx-background-radius:8;"
                 + "-fx-padding:7 10;-fx-cursor:hand;";
-        String hov  = "-fx-background-color:" + iconColor + ";-fx-text-fill:white;"
+        String hov = "-fx-background-color:" + iconColor + ";-fx-text-fill:white;"
                 + "-fx-font-family:'Font Awesome 6 Free Solid';"
                 + "-fx-font-size:13px;-fx-background-radius:8;"
                 + "-fx-padding:7 10;-fx-cursor:hand;";
         b.setStyle(base);
         b.setOnMouseEntered(e -> b.setStyle(hov));
-        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         Tooltip.install(b, new Tooltip(tooltip));
         return b;
     }
 
     private String colorEstado(EstadoUnidadPolicial e) {
-        if (e == null) return GRAY_TEXT;
+        if (e == null) {
+            return GRAY_TEXT;
+        }
         return switch (e) {
-            case OPERATIVA -> GREEN;
-            case ACTIVA    -> ORANGE;
-            case INACTIVA  -> GRAY_TEXT;
+            case OPERATIVA ->
+                GREEN;
+            case ACTIVA ->
+                ORANGE;
+            case INACTIVA ->
+                GRAY_TEXT;
         };
     }
 
     private String bgEstado(EstadoUnidadPolicial e) {
-        if (e == null) return "#f3f4f6";
+        if (e == null) {
+            return "#f3f4f6";
+        }
         return switch (e) {
-            case OPERATIVA -> GREEN_LIGHT;
-            case ACTIVA    -> ORANGE_LIGHT;
-            case INACTIVA  -> "#f3f4f6";
+            case OPERATIVA ->
+                GREEN_LIGHT;
+            case ACTIVA ->
+                ORANGE_LIGHT;
+            case INACTIVA ->
+                "#f3f4f6";
         };
     }
 
     private static final String[] AVATAR_COLORS = {
-        "#1565c0","#2e7d32","#6a1b9a","#c62828",
-        "#e65100","#00695c","#283593","#4e342e"
+        "#1565c0", "#2e7d32", "#6a1b9a", "#c62828",
+        "#e65100", "#00695c", "#283593", "#4e342e"
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String iniciales(String nombre) {
-        if (nombre == null || nombre.isBlank()) return "?";
+        if (nombre == null || nombre.isBlank()) {
+            return "?";
+        }
         String[] p = nombre.trim().split("\\s+");
         return p.length == 1
                 ? p[0].substring(0, 1).toUpperCase()
@@ -502,7 +551,7 @@ public class UnidadesAdminPoliciaView {
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
         lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size)
-                         : Font.font("System", size));
+                : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
@@ -513,13 +562,17 @@ public class UnidadesAdminPoliciaView {
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private void mostrarInfo(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle(titulo); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 }

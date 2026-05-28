@@ -287,7 +287,7 @@ public class MapaAlerta {
         Platform.runLater(() -> {
             lblCoordFooter.setText("📍  " + coord);
             coordProp.set(coord);
-            lblInstruccion.setText("✅  Ubicación marcada — completa el formulario y pulsa el botón de pánico");
+            lblInstruccion.setText("Ubicación marcada — completa el formulario y pulsa el botón de pánico");
             lblInstruccion.setTextFill(Color.web(GREEN));
         });
     }

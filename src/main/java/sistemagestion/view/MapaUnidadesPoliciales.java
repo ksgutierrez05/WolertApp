@@ -102,7 +102,7 @@ public class MapaUnidadesPoliciales {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    public void mostrar() {
+    public Stage mostrar() {
         Stage stage = new Stage();
         stage.setTitle("WolertApp — Unidades Policiales");
 
@@ -114,6 +114,7 @@ public class MapaUnidadesPoliciales {
         stage.setScene(new Scene(root, 1200, 720));
         stage.setResizable(true);
         stage.show();
+        return stage; // ← único cambio real
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -147,7 +148,6 @@ public class MapaUnidadesPoliciales {
         lblInstruccionHeader = new Label("Haz clic en el mapa para ubicar la unidad policial");
         lblInstruccionHeader.setFont(Font.font("Arial", 13));
         lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
-
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -540,26 +540,30 @@ public class MapaUnidadesPoliciales {
         txtNombre.setText(u.getNombre());
         cmbEstado.setValue(u.getEstado());
 
-        // Preseleccionar comuna → filtrar barrios → preseleccionar barrio
-        if (u.getBarrio() != null) {
-            if (u.getBarrio().getComuna() != null) {
-                // Seleccionar la comuna primero; filtrarBarrios() se dispara por setOnAction
-                cmbComuna.setValue(u.getBarrio().getComuna().getNombre());
-                // Luego seleccionar el barrio una vez que la lista esté poblada
-                Platform.runLater(()
-                        -> cmbBarrio.getItems().stream()
-                                .filter(b -> b.getId_barrio() == u.getBarrio().getId_barrio())
-                                .findFirst()
-                                .ifPresent(cmbBarrio::setValue)
-                );
-            } else {
-                // Sin comuna anidada: intentar seleccionar el barrio directamente
-                Platform.runLater(()
-                        -> cmbBarrio.getItems().stream()
-                                .filter(b -> b.getId_barrio() == u.getBarrio().getId_barrio())
-                                .findFirst()
-                                .ifPresent(cmbBarrio::setValue)
-                );
+        if (u.getBarrio() != null && u.getBarrio().getNombre() != null) {
+            try {
+                // Buscar el barrio completo por NOMBRE (más confiable que por ID)
+                Barrio barrioCompleto = barrioService.listar().stream()
+                        .filter(b -> b.getNombre().equalsIgnoreCase(u.getBarrio().getNombre()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (barrioCompleto != null && barrioCompleto.getComuna() != null) {
+                    // 1. Setear la comuna correcta
+                    cmbComuna.setValue(barrioCompleto.getComuna().getNombre());
+
+                    // 2. filtrarBarrios() ya corrió, seleccionar el barrio por nombre
+                    cmbBarrio.getItems().stream()
+                            .filter(b -> b.getNombre().equalsIgnoreCase(barrioCompleto.getNombre()))
+                            .findFirst()
+                            .ifPresent(cmbBarrio::setValue);
+                } else {
+                    System.out.println("Barrio no encontrado o sin comuna: "
+                            + u.getBarrio().getNombre());
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error cargando barrio: " + e.getMessage());
             }
         }
 
@@ -759,20 +763,17 @@ public class MapaUnidadesPoliciales {
 
     // Para el botón Ver — solo lectura
     public void mostrarSoloLectura(UnidadPolicial u) {
-        mostrar();
-        javafx.application.Platform.runLater(() -> {
+        Stage stage = mostrar(); // ← antes era solo mostrar()
+        Platform.runLater(() -> {
             cargarUnidadEnFormulario(u);
-            // Deshabilitar campos
             txtNombre.setDisable(true);
             cmbComuna.setDisable(true);
             cmbBarrio.setDisable(true);
             cmbEstado.setDisable(true);
-            // Ocultar botones
             btnAccionPrincipal.setVisible(false);
             btnAccionPrincipal.setManaged(false);
             btnEliminar.setVisible(false);
             btnEliminar.setManaged(false);
-            // Cambiar encabezado
             lblTituloPanel.setText("Detalle de unidad");
             lblSubtituloPanel.setText("Visualización — solo lectura");
             lblInstruccionHeader.setText("Viendo: " + u.getNombre());
