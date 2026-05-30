@@ -786,15 +786,23 @@ public class UsuariosAdminView {
         cmbRol.setPromptText("Seleccionar Rol *");
         cmbRol.setPrefHeight(40);
         cmbRol.setMaxWidth(Double.MAX_VALUE);
-        cmbRol.setStyle("-fx-background-radius: 8; -fx-font-size: 13px;");
+        cmbRol.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10;"
+                + "-fx-border-color: transparent;"
+                + "-fx-border-radius: 10;"
+                + "-fx-font-size: 13px;"
+                + "-fx-text-fill: #111827;"
+                + "-fx-cursor: hand;"
+        );
 
         if (rolService != null) {
             try {
                 for (RolUsuario r : rolService.listar()) {
                     if (r != null && r.getNombre() != null) {
-                        String nombre = r.getNombre().toUpperCase();
-                        if (nombre.equals("ADMIN") || nombre.equals("ADMINISTRADOR_POLICIA")) {
-                            cmbRol.getItems().add(r.getNombre());
+                        String nombre = r.getNombre().toUpperCase().trim();
+                        if (nombre.equals("ADMIN") || nombre.equals("ADMIN_POLICIA")) {
+                            cmbRol.getItems().add(r.getNombre()); // guarda el nombre original
                         }
                     }
                 }
@@ -807,7 +815,7 @@ public class UsuariosAdminView {
         cmbRol.setOnAction(e -> {
             String seleccionado = cmbRol.getValue();
             boolean esPolicia = seleccionado != null
-                    && seleccionado.toUpperCase().equals("ADMINISTRADOR_POLICIA");
+                    && seleccionado.toUpperCase().trim().equals("ADMIN_POLICIA");
             seccionPolicia.setVisible(esPolicia);
             seccionPolicia.setManaged(esPolicia);
         });
@@ -840,27 +848,6 @@ public class UsuariosAdminView {
                 + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
 
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            lblError.setText("");
-
-            if (fPrimerNombre.getText().isBlank()
-                    || fPrimerApellido.getText().isBlank()
-                    || fCedula.getText().isBlank()
-                    || fUsername.getText().isBlank()
-                    || fPassword.getText().isBlank()
-                    || cmbRol.getValue() == null) {
-                lblError.setText("Completa los campos obligatorios (*).");
-                ev.consume();
-                return;
-            }
-
-            boolean esPolicia = cmbRol.getValue().toUpperCase()
-                    .equals("ADMINISTRADOR_POLICIA");
-            if (esPolicia && (fPlaca.getText().isBlank() || fRango.getText().isBlank())) {
-                lblError.setText("Completa los datos policiales obligatorios (*).");
-                ev.consume();
-                return;
-            }
-
             try {
                 Usuario nuevo = new Usuario();
                 nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
@@ -876,32 +863,41 @@ public class UsuariosAdminView {
 
                 RolUsuario rolSeleccionado = rolService.listar().stream()
                         .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
-                        .findFirst()
-                        .orElse(null);
+                        .findFirst().orElse(null);
                 nuevo.setRol(rolSeleccionado);
+
+                sistemagestion.model.Direccion dir = new sistemagestion.model.Direccion();
+                sistemagestion.model.Barrio barrioVacio = new sistemagestion.model.Barrio();
+                barrioVacio.setNombre("");
+                dir.setBarrio(barrioVacio);
+                dir.setCalle("");
+                dir.setCarrera("");
+                dir.setEtapa("");
+                dir.setManzana("");
+                dir.setCasa("");
+                nuevo.setDireccion(dir);
 
                 usuarioService.insertar(nuevo);
 
-                // Si es policía también se registra el perfil policial
+                boolean esPolicia = cmbRol.getValue() != null
+                        && cmbRol.getValue().toUpperCase().trim().equals("ADMIN_POLICIA");
                 if (esPolicia) {
                     Policia policia = new Policia();
                     policia.setIdentificacion(fCedula.getText().trim());
                     policia.setPlaca(fPlaca.getText().trim());
                     policia.setRango(fRango.getText().trim());
                     policia.setEstadopolicial(sistemagestion.model.EstadoPolicia.DISPONIBLE);
-
                     sistemagestion.model.UnidadPolicial unidadVacia
                             = new sistemagestion.model.UnidadPolicial();
                     unidadVacia.setNombre("");
                     policia.setUnidadpolicial(unidadVacia);
-
                     policiaService.insertar(policia);
                 }
 
                 cargarUsuarios();
 
             } catch (IllegalArgumentException ex) {
-                lblError.setText("Error de validación: " + ex.getMessage());
+                lblError.setText("Error: " + ex.getMessage());
                 ev.consume();
             } catch (SQLException ex) {
                 lblError.setText("Error BD: " + ex.getMessage());
