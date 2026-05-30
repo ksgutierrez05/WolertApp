@@ -57,7 +57,7 @@ public class UnidadPolicialDAO {
             double latitud,
             double longitud
     ) {
-        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?)}";
+        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?, ?, ?)}";
   try (CallableStatement cs = con().prepareCall(sql)) {
         cs.setString(1, nombreActual);
         cs.setString(2, nombreNuevo);
