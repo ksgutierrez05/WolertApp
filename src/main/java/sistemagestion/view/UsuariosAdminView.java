@@ -44,7 +44,6 @@ public class UsuariosAdminView {
     private UsuarioService usuarioService;
     private RolUsuarioService rolService;
     private BarrioService barrioService;
-    private PoliciaService policiaService;
     private ObservableList<Usuario> todosLosUsuarios = FXCollections.observableArrayList();
     private ObservableList<Usuario> usuariosFiltrados = FXCollections.observableArrayList();
 
@@ -72,7 +71,6 @@ public class UsuariosAdminView {
             usuarioService = new UsuarioService();
             rolService = new RolUsuarioService();
             barrioService = new BarrioService();
-            policiaService = new PoliciaService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
         }
@@ -768,19 +766,6 @@ public class UsuariosAdminView {
         TextField fUsername = dlgField("Username *", "");
         PasswordField fPassword = dlgPassword("Contraseña *");
 
-        // Campos policiales — visibles solo si el rol es ADMINISTRADOR_POLICIA
-        TextField fPlaca = dlgField("Placa policial *", "");
-        TextField fRango = dlgField("Rango policial *", "");
-
-        VBox seccionPolicia = new VBox(10);
-        seccionPolicia.getChildren().addAll(
-                seccion("DATOS POLICIALES"),
-                fPlaca,
-                fRango
-        );
-        seccionPolicia.setVisible(false);
-        seccionPolicia.setManaged(false);
-
         // Solo ADMIN y ADMINISTRADOR_POLICIA
         ComboBox<String> cmbRol = new ComboBox<>();
         cmbRol.setPromptText("Seleccionar Rol *");
@@ -793,7 +778,8 @@ public class UsuariosAdminView {
                 for (RolUsuario r : rolService.listar()) {
                     if (r != null && r.getNombre() != null) {
                         String nombre = r.getNombre().toUpperCase();
-                        if (nombre.equals("ADMIN") || nombre.equals("ADMINISTRADOR_POLICIA")) {
+                        // Excluye POLICIA — ese se crea desde PoliciasAdminPoliciaView
+                        if (!nombre.equals("POLICIA")) {
                             cmbRol.getItems().add(r.getNombre());
                         }
                     }
@@ -802,16 +788,6 @@ public class UsuariosAdminView {
                 mostrarAlerta("Error roles", e.getMessage());
             }
         }
-
-        // Mostrar / ocultar sección policial según el rol elegido
-        cmbRol.setOnAction(e -> {
-            String seleccionado = cmbRol.getValue();
-            boolean esPolicia = seleccionado != null
-                    && seleccionado.toUpperCase().equals("ADMINISTRADOR_POLICIA");
-            seccionPolicia.setVisible(esPolicia);
-            seccionPolicia.setManaged(esPolicia);
-        });
-
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
 
@@ -826,7 +802,6 @@ public class UsuariosAdminView {
                 fPassword,
                 seccion("ROL"),
                 cmbRol,
-                seccionPolicia,
                 lblError
         );
 
@@ -853,14 +828,6 @@ public class UsuariosAdminView {
                 return;
             }
 
-            boolean esPolicia = cmbRol.getValue().toUpperCase()
-                    .equals("ADMINISTRADOR_POLICIA");
-            if (esPolicia && (fPlaca.getText().isBlank() || fRango.getText().isBlank())) {
-                lblError.setText("Completa los datos policiales obligatorios (*).");
-                ev.consume();
-                return;
-            }
-
             try {
                 Usuario nuevo = new Usuario();
                 nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
@@ -876,28 +843,10 @@ public class UsuariosAdminView {
 
                 RolUsuario rolSeleccionado = rolService.listar().stream()
                         .filter(r -> r.getNombre().equalsIgnoreCase(cmbRol.getValue()))
-                        .findFirst()
-                        .orElse(null);
+                        .findFirst().orElse(null);
                 nuevo.setRol(rolSeleccionado);
 
                 usuarioService.insertar(nuevo);
-
-                // Si es policía también se registra el perfil policial
-                if (esPolicia) {
-                    Policia policia = new Policia();
-                    policia.setIdentificacion(fCedula.getText().trim());
-                    policia.setPlaca(fPlaca.getText().trim());
-                    policia.setRango(fRango.getText().trim());
-                    policia.setEstadopolicial(sistemagestion.model.EstadoPolicia.DISPONIBLE);
-
-                    sistemagestion.model.UnidadPolicial unidadVacia
-                            = new sistemagestion.model.UnidadPolicial();
-                    unidadVacia.setNombre("");
-                    policia.setUnidadpolicial(unidadVacia);
-
-                    policiaService.insertar(policia);
-                }
-
                 cargarUsuarios();
 
             } catch (IllegalArgumentException ex) {

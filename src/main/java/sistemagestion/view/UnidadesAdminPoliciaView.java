@@ -38,6 +38,7 @@ public class UnidadesAdminPoliciaView {
     private VBox tablaContainer;
     private TextField campoBusqueda;
     private List<UnidadPolicial> todasLasUnidades;
+    private HBox statsContainer;
 
     public UnidadesAdminPoliciaView(UnidadPolicialService unidadService) {
         this.unidadService = unidadService;
@@ -53,10 +54,10 @@ public class UnidadesAdminPoliciaView {
         } catch (Exception e) {
             todasLasUnidades = List.of();
         }
-
+        statsContainer = buildStats();
         content.getChildren().addAll(
                 buildTopBar(),
-                buildStats(),
+                statsContainer,
                 buildToolbar(),
                 buildTabla()
         );
@@ -341,6 +342,8 @@ public class UnidadesAdminPoliciaView {
                         + (lista.size() != 1 ? "es" : ""));
             }
         }
+
+        actualizarStats();
     }
 
     // ── Fila ──────────────────────────────────────────────────────
@@ -419,22 +422,22 @@ public class UnidadesAdminPoliciaView {
     }
 
     // ── Editar ────────────────────────────────────────────────────
-   private void editarUnidad(UnidadPolicial u) {
-    MapaUnidadesPoliciales mapa = new MapaUnidadesPoliciales();
-    Stage stage = mapa.mostrar();
+    private void editarUnidad(UnidadPolicial u) {
+        MapaUnidadesPoliciales mapa = new MapaUnidadesPoliciales();
+        Stage stage = mapa.mostrar();
 
-    // Platform.runLater garantiza que corre DESPUÉS de que el Stage ya está montado
-    Platform.runLater(() -> mapa.cargarUnidadPublico(u));
+        // Platform.runLater garantiza que corre DESPUÉS de que el Stage ya está montado
+        Platform.runLater(() -> mapa.cargarUnidadPublico(u));
 
-    stage.setOnHidden(e -> {
-        try {
-            todasLasUnidades = unidadService.listar();
-            renderizarLista(todasLasUnidades);
-        } catch (Exception ex) {
-            mostrarAlerta("Error", "No se pudo recargar la lista: " + ex.getMessage());
-        }
-    });
-}
+        stage.setOnHidden(e -> {
+            try {
+                todasLasUnidades = unidadService.listar();
+                renderizarLista(todasLasUnidades);
+            } catch (Exception ex) {
+                mostrarAlerta("Error", "No se pudo recargar la lista: " + ex.getMessage());
+            }
+        });
+    }
 
     // ── Eliminar ──────────────────────────────────────────────────
     private void eliminarUnidad(UnidadPolicial u) {
@@ -574,5 +577,15 @@ public class UnidadesAdminPoliciaView {
         a.setHeaderText(null);
         a.setContentText(msg);
         a.showAndWait();
+    }
+
+    private void actualizarStats() {
+        HBox nuevo = buildStats();
+        VBox content = (VBox) statsContainer.getParent();
+        if (content != null) {
+            int index = content.getChildren().indexOf(statsContainer);
+            content.getChildren().set(index, nuevo);
+            statsContainer = nuevo;
+        }
     }
 }

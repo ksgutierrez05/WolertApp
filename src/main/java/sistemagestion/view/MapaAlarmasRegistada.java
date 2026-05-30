@@ -5,7 +5,6 @@
 package sistemagestion.view;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
@@ -69,12 +68,12 @@ public class MapaAlarmasRegistada {
     // ── Estado de edición (null = modo Registrar) ─────────────────────────────
     private Alarma alarmaEnEdicion = null;
     private List<Alarma> todasLasAlarmas = new ArrayList<>();
-    private List<Alarma> alarmasFiltradas = new ArrayList<>();
+    
 
     // ── Controles ─────────────────────────────────────────────────────────────
     private TextField txtNombre;
     private ComboBox<String> cmbComuna;
-    private ComboBox<String> cmbBarrio;
+    private ComboBox<Barrio> cmbBarrio;
     private Slider sliderRadio;
     private TextField txtRadioManual;
     private ComboBox<String> cmbEstado;
@@ -113,7 +112,7 @@ public class MapaAlarmasRegistada {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    public void mostrar() {
+    public Stage mostrar() {
         Stage stage = new Stage();
         stage.setTitle("WolertApp — Registrar Alarma");
 
@@ -127,10 +126,11 @@ public class MapaAlarmasRegistada {
         cargarAlarmas();
 
         stage.show();
+        return stage;
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // BARRA SUPERIOR  — se agrega el botón "Ver alarmas"
+    // BARRA SUPERIOR 
     // ════════════════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
         // Logo
@@ -216,7 +216,7 @@ public class MapaAlarmasRegistada {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // MAPA  (sin cambios)
+    // MAPA  
     // ════════════════════════════════════════════════════════════════════════
     private StackPane buildMapaStack() {
         SwingNode swingNode = new SwingNode();
@@ -316,7 +316,7 @@ public class MapaAlarmasRegistada {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // PANEL DERECHO  — encabezado con referencias de instancia para cambiar modo
+    // PANEL DERECHO  
     // ════════════════════════════════════════════════════════════════════════
     private VBox buildPanelDerecho() {
         VBox panel = new VBox(buildPanelHeader(), buildScroll());
@@ -364,7 +364,7 @@ public class MapaAlarmasRegistada {
     }
 
     private VBox buildFormulario() {
-        // ── Campos (idénticos a tu código original) ───────────────────────────
+
         txtNombre = new TextField();
         txtNombre.setPromptText("Ej: Alarma Sector Norte");
         estilizarInput(txtNombre);
@@ -379,7 +379,7 @@ public class MapaAlarmasRegistada {
         cmbBarrio.setPromptText("Seleccione un barrio");
         cmbBarrio.setMaxWidth(Double.MAX_VALUE);
         cmbBarrio.setDisable(true);
-        estilizarCombo(cmbBarrio);
+        estilizarComboBarrio(cmbBarrio);
 
         cmbComuna.setOnAction(e -> filtrarBarrios());
 
@@ -453,7 +453,6 @@ public class MapaAlarmasRegistada {
                 + "-fx-border-color:" + C_COORD_BDR + ";"
                 + "-fx-border-width:1;-fx-border-radius:10;-fx-background-radius:10;");
 
-        // ── NUEVO: botón primario dinámico (Guardar / Actualizar) ─────────────
         btnAccionPrincipal = buildBotonPrimario("Guardar alarma");
         btnAccionPrincipal.setOnAction(e -> {
             if (alarmaEnEdicion == null) {
@@ -463,7 +462,6 @@ public class MapaAlarmasRegistada {
             }
         });
 
-        // ── NUEVO: botón Eliminar (rojo, oculto en modo Registrar) ────────────
         btnEliminar = new Button("🗑  Eliminar alarma");
         btnEliminar.setMaxWidth(Double.MAX_VALUE);
         btnEliminar.setPrefHeight(38);
@@ -482,9 +480,9 @@ public class MapaAlarmasRegistada {
                 + "-fx-cursor:hand;-fx-background-radius:8;-fx-border-radius:8;"));
         btnEliminar.setOnAction(e -> eliminarAlarma());
         btnEliminar.setVisible(false);
-        btnEliminar.setManaged(false); // no ocupa espacio cuando está oculto
+        btnEliminar.setManaged(false);
 
-        // ── Botón secundario: "Limpiar" en registrar, "Cancelar" en editar ────
+     
         Button btnSecundario = buildBotonSecundario("Limpiar");
         btnSecundario.setOnAction(e -> salirModoEdicion());
 
@@ -502,126 +500,30 @@ public class MapaAlarmasRegistada {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // NUEVO — ventana de lista de alarmas con botón "Editar" por fila
-    // ════════════════════════════════════════════════════════════════════════
-    private void abrirListaAlarmas() {
-        List<Alarma> alarmas = alarmaService.listar();
-        if (alarmas == null || alarmas.isEmpty()) {
-            info("No hay alarmas registradas aún.");
-            return;
-        }
-
-        Stage ventana = new Stage();
-        ventana.initModality(Modality.APPLICATION_MODAL);
-        ventana.setTitle("WolertApp — Alarmas registradas");
-
-        // ── Tabla ─────────────────────────────────────────────────────────────
-        TableView<Alarma> tabla = new TableView<>();
-        tabla.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR + ";");
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<Alarma, String> colNombre = new TableColumn<>("Nombre");
-        colNombre.setCellValueFactory(c
-                -> new SimpleStringProperty(c.getValue().getNombre()));
-
-        TableColumn<Alarma, String> colBarrio = new TableColumn<>("Barrio");
-        colBarrio.setCellValueFactory(c -> {
-            Barrio b = c.getValue().getBarrio();
-            return new SimpleStringProperty(b != null ? b.getNombre() : "—");
-        });
-
-        TableColumn<Alarma, String> colEstado = new TableColumn<>("Estado");
-        colEstado.setCellValueFactory(c -> {
-            EstadoAlarma est = c.getValue().getEstado();
-            return new SimpleStringProperty(est != null ? est.name() : "—");
-        });
-
-        TableColumn<Alarma, String> colRadio = new TableColumn<>("Radio (m)");
-        colRadio.setCellValueFactory(c
-                -> new SimpleStringProperty(String.valueOf((int) c.getValue().getRadio_cobertura())));
-
-        // ── Columna "Editar" con botón por fila ───────────────────────────────
-        TableColumn<Alarma, Void> colAccion = new TableColumn<>("");
-        colAccion.setPrefWidth(90);
-        colAccion.setSortable(false);
-        colAccion.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("✏  Editar");
-
-            {
-                btn.setFont(Font.font("Arial", FontWeight.BOLD, 11));
-                btn.setStyle(
-                        "-fx-background-color:#f0f4ff;-fx-text-fill:#16283d;"
-                        + "-fx-border-color:#c7d7fd;-fx-border-width:1;"
-                        + "-fx-border-radius:6;-fx-background-radius:6;"
-                        + "-fx-cursor:hand;-fx-padding:4 10 4 10;");
-                btn.setOnAction(e -> {
-                    Alarma seleccionada = getTableView().getItems().get(getIndex());
-                    cargarAlarmaEnFormulario(seleccionada);
-                    ventana.close();
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
-            }
-        });
-
-        tabla.getColumns().addAll(colNombre, colBarrio, colEstado, colRadio, colAccion);
-        tabla.setItems(FXCollections.observableArrayList(alarmas));
-
-        // ── Layout de la ventana ──────────────────────────────────────────────
-        Label titulo = new Label("Alarmas registradas");
-        titulo.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-        titulo.setTextFill(Color.web("#111827"));
-
-        Label sub = new Label("Selecciona una alarma para editarla");
-        sub.setFont(Font.font("Arial", 11));
-        sub.setTextFill(Color.web("#6b7280"));
-
-        HBox header = new HBox(12, new Label("🔔"), new VBox(2, titulo, sub));
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(16, 20, 16, 20));
-        header.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
-                + ";-fx-border-width:0 0 1 0;");
-
-        Button btnCerrar = buildBotonSecundario("Cerrar");
-        btnCerrar.setOnAction(e -> ventana.close());
-        btnCerrar.setMaxWidth(Double.MAX_VALUE);
-
-        VBox layout = new VBox(header, tabla, new VBox(btnCerrar) {
-            {
-                setPadding(new Insets(14, 20, 14, 20));
-                setStyle("-fx-background-color:white;");
-            }
-        });
-        layout.setStyle("-fx-background-color:white;");
-        VBox.setVgrow(tabla, Priority.ALWAYS);
-
-        ventana.setScene(new Scene(layout, 700, 440));
-        ventana.show();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // NUEVO — carga una alarma en el formulario y activa el modo edición
+    // FORMULARIO
     // ════════════════════════════════════════════════════════════════════════
     private void cargarAlarmaEnFormulario(Alarma a) {
         alarmaEnEdicion = a;
 
-        // Encabezado del panel
         lblTituloPanel.setText("Editar alarma");
         lblSubtituloPanel.setText("Modifica los datos y guarda los cambios");
+        btnAccionPrincipal.setText("💾  Actualizar alarma");
+        btnEliminar.setVisible(true);
+        btnEliminar.setManaged(true);
 
-        // Campos
+        // Nombre
         txtNombre.setText(a.getNombre());
+
+        // Radio
         sliderRadio.setValue(a.getRadio_cobertura());
         txtRadioManual.setText(String.valueOf((int) a.getRadio_cobertura()));
+
+        // Estado
         if (a.getEstado() != null) {
             cmbEstado.setValue(a.getEstado().name());
         }
 
-        // Coordenadas → marcador en el mapa
+        // Coordenadas
         posicionSeleccionada = new GeoPosition(a.getLatitud(), a.getLongitud());
         String coord = String.format("%.5f,  %.5f", a.getLatitud(), a.getLongitud());
         lblCoordenadas.setText(coord);
@@ -632,21 +534,31 @@ public class MapaAlarmasRegistada {
             mapa.repaint();
         });
 
-        // Comuna y barrio: primero seleccionar la comuna para disparar filtrarBarrios(),
-        // luego seleccionar el barrio una vez que la lista esté poblada
-        if (a.getBarrio() != null && a.getBarrio().getComuna() != null) {
-            cmbComuna.setValue(a.getBarrio().getComuna().getNombre());
-            // filtrarBarrios() se dispara por el setOnAction; esperamos en el hilo FX
-            Platform.runLater(() -> cmbBarrio.setValue(a.getBarrio().getNombre()));
-        } else if (a.getBarrio() != null) {
-            // Si el barrio llega sin comuna anidada, intentamos igualmente
-            Platform.runLater(() -> cmbBarrio.setValue(a.getBarrio().getNombre()));
+        
+        if (a.getBarrio() != null && a.getBarrio().getNombre() != null) {
+            try {
+                // Buscar barrio completo desde el servicio
+                Barrio barrioCompleto = barrioService.listar().stream()
+                        .filter(b -> b.getNombre().equalsIgnoreCase(a.getBarrio().getNombre()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (barrioCompleto != null && barrioCompleto.getComuna() != null) {
+                    
+                    cmbComuna.setValue(barrioCompleto.getComuna().getNombre());
+                    filtrarBarrios();
+                   
+                    cmbBarrio.getItems().stream()
+                            .filter(b -> b.getNombre().equalsIgnoreCase(barrioCompleto.getNombre()))
+                            .findFirst()
+                            .ifPresent(cmbBarrio::setValue);
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error cargando barrio: " + e.getMessage());
+            }
         }
 
-        // Mostrar botón Eliminar y cambiar etiqueta del botón primario
-        btnAccionPrincipal.setText("💾  Actualizar alarma");
-        btnEliminar.setVisible(true);
-        btnEliminar.setManaged(true);
     }
 
     private void cargarAlarmas() {
@@ -656,20 +568,13 @@ public class MapaAlarmasRegistada {
             System.out.println("Error cargando alarmas: " + e.getMessage());
             todasLasAlarmas = new ArrayList<>();
         }
-        aplicarFiltros();
-
-    }
-
-    private void aplicarFiltros() {
-        alarmasFiltradas = new ArrayList<>(todasLasAlarmas);
-        int count = alarmasFiltradas.size();
-        Platform.runLater(()
-                -> lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
+        int count = todasLasAlarmas.size();
+        Platform.runLater(() -> lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
     }
 
     // ════════════════════════════════════════════════════════════════════════
-// ACTUALIZAR — conserva el id del barrio original y muestra confirmación
-// ════════════════════════════════════════════════════════════════════════
+    // ACTUALIZAR
+   // ════════════════════════════════════════════════════════════════════════
     private void actualizarAlarma() {
         if (txtNombre.getText().trim().isEmpty()) {
             alerta("Ingrese el nombre.");
@@ -688,7 +593,6 @@ public class MapaAlarmasRegistada {
             return;
         }
 
-        // Buscar el objeto Barrio completo (con su id) desde el servicio
         Barrio barrioSeleccionado = null;
         try {
             for (Barrio b : barrioService.listar()) {
@@ -715,16 +619,17 @@ public class MapaAlarmasRegistada {
 
         boolean ok = alarmaService.actualizar(alarmaEnEdicion);
         if (ok) {
-            mostrarExito("✅  Alarma actualizada", "Los cambios fueron guardados correctamente.");
-            salirModoEdicion();
+            mostrarExito("Alarma actualizada", "Los cambios fueron guardados correctamente.");
+            Stage stage = (Stage) btnAccionPrincipal.getScene().getWindow();
+            stage.close(); // ← esto dispara setOnHidden → recarga la tabla
         } else {
             alerta("Error al actualizar — verifica los datos.");
         }
     }
 
-// ════════════════════════════════════════════════════════════════════════
-// ELIMINAR — confirmación visual y mensaje de éxito
-// ════════════════════════════════════════════════════════════════════════
+   // ════════════════════════════════════════════════════════════════════════
+   // ELIMINAR 
+   // ════════════════════════════════════════════════════════════════════════
     private void eliminarAlarma() {
         // Diálogo de confirmación estilizado
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -752,9 +657,6 @@ public class MapaAlarmasRegistada {
         });
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // NUEVO — volver al modo Registrar (reemplaza limpiarFormulario)
-    // ════════════════════════════════════════════════════════════════════════
     private void salirModoEdicion() {
         alarmaEnEdicion = null;
 
@@ -786,7 +688,7 @@ public class MapaAlarmasRegistada {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // LÓGICA ORIGINAL — sin cambios
+    // LÓGICA ORIGINAL 
     // ════════════════════════════════════════════════════════════════════════
     private void guardarAlarma() {
         if (txtNombre.getText().trim().isEmpty()) {
@@ -808,9 +710,7 @@ public class MapaAlarmasRegistada {
 
         Alarma a = new Alarma();
         a.setNombre(txtNombre.getText().trim());
-        Barrio b = new Barrio();
-        b.setNombre(cmbBarrio.getValue());
-        a.setBarrio(b);
+        a.setBarrio(cmbBarrio.getValue());
         a.setLatitud(posicionSeleccionada.getLatitude());
         a.setLongitud(posicionSeleccionada.getLongitude());
         a.setRadio_cobertura(sliderRadio.getValue());
@@ -839,31 +739,29 @@ public class MapaAlarmasRegistada {
     }
 
     private void filtrarBarrios() {
-        String comunaSeleccionada = cmbComuna.getValue();
+        String comunaSel = cmbComuna.getValue();
         cmbBarrio.getItems().clear();
         cmbBarrio.setValue(null);
         cmbBarrio.setDisable(true);
-        if (comunaSeleccionada == null) {
+        if (comunaSel == null) {
             return;
         }
         try {
-            List<Barrio> barrios = barrioService.listar();
-            ObservableList<String> nombres = FXCollections.observableArrayList();
-            for (Barrio b : barrios) {
-                if (b.getComuna() != null
-                        && comunaSeleccionada.equals(b.getComuna().getNombre())) {
-                    nombres.add(b.getNombre());
+            ObservableList<Barrio> filtrados = FXCollections.observableArrayList();
+            for (Barrio b : barrioService.listar()) {
+                if (b.getComuna() != null && comunaSel.equals(b.getComuna().getNombre())) {
+                    filtrados.add(b);
                 }
             }
-            cmbBarrio.setItems(nombres);
-            cmbBarrio.setDisable(nombres.isEmpty());
+            cmbBarrio.setItems(filtrados);
+            cmbBarrio.setDisable(filtrados.isEmpty());
         } catch (Exception e) {
             System.out.println("Error filtrando barrios: " + e.getMessage());
         }
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // HELPERS DE UI — sin cambios
+    // HELPERS DE UI 
     // ════════════════════════════════════════════════════════════════════════
     private VBox campo(String etiqueta, javafx.scene.Node control) {
         Label lbl = new Label(etiqueta);
@@ -952,6 +850,40 @@ public class MapaAlarmasRegistada {
         });
     }
 
+    private void estilizarComboBarrio(ComboBox<Barrio> cb) {
+        cb.setStyle("-fx-background-color:" + C_INPUT_BG + ";"
+                + "-fx-text-fill:" + C_INPUT_TEXT + ";"
+                + "-fx-prompt-text-fill:#9ca3af;"
+                + "-fx-border-color:transparent;"
+                + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:14px;");
+        cb.setPrefHeight(48);
+        cb.setCellFactory(lv -> new ListCell<Barrio>() {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNombre());
+                setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;");
+                setOnMouseEntered(e -> setStyle("-fx-background-color:" + C_DARK_GRAD
+                        + ";-fx-background-radius:6;-fx-text-fill:white;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
+                setOnMouseExited(e -> setStyle(
+                        "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
+            }
+        });
+        cb.setButtonCell(new ListCell<Barrio>() {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? cb.getPromptText() : item.getNombre());
+                setStyle(item != null
+                        ? "-fx-background-color:" + C_INPUT_BG + ";-fx-text-fill:black;-fx-font-size:14px;"
+                        : "-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:14px;");
+            }
+        });
+    }
+
     private void estilizarSlider() {
         javafx.scene.layout.StackPane track
                 = (javafx.scene.layout.StackPane) sliderRadio.lookup(".track");
@@ -1017,7 +949,7 @@ public class MapaAlarmasRegistada {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // UTILIDAD AWT — sin cambios
+    // UTILIDAD AWT 
     // ════════════════════════════════════════════════════════════════════════
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight();

@@ -14,23 +14,24 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import sistemagestion.model.*;
 import sistemagestion.service.AlarmaService;
 
 public class AlarmasAdminPoliciaView {
 
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String BLUE      = "#1565c0";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
     private static final String BLUE_LIGHT = "#e8f0fe";
-    private static final String GREEN     = "#43a047";
+    private static final String GREEN = "#43a047";
     private static final String GREEN_LIGHT = "#e8f5e9";
-    private static final String RED       = "#e53935";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
+    private static final String ORANGE = "#fb8c00";
     private static final String ORANGE_LIGHT = "#fff8e1";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
     private final AlarmaService alarmaService;
     private VBox tablaContainer;
@@ -109,22 +110,22 @@ public class AlarmasAdminPoliciaView {
     private HBox buildStats() {
         HBox row = new HBox(16);
 
-        long total       = todasLasAlarmas.size();
-        long activas     = todasLasAlarmas.stream()
+        long total = todasLasAlarmas.size();
+        long activas = todasLasAlarmas.stream()
                 .filter(a -> a.getEstado() == EstadoAlarma.ACTIVA).count();
-        long inactivas   = todasLasAlarmas.stream()
+        long inactivas = todasLasAlarmas.stream()
                 .filter(a -> a.getEstado() == EstadoAlarma.INACTIVA).count();
         long mantenimiento = todasLasAlarmas.stream()
                 .filter(a -> a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO).count();
 
         row.getChildren().addAll(
-                statCard(BLUE_LIGHT,    BLUE,   "\uf0f3", "Total alarmas",
-                        boldNum(String.valueOf(total),       BLUE),   "Registradas en el sistema"),
-                statCard(GREEN_LIGHT,   GREEN,  "\uf058", "Activas",
-                        boldNum(String.valueOf(activas),     GREEN),  "Funcionando correctamente"),
-                statCard("#f3f4f6",     GRAY_TEXT, "\uf057", "Inactivas",
-                        boldNum(String.valueOf(inactivas),   GRAY_TEXT), "Fuera de servicio"),
-                statCard(ORANGE_LIGHT,  ORANGE, "\uf0ad", "En mantenimiento",
+                statCard(BLUE_LIGHT, BLUE, "\uf0f3", "Total alarmas",
+                        boldNum(String.valueOf(total), BLUE), "Registradas en el sistema"),
+                statCard(GREEN_LIGHT, GREEN, "\uf058", "Activas",
+                        boldNum(String.valueOf(activas), GREEN), "Funcionando correctamente"),
+                statCard("#f3f4f6", GRAY_TEXT, "\uf057", "Inactivas",
+                        boldNum(String.valueOf(inactivas), GRAY_TEXT), "Fuera de servicio"),
+                statCard(ORANGE_LIGHT, ORANGE, "\uf0ad", "En mantenimiento",
                         boldNum(String.valueOf(mantenimiento), ORANGE), "En revisión técnica")
         );
         return row;
@@ -137,7 +138,7 @@ public class AlarmasAdminPoliciaView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color:white;-fx-background-radius:18;");
@@ -150,7 +151,8 @@ public class AlarmasAdminPoliciaView {
         iconWrap.setMaxSize(52, 52);
 
         javafx.scene.shape.Rectangle iconBg = new javafx.scene.shape.Rectangle(52, 52);
-        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
 
         Label iconLbl = new Label(iconFA);
@@ -170,7 +172,7 @@ public class AlarmasAdminPoliciaView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -216,7 +218,7 @@ public class AlarmasAdminPoliciaView {
                     ? todasLasAlarmas
                     : todasLasAlarmas.stream()
                             .filter(a -> a.getEstado() != null
-                                    && a.getEstado().name().equals(val))
+                            && a.getEstado().name().equals(val))
                             .toList();
             renderizarLista(filtradas);
         });
@@ -241,18 +243,18 @@ public class AlarmasAdminPoliciaView {
                 + "-fx-border-color:transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width:0 0 1 0;");
 
-        // Col Nombre — crece
+        
         HBox nombreWrap = new HBox();
         HBox.setHgrow(nombreWrap, Priority.ALWAYS);
         nombreWrap.getChildren().add(colH("Nombre", true));
 
         header.getChildren().addAll(
                 nombreWrap,
-                colHFixed("Barrio",        160),
-                colHFixed("Estado",        130),
-                colHFixed("Radio (m)",     100),
-                colHFixed("Coordenadas",   170),
-                colHFixed("Acciones",      190)
+                colHFixed("Barrio", 160),
+                colHFixed("Estado", 130),
+                colHFixed("Radio (m)", 100),
+                colHFixed("Coordenadas", 170),
+                colHFixed("Acciones", 190)
         );
         card.getChildren().add(header);
 
@@ -276,7 +278,9 @@ public class AlarmasAdminPoliciaView {
         Label l = new Label(text.toUpperCase());
         l.setStyle("-fx-font-size:11px;-fx-font-weight:bold;"
                 + "-fx-text-fill:#9ca3af;-fx-letter-spacing:0.5;");
-        if (grow) HBox.setHgrow(l, Priority.ALWAYS);
+        if (grow) {
+            HBox.setHgrow(l, Priority.ALWAYS);
+        }
         return l;
     }
 
@@ -291,10 +295,13 @@ public class AlarmasAdminPoliciaView {
     // ── Filtrar ───────────────────────────────────────────────────
     private void filtrarYMostrar() {
         String txt = campoBusqueda.getText().toLowerCase().trim();
-        if (txt.isEmpty()) { renderizarLista(todasLasAlarmas); return; }
+        if (txt.isEmpty()) {
+            renderizarLista(todasLasAlarmas);
+            return;
+        }
         List<Alarma> filtradas = todasLasAlarmas.stream()
                 .filter(a -> (a.getNombre() != null && a.getNombre().toLowerCase().contains(txt))
-                        || (a.getBarrio() != null && a.getBarrio().getNombre().toLowerCase().contains(txt)))
+                || (a.getBarrio() != null && a.getBarrio().getNombre().toLowerCase().contains(txt)))
                 .toList();
         renderizarLista(filtradas);
     }
@@ -369,11 +376,11 @@ public class AlarmasAdminPoliciaView {
                 a.getBarrio() != null ? a.getBarrio().getNombre() : "—", 160);
 
         // ── Estado badge (130px) ──────────────────────────────────
-        String estNom   = a.getEstado() != null
+        String estNom = a.getEstado() != null
                 ? a.getEstado().name().replace("_", " ") : "—";
         String colorEst = colorEstado(a.getEstado());
-        String bgEst    = bgEstado(a.getEstado());
-        Label estBadge  = badge(estNom, bgEst, colorEst);
+        String bgEst = bgEstado(a.getEstado());
+        Label estBadge = badge(estNom, bgEst, colorEst);
         HBox estBox = new HBox(estBadge);
         estBox.setAlignment(Pos.CENTER_LEFT);
         estBox.setPrefWidth(130);
@@ -395,9 +402,9 @@ public class AlarmasAdminPoliciaView {
         acciones.setMinWidth(190);
         acciones.setMaxWidth(190);
         acciones.getChildren().addAll(
-                btnAccion("\uf06e", BLUE,   BLUE_LIGHT,    "Ver",     () -> verAlarma(a)),
-                btnAccion("\uf044", ORANGE, ORANGE_LIGHT,  "Editar",  () -> editarAlarma(a)),
-                btnAccion("\uf2ed", RED,    RED_LIGHT,     "Eliminar",() -> eliminarAlarma(a))
+                btnAccion("\uf06e", BLUE, BLUE_LIGHT, "Ver", () -> verAlarma(a)),
+                btnAccion("\uf044", ORANGE, ORANGE_LIGHT, "Editar", () -> editarAlarma(a)),
+                btnAccion("\uf2ed", RED, RED_LIGHT, "Eliminar", () -> eliminarAlarma(a))
         );
 
         fila.getChildren().addAll(celdaNombre, barrioLbl, estBox, radioLbl, coordLbl, acciones);
@@ -433,11 +440,11 @@ public class AlarmasAdminPoliciaView {
 
         content.getChildren().addAll(
                 header, new Separator(),
-                detRow("🔔 Nombre",    a.getNombre() != null ? a.getNombre() : "—"),
-                detRow("🏘 Barrio",    a.getBarrio() != null ? a.getBarrio().getNombre() : "—"),
-                detRow("📡 Radio",     (int) a.getRadio_cobertura() + " metros"),
-                detRow("📍 Latitud",   String.format("%.6f", a.getLatitud())),
-                detRow("📍 Longitud",  String.format("%.6f", a.getLongitud()))
+                detRow("🔔 Nombre", a.getNombre() != null ? a.getNombre() : "—"),
+                detRow("🏘 Barrio", a.getBarrio() != null ? a.getBarrio().getNombre() : "—"),
+                detRow("📡 Radio", (int) a.getRadio_cobertura() + " metros"),
+                detRow("📍 Latitud", String.format("%.6f", a.getLatitud())),
+                detRow("📍 Longitud", String.format("%.6f", a.getLongitud()))
         );
 
         // Botón ver en mapa
@@ -461,15 +468,26 @@ public class AlarmasAdminPoliciaView {
     private void editarAlarma(Alarma a) {
         abrirEnMapaEdicion(a);
     }
-    
-    private void visualizacionAlarmas (Alarma a) {
+
+    private void visualizacionAlarmas(Alarma a) {
         MapaAlarmasRegistradas mapa = new MapaAlarmasRegistradas();
         mapa.mostrar();
     }
+
     private void abrirEnMapaEdicion(Alarma a) {
         MapaAlarmasRegistada mapa = new MapaAlarmasRegistada();
-        mapa.mostrar();
+        Stage stage = mapa.mostrar(); // ← mostrar() debe retornar Stage
         javafx.application.Platform.runLater(() -> mapa.cargarAlarmaPublico(a));
+
+        stage.setOnHidden(e -> {
+            try {
+                todasLasAlarmas = alarmaService.listar();
+                renderizarLista(todasLasAlarmas);
+            } catch (Exception ex) {
+                mostrarAlerta("Error", "No se pudo recargar: " + ex.getMessage());
+            }
+        });
+
     }
 
     // ── Eliminar ──────────────────────────────────────────────────
@@ -480,15 +498,18 @@ public class AlarmasAdminPoliciaView {
         confirm.setContentText("Esta acción no se puede deshacer.");
 
         ButtonType btnSi = new ButtonType("Sí, eliminar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType btnNo = new ButtonType("Cancelar",      ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType btnNo = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(btnSi, btnNo);
 
         confirm.showAndWait().ifPresent(resp -> {
             if (resp == btnSi) {
                 boolean ok = alarmaService.eliminar(a.getId_alarma());
                 if (ok) {
-                    try { todasLasAlarmas = alarmaService.listar(); }
-                    catch (Exception ex) { todasLasAlarmas = List.of(); }
+                    try {
+                        todasLasAlarmas = alarmaService.listar();
+                    } catch (Exception ex) {
+                        todasLasAlarmas = List.of();
+                    }
                     renderizarLista(todasLasAlarmas);
                     mostrarInfo("Eliminada", "Alarma eliminada correctamente.");
                 } else {
@@ -517,17 +538,17 @@ public class AlarmasAdminPoliciaView {
     }
 
     private Button btnAccion(String iconFA, String iconColor,
-                              String bgColor, String tooltip, Runnable accion) {
+            String bgColor, String tooltip, Runnable accion) {
         Button b = new Button(iconFA);
-        String base  = "-fx-background-color:" + bgColor + ";-fx-text-fill:" + iconColor + ";"
+        String base = "-fx-background-color:" + bgColor + ";-fx-text-fill:" + iconColor + ";"
                 + "-fx-font-family:'Font Awesome 6 Free Solid';"
                 + "-fx-font-size:13px;-fx-background-radius:8;-fx-padding:7 10;-fx-cursor:hand;";
-        String hov   = "-fx-background-color:" + iconColor + ";-fx-text-fill:white;"
+        String hov = "-fx-background-color:" + iconColor + ";-fx-text-fill:white;"
                 + "-fx-font-family:'Font Awesome 6 Free Solid';"
                 + "-fx-font-size:13px;-fx-background-radius:8;-fx-padding:7 10;-fx-cursor:hand;";
         b.setStyle(base);
         b.setOnMouseEntered(e -> b.setStyle(hov));
-        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         Tooltip.install(b, new Tooltip(tooltip));
         return b;
@@ -543,35 +564,49 @@ public class AlarmasAdminPoliciaView {
     }
 
     private String colorEstado(EstadoAlarma e) {
-        if (e == null) return GRAY_TEXT;
+        if (e == null) {
+            return GRAY_TEXT;
+        }
         return switch (e) {
-            case ACTIVA           -> GREEN;
-            case EN_MANTENIMIENTO -> ORANGE;
-            case INACTIVA         -> GRAY_TEXT;
+            case ACTIVA ->
+                GREEN;
+            case EN_MANTENIMIENTO ->
+                ORANGE;
+            case INACTIVA ->
+                GRAY_TEXT;
         };
     }
 
     private String bgEstado(EstadoAlarma e) {
-        if (e == null) return "#f3f4f6";
+        if (e == null) {
+            return "#f3f4f6";
+        }
         return switch (e) {
-            case ACTIVA           -> GREEN_LIGHT;
-            case EN_MANTENIMIENTO -> ORANGE_LIGHT;
-            case INACTIVA         -> "#f3f4f6";
+            case ACTIVA ->
+                GREEN_LIGHT;
+            case EN_MANTENIMIENTO ->
+                ORANGE_LIGHT;
+            case INACTIVA ->
+                "#f3f4f6";
         };
     }
 
     private static final String[] AVATAR_COLORS = {
-        "#1565c0","#2e7d32","#6a1b9a","#c62828",
-        "#e65100","#00695c","#283593","#4e342e"
+        "#1565c0", "#2e7d32", "#6a1b9a", "#c62828",
+        "#e65100", "#00695c", "#283593", "#4e342e"
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String iniciales(String nombre) {
-        if (nombre == null || nombre.isBlank()) return "?";
+        if (nombre == null || nombre.isBlank()) {
+            return "?";
+        }
         String[] p = nombre.trim().split("\\s+");
         return p.length == 1
                 ? p[0].substring(0, 1).toUpperCase()
@@ -581,7 +616,7 @@ public class AlarmasAdminPoliciaView {
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
         lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size)
-                         : Font.font("System", size));
+                : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
@@ -592,13 +627,17 @@ public class AlarmasAdminPoliciaView {
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private void mostrarInfo(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle(titulo); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 }

@@ -5,7 +5,6 @@
 package sistemagestion.view;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
@@ -393,142 +392,6 @@ public class MapaUnidadesPoliciales {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // VENTANA MODAL — lista de unidades
-    // ════════════════════════════════════════════════════════════════════════
-    private void abrirListaUnidades() {
-        List<UnidadPolicial> lista;
-        try {
-            lista = unidadService.listar();
-        } catch (Exception e) {
-            info("Error cargando unidades: " + e.getMessage());
-            return;
-        }
-        if (lista == null || lista.isEmpty()) {
-            info("No hay unidades registradas aún.");
-            return;
-        }
-
-        Stage ventana = new Stage();
-        ventana.initModality(Modality.APPLICATION_MODAL);
-        ventana.setTitle("WolertApp — Unidades registradas");
-
-        TableView<UnidadPolicial> tabla = new TableView<>();
-        tabla.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR + ";");
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<UnidadPolicial, String> colNombre = new TableColumn<>("Nombre");
-        colNombre.setCellValueFactory(c
-                -> new SimpleStringProperty(c.getValue().getNombre()));
-
-        TableColumn<UnidadPolicial, String> colBarrio = new TableColumn<>("Barrio");
-        colBarrio.setCellValueFactory(c -> {
-            Barrio b = c.getValue().getBarrio();
-            return new SimpleStringProperty(b != null ? b.getNombre() : "—");
-        });
-
-        TableColumn<UnidadPolicial, String> colEstado = new TableColumn<>("Estado");
-        colEstado.setCellValueFactory(c -> {
-            EstadoUnidadPolicial est = c.getValue().getEstado();
-            return new SimpleStringProperty(est != null ? labelEstado(est) : "—");
-        });
-        colEstado.setCellFactory(col -> new TableCell<UnidadPolicial, String>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setGraphic(null);
-                    return;
-                }
-                Label badge = new Label(item);
-                badge.setFont(Font.font("Arial", FontWeight.BOLD, 10));
-                String bg, fg;
-                switch (item) {
-                    case "Activa":
-                        bg = "#dcfce7";
-                        fg = "#14532d";
-                        break;
-                    case "Operativa":
-                        bg = "#dbeafe";
-                        fg = "#1e3a8a";
-                        break;
-                    default:
-                        bg = "#f1f5f9";
-                        fg = "#475569";
-                        break;
-                }
-                badge.setStyle("-fx-background-color:" + bg + ";-fx-text-fill:" + fg
-                        + ";-fx-background-radius:20;-fx-padding:3 10 3 10;");
-                setGraphic(badge);
-            }
-        });
-
-        TableColumn<UnidadPolicial, Void> colAccion = new TableColumn<>("");
-        colAccion.setPrefWidth(90);
-        colAccion.setSortable(false);
-        colAccion.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("✏  Editar");
-
-            {
-                btn.setFont(Font.font("Arial", FontWeight.BOLD, 11));
-                btn.setStyle(
-                        "-fx-background-color:#f0f4ff;-fx-text-fill:#16283d;"
-                        + "-fx-border-color:#c7d7fd;-fx-border-width:1;"
-                        + "-fx-border-radius:6;-fx-background-radius:6;"
-                        + "-fx-cursor:hand;-fx-padding:4 10 4 10;");
-                btn.setOnAction(e -> {
-                    UnidadPolicial sel = getTableView().getItems().get(getIndex());
-                    cargarUnidadEnFormulario(sel);
-                    ventana.close();
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
-            }
-        });
-
-        tabla.getColumns().addAll(colNombre, colBarrio, colEstado, colAccion);
-        tabla.setItems(FXCollections.observableArrayList(lista));
-
-        Label titulo = new Label("Unidades registradas");
-        titulo.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-        titulo.setTextFill(Color.web("#111827"));
-
-        Label sub = new Label("Selecciona una unidad para editarla");
-        sub.setFont(Font.font("Arial", 11));
-        sub.setTextFill(Color.web("#6b7280"));
-
-        Label icono = new Label("\uf505");
-        icono.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:16px;-fx-text-fill:white;"
-                + "-fx-background-color:" + C_DARK_GRAD
-                + ";-fx-background-radius:8;-fx-padding:7 10 7 10;");
-
-        HBox header = new HBox(12, icono, new VBox(2, titulo, sub));
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(16, 20, 16, 20));
-        header.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
-                + ";-fx-border-width:0 0 1 0;");
-
-        Button btnCerrar = buildBotonSecundario("Cerrar");
-        btnCerrar.setOnAction(e -> ventana.close());
-        btnCerrar.setMaxWidth(Double.MAX_VALUE);
-
-        VBox footerBox = new VBox(btnCerrar);
-        footerBox.setPadding(new Insets(14, 20, 14, 20));
-        footerBox.setStyle("-fx-background-color:white;");
-
-        VBox layout = new VBox(header, tabla, footerBox);
-        layout.setStyle("-fx-background-color:white;");
-        VBox.setVgrow(tabla, Priority.ALWAYS);
-
-        ventana.setScene(new Scene(layout, 700, 440));
-        ventana.show();
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
     // CARGAR EN FORMULARIO — modo edición
     // ════════════════════════════════════════════════════════════════════════
     private void cargarUnidadEnFormulario(UnidadPolicial u) {
@@ -585,7 +448,7 @@ public class MapaUnidadesPoliciales {
         lblInstruccionHeader.setTextFill(Color.web("#F97316"));
     }
 
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
     // GUARDAR — nueva unidad
     // ════════════════════════════════════════════════════════════════════════
     private void guardarUnidad() {
@@ -622,7 +485,7 @@ public class MapaUnidadesPoliciales {
         }
 
         unidadEditando.setNombre(txtNombre.getText().trim());
-        unidadEditando.setEstado(cmbEstado.getValue());
+        unidadEditando.setEstado(cmbEstado.getValue());   
         unidadEditando.setBarrio(barrioSel);
         unidadEditando.setLatitud(posicionSeleccionada.getLatitude());
         unidadEditando.setLongitud(posicionSeleccionada.getLongitude());
@@ -630,7 +493,8 @@ public class MapaUnidadesPoliciales {
         try {
             unidadService.actualizar(unidadEditando);
             mostrarExito("Unidad actualizada", "Los cambios fueron guardados correctamente.");
-            salirModoEdicion();
+            Stage stage = (Stage) btnAccionPrincipal.getScene().getWindow();
+            stage.close();
         } catch (SQLException e) {
             alerta("Error al actualizar: " + e.getMessage());
         }
