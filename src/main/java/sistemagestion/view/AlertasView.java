@@ -146,6 +146,28 @@ public class AlertasView {
         HBox.setHgrow(right, Priority.ALWAYS);
 
         Button btnRecargar = btnSecundario("↻  Actualizar");
+        btnRecargar.setOnAction(e -> {
+            btnRecargar.setDisable(true);
+            btnRecargar.setText("Cargando…");
+            new Thread(() -> {
+                try {
+                    List<Alerta> todas = alertaService.listar();
+                    javafx.application.Platform.runLater(() -> {
+                        todasLasAlertas.setAll(todas);
+                        filtrarYMostrar();
+                        actualizarMetricas();
+                        btnRecargar.setDisable(false);
+                        btnRecargar.setText("↻  Actualizar");
+                    });
+                } catch (Exception ex) {
+                    javafx.application.Platform.runLater(() -> {
+                        mostrarAlerta("Error al actualizar", ex.getMessage());
+                        btnRecargar.setDisable(false);
+                        btnRecargar.setText("↻  Actualizar");
+                    });
+                }
+            }, "hilo-recarga-alertas").start();
+        });
         btnRecargar.setOnAction(e -> cargarAlertas());
 
         right.getChildren().add(btnRecargar);
@@ -348,14 +370,22 @@ public class AlertasView {
         if (alertaService == null) {
             return;
         }
-        try {
-            List<Alerta> todas = alertaService.listar();
-            todasLasAlertas.setAll(todas);
-            filtrarYMostrar();
-            actualizarMetricas();
-        } catch (Exception e) {
-            mostrarAlerta("Error al cargar alertas", e.getMessage());
-        }
+
+        // Carga en hilo de fondo para no bloquear el hilo de JavaFX
+        new Thread(() -> {
+            try {
+                List<Alerta> todas = alertaService.listar();
+                // Volver al hilo de JavaFX para actualizar la UI
+                javafx.application.Platform.runLater(() -> {
+                    todasLasAlertas.setAll(todas);
+                    filtrarYMostrar();
+                    actualizarMetricas();
+                });
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(()
+                        -> mostrarAlerta("Error al cargar alertas", e.getMessage()));
+            }
+        }, "hilo-carga-alertas").start();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -491,9 +521,9 @@ public class AlertasView {
         HBox acciones = new HBox(6);
         acciones.setAlignment(Pos.CENTER_LEFT);
         acciones.setPrefWidth(80);
-       acciones.getChildren().add(
-        btnIcono("\uf06e", "Ver detalle", "#1565c0", "#e8f0fe",
-                () -> abrirDetalle(a)));
+        acciones.getChildren().add(
+                btnIcono("\uf06e", "Ver detalle", "#1565c0", "#e8f0fe",
+                        () -> abrirDetalle(a)));
 
         fila.getChildren().addAll(
                 estBox, tipoBox, descLbl, reportadoLbl,

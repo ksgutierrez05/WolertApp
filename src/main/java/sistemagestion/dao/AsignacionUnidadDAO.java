@@ -28,7 +28,7 @@ public class AsignacionUnidadDAO {
     }
 
     public AsignacionUnidadDAO() throws SQLException {
-        
+
     }
 
     public boolean insertar(
@@ -101,13 +101,25 @@ public class AsignacionUnidadDAO {
         return lista;
     }
 
+    public boolean asignarUnidadCercana(int idAlerta) {
+        String sql = "{CALL pr_asignar_unidad_cercana(?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.setInt(1, idAlerta);
+            cs.execute();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error asignar unidad cercana: " + e.getMessage());
+            return false;
+        }
+    }
+
     // vw_asignaciones retorna
     private AsignacionUnidad mapear(ResultSet rs) throws SQLException {
         AsignacionUnidad a = new AsignacionUnidad();
         a.setId_asignacion(rs.getInt("ID_ASIGNACION"));
         a.setObservacion(rs.getString("OBSERVACION"));
         a.setFechahoraasignacion(
-            rs.getTimestamp("FECHA").toLocalDateTime()
+                rs.getTimestamp("FECHA").toLocalDateTime()
         );
 
         // alerta — la vista retorna estado y descripcion

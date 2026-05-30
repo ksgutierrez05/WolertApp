@@ -5,7 +5,6 @@
 package sistemagestion.view;
 
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingNode;
@@ -45,35 +44,35 @@ import java.util.List;
 public class MapaUnidadesPoliciales {
 
     // ── Paleta ────────────────────────────────────────────────────────────────
-    private static final String C_INPUT_BG   = "#f7f7f7";
+    private static final String C_INPUT_BG = "#f7f7f7";
     private static final String C_INPUT_TEXT = "#4b5563";
-    private static final String C_LABEL      = "#374151";
-    private static final String C_COORD_BG   = "#f0f4ff";
-    private static final String C_COORD_BDR  = "#c7d7fd";
-    private static final String C_COORD_VAL  = "#1e3a8a";
-    private static final String C_SEPARATOR  = "#e5e7eb";
-    private static final String C_DARK_GRAD  = "linear-gradient(to right, #16283d, #1f3a56)";
-    private static final String C_GREEN      = "#16a34a";
+    private static final String C_LABEL = "#374151";
+    private static final String C_COORD_BG = "#f0f4ff";
+    private static final String C_COORD_BDR = "#c7d7fd";
+    private static final String C_COORD_VAL = "#1e3a8a";
+    private static final String C_SEPARATOR = "#e5e7eb";
+    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
+    private static final String C_GREEN = "#16a34a";
 
     // ── Servicios ─────────────────────────────────────────────────────────────
     private UnidadPolicialService unidadService;
-    private BarrioService         barrioService;
-    private ComunaService         comunaService;
+    private BarrioService barrioService;
+    private ComunaService comunaService;
 
     // ── Mapa ──────────────────────────────────────────────────────────────────
-    private JXMapViewer  mapa;
-    private GeoPosition  posicionSeleccionada;
+    private JXMapViewer mapa;
+    private GeoPosition posicionSeleccionada;
 
     // ── Controles ─────────────────────────────────────────────────────────────
-    private TextField                      txtNombre;
+    private TextField txtNombre;
     private ComboBox<EstadoUnidadPolicial> cmbEstado;
-    private ComboBox<String>               cmbComuna;
-    private ComboBox<Barrio>               cmbBarrio;
-    private Label                          lblCoordenadas;
-    private Label                          lblCoordFooter;
-    private Label                          lblInstruccionHeader;
-    private Label                          lblTituloPanel;
-    private Label                          lblSubtituloPanel;
+    private ComboBox<String> cmbComuna;
+    private ComboBox<Barrio> cmbBarrio;
+    private Label lblCoordenadas;
+    private Label lblCoordFooter;
+    private Label lblInstruccionHeader;
+    private Label lblTituloPanel;
+    private Label lblSubtituloPanel;
 
     // ── Botones ───────────────────────────────────────────────────────────────
     private Button btnAccionPrincipal;
@@ -84,16 +83,25 @@ public class MapaUnidadesPoliciales {
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public MapaUnidadesPoliciales() {
-        try { unidadService = new UnidadPolicialService(); }
-        catch (SQLException e) { System.out.println("Error UnidadService: " + e.getMessage()); }
-        try { barrioService = new BarrioService(); }
-        catch (SQLException e) { System.out.println("Error BarrioService: " + e.getMessage()); }
-        try { comunaService = new ComunaService(); }
-        catch (SQLException e) { System.out.println("Error ComunaService: " + e.getMessage()); }
+        try {
+            unidadService = new UnidadPolicialService();
+        } catch (SQLException e) {
+            System.out.println("Error UnidadService: " + e.getMessage());
+        }
+        try {
+            barrioService = new BarrioService();
+        } catch (SQLException e) {
+            System.out.println("Error BarrioService: " + e.getMessage());
+        }
+        try {
+            comunaService = new ComunaService();
+        } catch (SQLException e) {
+            System.out.println("Error ComunaService: " + e.getMessage());
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    public void mostrar() {
+    public Stage mostrar() {
         Stage stage = new Stage();
         stage.setTitle("WolertApp — Unidades Policiales");
 
@@ -105,6 +113,7 @@ public class MapaUnidadesPoliciales {
         stage.setScene(new Scene(root, 1200, 720));
         stage.setResizable(true);
         stage.show();
+        return stage; // ← único cambio real
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -117,8 +126,11 @@ public class MapaUnidadesPoliciales {
                     getClass().getResourceAsStream("/LogoWolertApp.png"));
             logoImg.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(
                     recortarTransparencia(raw), null));
-        } catch (Exception ignored) {}
-        logoImg.setFitHeight(24); logoImg.setFitWidth(24); logoImg.setPreserveRatio(true);
+        } catch (Exception ignored) {
+        }
+        logoImg.setFitHeight(24);
+        logoImg.setFitWidth(24);
+        logoImg.setPreserveRatio(true);
 
         StackPane logoBox = new StackPane(logoImg);
         logoBox.setStyle("-fx-background-color:" + C_DARK_GRAD
@@ -136,26 +148,11 @@ public class MapaUnidadesPoliciales {
         lblInstruccionHeader.setFont(Font.font("Arial", 13));
         lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
 
-        Button btnVerUnidades = new Button("🔍  Ver unidades");
-        btnVerUnidades.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        String estNormal = "-fx-background-color:white;-fx-text-fill:#16283d;"
-                + "-fx-border-color:#c7d7fd;-fx-border-width:1.5;"
-                + "-fx-border-radius:8;-fx-background-radius:8;"
-                + "-fx-cursor:hand;-fx-padding:7 16 7 16;";
-        String estHover = "-fx-background-color:#f0f4ff;-fx-text-fill:#16283d;"
-                + "-fx-border-color:#93c5fd;-fx-border-width:1.5;"
-                + "-fx-border-radius:8;-fx-background-radius:8;"
-                + "-fx-cursor:hand;-fx-padding:7 16 7 16;";
-        btnVerUnidades.setStyle(estNormal);
-        btnVerUnidades.setOnMouseEntered(e -> btnVerUnidades.setStyle(estHover));
-        btnVerUnidades.setOnMouseExited(e  -> btnVerUnidades.setStyle(estNormal));
-        btnVerUnidades.setOnAction(e -> abrirListaUnidades());
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox bar = new HBox(10, logoBox, logoText, sep,
-                lblInstruccionHeader, spacer, btnVerUnidades);
+                lblInstruccionHeader, spacer);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
@@ -201,7 +198,8 @@ public class MapaUnidadesPoliciales {
         TileFactoryInfo info = new TileFactoryInfo(
                 1, 15, 17, 256, true, true,
                 "https://tile.openstreetmap.org", "x", "y", "z") {
-            @Override public String getTileUrl(int x, int y, int zoom) {
+            @Override
+            public String getTileUrl(int x, int y, int zoom) {
                 return baseURL + "/" + (17 - zoom) + "/" + x + "/" + y + ".png";
             }
         };
@@ -214,7 +212,10 @@ public class MapaUnidadesPoliciales {
         mapa.addMouseMotionListener(pan);
         mapa.addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapa));
         mapa.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onMapaClick(e); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onMapaClick(e);
+            }
         });
         mapa.setOverlayPainter(this::pintarOverlay);
         swingNode.setContent(mapa);
@@ -233,24 +234,27 @@ public class MapaUnidadesPoliciales {
         });
     }
 
-private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
-    if (posicionSeleccionada == null) return;
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    Point2D pt = map.getTileFactory().geoToPixel(posicionSeleccionada, map.getZoom());
-    int cx = (int) pt.getX() - map.getViewportBounds().x;
-    int cy = (int) pt.getY() - map.getViewportBounds().y;
-
-    try {
-        java.io.InputStream is = getClass().getResourceAsStream("/PinPolicia.png");
-        if (is != null) {
-            java.awt.image.BufferedImage img =
-                    recortarTransparencia(javax.imageio.ImageIO.read(is));
-            int iw = 32, ih = (int) (img.getHeight() * (32.0 / img.getWidth()));
-            g.drawImage(img, cx - iw / 2, cy - ih, iw, ih, null);
+    private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
+        if (posicionSeleccionada == null) {
+            return;
         }
-    } catch (Exception ignored) {}
-}
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        Point2D pt = map.getTileFactory().geoToPixel(posicionSeleccionada, map.getZoom());
+        int cx = (int) pt.getX() - map.getViewportBounds().x;
+        int cy = (int) pt.getY() - map.getViewportBounds().y;
+
+        try {
+            java.io.InputStream is = getClass().getResourceAsStream("/PinPolicia.png");
+            if (is != null) {
+                java.awt.image.BufferedImage img
+                        = recortarTransparencia(javax.imageio.ImageIO.read(is));
+                int iw = 32, ih = (int) (img.getHeight() * (32.0 / img.getWidth()));
+                g.drawImage(img, cx - iw / 2, cy - ih, iw, ih, null);
+            }
+        } catch (Exception ignored) {
+        }
+    }
 
     // ════════════════════════════════════════════════════════════════════════
     // PANEL DERECHO
@@ -347,8 +351,11 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         // Botón principal dinámico (Guardar / Actualizar)
         btnAccionPrincipal = buildBotonPrimario("Guardar unidad");
         btnAccionPrincipal.setOnAction(e -> {
-            if (unidadEditando == null) guardarUnidad();
-            else actualizarUnidad();
+            if (unidadEditando == null) {
+                guardarUnidad();
+            } else {
+                actualizarUnidad();
+            }
         });
 
         // Botón Eliminar (rojo, oculto en modo registrar)
@@ -364,7 +371,7 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 + "-fx-cursor:hand;-fx-background-radius:8;-fx-border-radius:8;";
         btnEliminar.setStyle(estElimN);
         btnEliminar.setOnMouseEntered(e -> btnEliminar.setStyle(estElimH));
-        btnEliminar.setOnMouseExited(e  -> btnEliminar.setStyle(estElimN));
+        btnEliminar.setOnMouseExited(e -> btnEliminar.setStyle(estElimN));
         btnEliminar.setOnAction(e -> eliminarUnidad());
         btnEliminar.setVisible(false);
         btnEliminar.setManaged(false);
@@ -374,134 +381,14 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
 
         return new VBox(14,
                 campo("Nombre de la unidad", txtNombre),
-                campo("Comuna",              cmbComuna),
-                campo("Barrio",              cmbBarrio),
-                campo("Estado",              cmbEstado),
+                campo("Comuna", cmbComuna),
+                campo("Barrio", cmbBarrio),
+                campo("Estado", cmbEstado),
                 coordBox,
                 btnAccionPrincipal,
                 btnEliminar,
                 btnSecundario
         );
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // VENTANA MODAL — lista de unidades
-    // ════════════════════════════════════════════════════════════════════════
-    private void abrirListaUnidades() {
-        List<UnidadPolicial> lista;
-        try {
-            lista = unidadService.listar();
-        } catch (Exception e) {
-            info("Error cargando unidades: " + e.getMessage());
-            return;
-        }
-        if (lista == null || lista.isEmpty()) {
-            info("No hay unidades registradas aún.");
-            return;
-        }
-
-        Stage ventana = new Stage();
-        ventana.initModality(Modality.APPLICATION_MODAL);
-        ventana.setTitle("WolertApp — Unidades registradas");
-
-        TableView<UnidadPolicial> tabla = new TableView<>();
-        tabla.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR + ";");
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        TableColumn<UnidadPolicial, String> colNombre = new TableColumn<>("Nombre");
-        colNombre.setCellValueFactory(c ->
-                new SimpleStringProperty(c.getValue().getNombre()));
-
-        TableColumn<UnidadPolicial, String> colBarrio = new TableColumn<>("Barrio");
-        colBarrio.setCellValueFactory(c -> {
-            Barrio b = c.getValue().getBarrio();
-            return new SimpleStringProperty(b != null ? b.getNombre() : "—");
-        });
-
-        TableColumn<UnidadPolicial, String> colEstado = new TableColumn<>("Estado");
-        colEstado.setCellValueFactory(c -> {
-            EstadoUnidadPolicial est = c.getValue().getEstado();
-            return new SimpleStringProperty(est != null ? labelEstado(est) : "—");
-        });
-        colEstado.setCellFactory(col -> new TableCell<UnidadPolicial, String>() {
-            @Override protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) { setGraphic(null); return; }
-                Label badge = new Label(item);
-                badge.setFont(Font.font("Arial", FontWeight.BOLD, 10));
-                String bg, fg;
-                switch (item) {
-                    case "Activa":    bg = "#dcfce7"; fg = "#14532d"; break;
-                    case "Operativa": bg = "#dbeafe"; fg = "#1e3a8a"; break;
-                    default:          bg = "#f1f5f9"; fg = "#475569"; break;
-                }
-                badge.setStyle("-fx-background-color:" + bg + ";-fx-text-fill:" + fg
-                        + ";-fx-background-radius:20;-fx-padding:3 10 3 10;");
-                setGraphic(badge);
-            }
-        });
-
-        TableColumn<UnidadPolicial, Void> colAccion = new TableColumn<>("");
-        colAccion.setPrefWidth(90);
-        colAccion.setSortable(false);
-        colAccion.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("✏  Editar");
-            {
-                btn.setFont(Font.font("Arial", FontWeight.BOLD, 11));
-                btn.setStyle(
-                        "-fx-background-color:#f0f4ff;-fx-text-fill:#16283d;"
-                        + "-fx-border-color:#c7d7fd;-fx-border-width:1;"
-                        + "-fx-border-radius:6;-fx-background-radius:6;"
-                        + "-fx-cursor:hand;-fx-padding:4 10 4 10;");
-                btn.setOnAction(e -> {
-                    UnidadPolicial sel = getTableView().getItems().get(getIndex());
-                    cargarUnidadEnFormulario(sel);
-                    ventana.close();
-                });
-            }
-            @Override protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
-            }
-        });
-
-        tabla.getColumns().addAll(colNombre, colBarrio, colEstado, colAccion);
-        tabla.setItems(FXCollections.observableArrayList(lista));
-
-        Label titulo = new Label("Unidades registradas");
-        titulo.setFont(Font.font("Arial", FontWeight.BOLD, 15));
-        titulo.setTextFill(Color.web("#111827"));
-
-        Label sub = new Label("Selecciona una unidad para editarla");
-        sub.setFont(Font.font("Arial", 11));
-        sub.setTextFill(Color.web("#6b7280"));
-
-        Label icono = new Label("\uf505");
-        icono.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:16px;-fx-text-fill:white;"
-                + "-fx-background-color:" + C_DARK_GRAD
-                + ";-fx-background-radius:8;-fx-padding:7 10 7 10;");
-
-        HBox header = new HBox(12, icono, new VBox(2, titulo, sub));
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(16, 20, 16, 20));
-        header.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
-                + ";-fx-border-width:0 0 1 0;");
-
-        Button btnCerrar = buildBotonSecundario("Cerrar");
-        btnCerrar.setOnAction(e -> ventana.close());
-        btnCerrar.setMaxWidth(Double.MAX_VALUE);
-
-        VBox footerBox = new VBox(btnCerrar);
-        footerBox.setPadding(new Insets(14, 20, 14, 20));
-        footerBox.setStyle("-fx-background-color:white;");
-
-        VBox layout = new VBox(header, tabla, footerBox);
-        layout.setStyle("-fx-background-color:white;");
-        VBox.setVgrow(tabla, Priority.ALWAYS);
-
-        ventana.setScene(new Scene(layout, 700, 440));
-        ventana.show();
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -516,26 +403,30 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         txtNombre.setText(u.getNombre());
         cmbEstado.setValue(u.getEstado());
 
-        // Preseleccionar comuna → filtrar barrios → preseleccionar barrio
-        if (u.getBarrio() != null) {
-            if (u.getBarrio().getComuna() != null) {
-                // Seleccionar la comuna primero; filtrarBarrios() se dispara por setOnAction
-                cmbComuna.setValue(u.getBarrio().getComuna().getNombre());
-                // Luego seleccionar el barrio una vez que la lista esté poblada
-                Platform.runLater(() ->
-                    cmbBarrio.getItems().stream()
-                        .filter(b -> b.getId_barrio() == u.getBarrio().getId_barrio())
+        if (u.getBarrio() != null && u.getBarrio().getNombre() != null) {
+            try {
+                // Buscar el barrio completo por NOMBRE (más confiable que por ID)
+                Barrio barrioCompleto = barrioService.listar().stream()
+                        .filter(b -> b.getNombre().equalsIgnoreCase(u.getBarrio().getNombre()))
                         .findFirst()
-                        .ifPresent(cmbBarrio::setValue)
-                );
-            } else {
-                // Sin comuna anidada: intentar seleccionar el barrio directamente
-                Platform.runLater(() ->
+                        .orElse(null);
+
+                if (barrioCompleto != null && barrioCompleto.getComuna() != null) {
+                    // 1. Setear la comuna correcta
+                    cmbComuna.setValue(barrioCompleto.getComuna().getNombre());
+
+                    // 2. filtrarBarrios() ya corrió, seleccionar el barrio por nombre
                     cmbBarrio.getItems().stream()
-                        .filter(b -> b.getId_barrio() == u.getBarrio().getId_barrio())
-                        .findFirst()
-                        .ifPresent(cmbBarrio::setValue)
-                );
+                            .filter(b -> b.getNombre().equalsIgnoreCase(barrioCompleto.getNombre()))
+                            .findFirst()
+                            .ifPresent(cmbBarrio::setValue);
+                } else {
+                    System.out.println("Barrio no encontrado o sin comuna: "
+                            + u.getBarrio().getNombre());
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error cargando barrio: " + e.getMessage());
             }
         }
 
@@ -557,11 +448,13 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         lblInstruccionHeader.setTextFill(Color.web("#F97316"));
     }
 
-    // ════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
     // GUARDAR — nueva unidad
     // ════════════════════════════════════════════════════════════════════════
     private void guardarUnidad() {
-        if (!validar()) return;
+        if (!validar()) {
+            return;
+        }
         UnidadPolicial u = new UnidadPolicial();
         u.setNombre(txtNombre.getText().trim());
         u.setEstado(cmbEstado.getValue());
@@ -581,13 +474,18 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
     // ACTUALIZAR — unidad existente
     // ════════════════════════════════════════════════════════════════════════
     private void actualizarUnidad() {
-        if (!validar()) return;
+        if (!validar()) {
+            return;
+        }
 
         Barrio barrioSel = cmbBarrio.getValue();
-        if (barrioSel == null) { alerta("Seleccione un barrio."); return; }
+        if (barrioSel == null) {
+            alerta("Seleccione un barrio.");
+            return;
+        }
 
         unidadEditando.setNombre(txtNombre.getText().trim());
-        unidadEditando.setEstado(cmbEstado.getValue());
+        unidadEditando.setEstado(cmbEstado.getValue());   
         unidadEditando.setBarrio(barrioSel);
         unidadEditando.setLatitud(posicionSeleccionada.getLatitude());
         unidadEditando.setLongitud(posicionSeleccionada.getLongitude());
@@ -595,7 +493,8 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         try {
             unidadService.actualizar(unidadEditando);
             mostrarExito("Unidad actualizada", "Los cambios fueron guardados correctamente.");
-            salirModoEdicion();
+            Stage stage = (Stage) btnAccionPrincipal.getScene().getWindow();
+            stage.close();
         } catch (SQLException e) {
             alerta("Error al actualizar: " + e.getMessage());
         }
@@ -605,7 +504,9 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
     // ELIMINAR
     // ════════════════════════════════════════════════════════════════════════
     private void eliminarUnidad() {
-        if (unidadEditando == null) return;
+        if (unidadEditando == null) {
+            return;
+        }
 
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Confirmar eliminación");
@@ -614,7 +515,7 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 + "\"\nEsta acción no se puede deshacer.");
 
         ButtonType btnSi = new ButtonType("Sí, eliminar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType btnNo = new ButtonType("Cancelar",     ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType btnNo = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(btnSi, btnNo);
 
         confirm.showAndWait().ifPresent(resp -> {
@@ -651,18 +552,35 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         lblCoordFooter.setText("📍  —,  —");
         lblInstruccionHeader.setText("Haz clic en el mapa para ubicar la unidad policial");
         lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
-        if (mapa != null) SwingUtilities.invokeLater(mapa::repaint);
+        if (mapa != null) {
+            SwingUtilities.invokeLater(mapa::repaint);
+        }
     }
 
     // ════════════════════════════════════════════════════════════════════════
     // VALIDACIÓN
     // ════════════════════════════════════════════════════════════════════════
     private boolean validar() {
-        if (txtNombre.getText().trim().isEmpty()) { alerta("Ingrese el nombre.");            return false; }
-        if (cmbComuna.getValue() == null)          { alerta("Seleccione una comuna.");        return false; }
-        if (cmbBarrio.getValue() == null)          { alerta("Seleccione un barrio.");         return false; }
-        if (cmbEstado.getValue() == null)          { alerta("Seleccione el estado.");         return false; }
-        if (posicionSeleccionada == null)           { alerta("Seleccione ubicación en mapa."); return false; }
+        if (txtNombre.getText().trim().isEmpty()) {
+            alerta("Ingrese el nombre.");
+            return false;
+        }
+        if (cmbComuna.getValue() == null) {
+            alerta("Seleccione una comuna.");
+            return false;
+        }
+        if (cmbBarrio.getValue() == null) {
+            alerta("Seleccione un barrio.");
+            return false;
+        }
+        if (cmbEstado.getValue() == null) {
+            alerta("Seleccione el estado.");
+            return false;
+        }
+        if (posicionSeleccionada == null) {
+            alerta("Seleccione ubicación en mapa.");
+            return false;
+        }
         return true;
     }
 
@@ -670,11 +588,15 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
     // DATOS
     // ════════════════════════════════════════════════════════════════════════
     private void cargarComunas() {
-        if (comunaService == null) return;
+        if (comunaService == null) {
+            return;
+        }
         try {
             List<Comuna> comunas = comunaService.listar();
             ObservableList<String> nombres = FXCollections.observableArrayList();
-            for (Comuna c : comunas) nombres.add(c.getNombre());
+            for (Comuna c : comunas) {
+                nombres.add(c.getNombre());
+            }
             cmbComuna.setItems(nombres);
         } catch (Exception e) {
             System.out.println("Error cargando comunas: " + e.getMessage());
@@ -686,18 +608,45 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         cmbBarrio.getItems().clear();
         cmbBarrio.setValue(null);
         cmbBarrio.setDisable(true);
-        if (comunaSel == null) return;
+        if (comunaSel == null) {
+            return;
+        }
         try {
             ObservableList<Barrio> filtrados = FXCollections.observableArrayList();
             for (Barrio b : barrioService.listar()) {
-                if (b.getComuna() != null && comunaSel.equals(b.getComuna().getNombre()))
+                if (b.getComuna() != null && comunaSel.equals(b.getComuna().getNombre())) {
                     filtrados.add(b);
+                }
             }
             cmbBarrio.setItems(filtrados);
             cmbBarrio.setDisable(filtrados.isEmpty());
         } catch (Exception e) {
             System.out.println("Error filtrando barrios: " + e.getMessage());
         }
+    }
+
+    // Para el botón Ver — solo lectura
+    public void mostrarSoloLectura(UnidadPolicial u) {
+        Stage stage = mostrar(); // ← antes era solo mostrar()
+        Platform.runLater(() -> {
+            cargarUnidadEnFormulario(u);
+            txtNombre.setDisable(true);
+            cmbComuna.setDisable(true);
+            cmbBarrio.setDisable(true);
+            cmbEstado.setDisable(true);
+            btnAccionPrincipal.setVisible(false);
+            btnAccionPrincipal.setManaged(false);
+            btnEliminar.setVisible(false);
+            btnEliminar.setManaged(false);
+            lblTituloPanel.setText("Detalle de unidad");
+            lblSubtituloPanel.setText("Visualización — solo lectura");
+            lblInstruccionHeader.setText("Viendo: " + u.getNombre());
+        });
+    }
+
+// Para el botón Editar
+    public void cargarUnidadPublico(UnidadPolicial u) {
+        cargarUnidadEnFormulario(u);
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -717,11 +666,11 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         btn.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         String normal = "-fx-background-color:" + C_DARK_GRAD
                 + ";-fx-text-fill:white;-fx-cursor:hand;-fx-background-radius:8;";
-        String hover  = "-fx-background-color:#1f3a56"
+        String hover = "-fx-background-color:#1f3a56"
                 + ";-fx-text-fill:white;-fx-cursor:hand;-fx-background-radius:8;";
         btn.setStyle(normal);
         btn.setOnMouseEntered(e -> btn.setStyle(hover));
-        btn.setOnMouseExited(e  -> btn.setStyle(normal));
+        btn.setOnMouseExited(e -> btn.setStyle(normal));
         return btn;
     }
 
@@ -754,7 +703,8 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:14px;");
         cb.setPrefHeight(48);
         cb.setCellFactory(lv -> new ListCell<String>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item);
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
@@ -762,13 +712,14 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 setOnMouseEntered(e -> setStyle("-fx-background-color:" + C_DARK_GRAD
                         + ";-fx-background-radius:6;-fx-text-fill:white;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
-                setOnMouseExited(e  -> setStyle(
+                setOnMouseExited(e -> setStyle(
                         "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
             }
         });
         cb.setButtonCell(new ListCell<String>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? cb.getPromptText() : item);
                 setStyle(item != null
@@ -786,22 +737,27 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:14px;");
         cb.setPrefHeight(48);
         cb.setCellFactory(lv -> new ListCell<EstadoUnidadPolicial>() {
-            @Override protected void updateItem(EstadoUnidadPolicial item, boolean empty) {
+            @Override
+            protected void updateItem(EstadoUnidadPolicial item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); return; }
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
                 setText(labelEstado(item));
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;");
                 setOnMouseEntered(e -> setStyle("-fx-background-color:" + C_DARK_GRAD
                         + ";-fx-background-radius:6;-fx-text-fill:white;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
-                setOnMouseExited(e  -> setStyle(
+                setOnMouseExited(e -> setStyle(
                         "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
             }
         });
         cb.setButtonCell(new ListCell<EstadoUnidadPolicial>() {
-            @Override protected void updateItem(EstadoUnidadPolicial item, boolean empty) {
+            @Override
+            protected void updateItem(EstadoUnidadPolicial item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? cb.getPromptText() : labelEstado(item));
                 setStyle(item != null
@@ -819,7 +775,8 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:14px;");
         cb.setPrefHeight(48);
         cb.setCellFactory(lv -> new ListCell<Barrio>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.getNombre());
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
@@ -827,13 +784,14 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
                 setOnMouseEntered(e -> setStyle("-fx-background-color:" + C_DARK_GRAD
                         + ";-fx-background-radius:6;-fx-text-fill:white;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
-                setOnMouseExited(e  -> setStyle(
+                setOnMouseExited(e -> setStyle(
                         "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
                         + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
             }
         });
         cb.setButtonCell(new ListCell<Barrio>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? cb.getPromptText() : item.getNombre());
                 setStyle(item != null
@@ -845,23 +803,31 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
 
     private String labelEstado(EstadoUnidadPolicial est) {
         switch (est) {
-            case ACTIVA:    return "ACTIVA";
-            case INACTIVA:  return "INACTIVA";
-            case OPERATIVA: return "OPERATIVA";
-            default:        return est.name();
+            case ACTIVA:
+                return "ACTIVA";
+            case INACTIVA:
+                return "INACTIVA";
+            case OPERATIVA:
+                return "OPERATIVA";
+            default:
+                return est.name();
         }
     }
 
     private void alerta(String msg) {
         Alert a = new Alert(Alert.AlertType.WARNING);
-        a.setTitle("Validación"); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle("Validación");
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private void info(String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle("WolertApp"); a.setHeaderText(null);
-        a.setContentText(msg); a.showAndWait();
+        a.setTitle("WolertApp");
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private void mostrarExito(String titulo, String mensaje) {
@@ -870,7 +836,7 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         ventana.setTitle("WolertApp");
         ventana.setResizable(false);
 
-        Label lblIcono  = new Label(titulo.contains("eliminada") ? "🗑" : "✅");
+        Label lblIcono = new Label(titulo.contains("eliminada") ? "🗑" : "✅");
         lblIcono.setFont(Font.font(32));
         Label lblTitulo = new Label(titulo);
         lblTitulo.setFont(Font.font("Arial", FontWeight.BOLD, 15));
@@ -881,7 +847,8 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
         lblMsg.setWrapText(true);
 
         Button btnOk = buildBotonPrimario("Aceptar");
-        btnOk.setPrefWidth(160); btnOk.setMaxWidth(160);
+        btnOk.setPrefWidth(160);
+        btnOk.setMaxWidth(160);
         btnOk.setOnAction(e -> ventana.close());
 
         VBox contenido = new VBox(12, lblIcono, lblTitulo, lblMsg, btnOk);
@@ -899,15 +866,27 @@ private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight();
         int top = h, bottom = 0, left = w, right = 0;
-        for (int y = 0; y < h; y++)
-            for (int x = 0; x < w; x++)
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
                 if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
-                    if (y < top)    top    = y;
-                    if (y > bottom) bottom = y;
-                    if (x < left)   left   = x;
-                    if (x > right)  right  = x;
+                    if (y < top) {
+                        top = y;
+                    }
+                    if (y > bottom) {
+                        bottom = y;
+                    }
+                    if (x < left) {
+                        left = x;
+                    }
+                    if (x > right) {
+                        right = x;
+                    }
                 }
-        if (top >= bottom || left >= right) return img;
+            }
+        }
+        if (top >= bottom || left >= right) {
+            return img;
+        }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
 }

@@ -13,6 +13,7 @@ import java.util.List;
 import oracle.jdbc.OracleTypes;
 import sistemagestion.model.Alerta;
 import sistemagestion.model.AtencionAlerta;
+import sistemagestion.model.EstadoAlerta;
 import sistemagestion.model.EstadoAtencionAlerta;
 import sistemagestion.model.MedioTransporte;
 import sistemagestion.model.TipoArma;
@@ -199,7 +200,9 @@ public class AtencionAlertaDAO {
         // alerta asociada
         Alerta al = new Alerta();
         al.setId_alerta(rs.getInt("ID_ALERTA"));
+        al.setEstado(EstadoAlerta.valueOf(rs.getString("ESTADO_ALERTA")));
         a.setAlerta(al);
+      
 
         // unidad que atendió
         UnidadPolicial u = new UnidadPolicial();

@@ -28,19 +28,47 @@ public class PoliciaDAO {
     }
 
     public PoliciaDAO() throws SQLException {
-         
+
     }
 
-    public boolean insertar(
-            String cedulaUsuario,
+    public boolean insertarCompleto(
+            String cedula,
+            String primerNombre, String segundoNombre,
+            String primerApellido, String segundoApellido,
+            String telefono, String email,
+            String username, String password,
+            String nombreRol,
             String nombreUnidad,
-            String placa,
-            String rango,
-            String estado
+            String placa, String rango, String estado
     ) {
-        String sql = "{call pkg_usuarios.pr_insertar_policia(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con().prepareCall(sql)) {
-            cs.setString(1, cedulaUsuario);
+        // Paso 1: crear usuario
+        String sqlUsuario = "{call pkg_usuarios.pr_insertar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+        try (CallableStatement cs = con().prepareCall(sqlUsuario)) {
+            cs.setString(1, primerNombre);
+            cs.setString(2, segundoNombre);
+            cs.setString(3, primerApellido);
+            cs.setString(4, segundoApellido);
+            cs.setString(5, cedula);
+            cs.setString(6, telefono);
+            cs.setString(7, email);
+            cs.setString(8, username);
+            cs.setString(9, password);
+            cs.setString(10, nombreRol);
+            cs.setString(11, null); // barrio opcional
+            cs.setString(12, null); // calle
+            cs.setString(13, null); // carrera
+            cs.setString(14, null); // etapa
+            cs.setString(15, null); // manzana
+            cs.setString(16, null); // casa
+            cs.execute();
+        } catch (SQLException e) {
+            System.out.println("Error creando usuario base: " + e.getMessage());
+            return false;
+        }
+
+        String sqlPolicia = "{call pkg_usuarios.pr_insertar_policia(?,?,?,?,?)}";
+        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {
+            cs.setString(1, cedula);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);
             cs.setString(4, rango);
@@ -48,20 +76,61 @@ public class PoliciaDAO {
             cs.execute();
             return true;
         } catch (SQLException e) {
-            System.out.println("Error insertar policia: " + e.getMessage());
+            System.out.println("Error creando policia: " + e.getMessage());
+            try {
+                eliminarUsuarioBase(cedula);
+            } catch (Exception ignored) {
+            }
             return false;
+        }
+    }
+
+    private void eliminarUsuarioBase(String cedula) throws SQLException {
+        String sql = "{call pkg_usuarios.pr_eliminar_usuario(?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.setString(1, cedula);
+            cs.execute();
         }
     }
 
     public boolean actualizar(
             String cedulaUsuario,
+            String primerNombre, String segundoNombre,
+            String primerApellido, String segundoApellido,
+            String telefono, String email,
+            String username,
             String nombreUnidad,
             String placa,
             String rango,
             String estado
     ) {
-        String sql = "{call pkg_usuarios.pr_actualizar_policia(?, ?, ?, ?, ?)}";
-        try (CallableStatement cs = con().prepareCall(sql)) {
+        // Paso 1: actualizar datos personales en USUARIOS
+        String sqlUsuario = "{call pkg_usuarios.pr_actualizar_usuario(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+        try (CallableStatement cs = con().prepareCall(sqlUsuario)) {
+            cs.setString(1, username);
+            cs.setString(2, primerNombre);
+            cs.setString(3, segundoNombre);
+            cs.setString(4, primerApellido);
+            cs.setString(5, segundoApellido);
+            cs.setString(6, telefono);
+            cs.setString(7, email);
+            cs.setString(8, null); // password sin cambio
+            cs.setString(9, "POLICIA"); // rol
+            cs.setString(10, null); // barrio
+            cs.setString(11, null); // calle
+            cs.setString(12, null); // carrera
+            cs.setString(13, null); // etapa
+            cs.setString(14, null); // manzana
+            cs.setString(15, null); // casa
+            cs.execute();
+        } catch (SQLException e) {
+            System.out.println("Error actualizando usuario: " + e.getMessage());
+            return false;
+        }
+
+        // Paso 2: actualizar datos policiales en POLICIAS
+        String sqlPolicia = "{call pkg_usuarios.pr_actualizar_policia(?, ?, ?, ?, ?)}";
+        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {
             cs.setString(1, cedulaUsuario);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);
@@ -70,7 +139,7 @@ public class PoliciaDAO {
             cs.execute();
             return true;
         } catch (SQLException e) {
-            System.out.println("Error actualizar policia: " + e.getMessage());
+            System.out.println("Error actualizando policia: " + e.getMessage());
             return false;
         }
     }
@@ -88,14 +157,16 @@ public class PoliciaDAO {
     }
 
     public boolean verificarPlaca(String username, String placa) {
-        String sql = "SELECT COUNT(*) FROM policias p " +
-                     "JOIN usuarios u ON p.id_usuario = u.id_usuario " +
-                     "WHERE u.username = ? AND UPPER(p.placa) = UPPER(?)";
+        String sql = "SELECT COUNT(*) FROM policias p "
+                + "JOIN usuarios u ON p.id_usuario = u.id_usuario "
+                + "WHERE u.username = ? AND UPPER(p.placa) = UPPER(?)";
         try (java.sql.PreparedStatement ps = con().prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, placa);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1) > 0;
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
         } catch (SQLException e) {
             System.out.println("Error verificar placa: " + e.getMessage());
         }
@@ -147,12 +218,13 @@ public class PoliciaDAO {
                 lista.add(mapear(rs));
             }
         } catch (SQLException e) {
-            System.out.println("Error buscar policia exacto: " + e.getMessage());
+            System.out.println("Error listar policias: " + e.getMessage());
+            e.printStackTrace();
         }
         return lista;
     }
 
-    // cursor retorna campos separados 
+// ── REEMPLAZA el método mapear() en PoliciaDAO.java ──────────
     private Policia mapear(ResultSet rs) throws SQLException {
         Policia p = new Policia();
 
@@ -165,21 +237,46 @@ public class PoliciaDAO {
         p.setTelefono(rs.getString("TELEFONO"));
         p.setCorreo(rs.getString("EMAIL"));
         p.setUsername(rs.getString("USERNAME"));
-        p.setEstado(EstadoUsuario.valueOf(rs.getString("ACTIVO")));
 
-        RolUsuario r = new RolUsuario();
-        r.setNombre(rs.getString("ROL"));
-        p.setRol(r);
+        // ACTIVO puede ser null → protegemos
+        String activo = rs.getString("ACTIVO");
+        if (activo != null) {
+            try {
+                p.setEstado(EstadoUsuario.valueOf(activo.trim().toUpperCase()));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
+
+        // ROL puede ser null
+        String rolStr = rs.getString("ROL");
+        if (rolStr != null && !rolStr.isBlank()) {
+            RolUsuario r = new RolUsuario();
+            r.setNombre(rolStr);
+            p.setRol(r);
+        }
 
         // campos propios de Policia
         p.setPlaca(rs.getString("PLACA"));
         p.setRango(rs.getString("RANGO"));
-        p.setEstadopolicial(EstadoPolicia.valueOf(rs.getString("ESTADO_POLICIA")));
 
+        // ESTADO_POLICIA puede ser null → protegemos
+        String estadoP = rs.getString("EST_POLICIA");
+        System.out.println(">>> EST_POLICIA raw = [" + estadoP + "]");
+        if (estadoP != null) {
+            try {
+                p.setEstadopolicial(EstadoPolicia.valueOf(estadoP.trim().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                System.out.println("EstadoPolicia desconocido: " + estadoP);
+            }
+        }
+
+        // NOMBRE_UNIDAD puede ser null
+        String nomUnidad = rs.getString("NOMBRE_UNIDAD");
         UnidadPolicial u = new UnidadPolicial();
-        u.setNombre(rs.getString("NOMBRE_UNIDAD"));
+        u.setNombre(nomUnidad != null ? nomUnidad : "—");
         p.setUnidadpolicial(u);
 
         return p;
     }
+
 }

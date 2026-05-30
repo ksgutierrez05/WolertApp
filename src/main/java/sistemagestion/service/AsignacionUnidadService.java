@@ -15,8 +15,6 @@ import sistemagestion.util.Validador;
  *
  * @author Maria Cristina
  */
-
-
 public class AsignacionUnidadService {
 
     private AsignacionUnidadDAO asignacionDAO;
@@ -42,6 +40,13 @@ public class AsignacionUnidadService {
                 a.getObservacion(),
                 fecha
         );
+    }
+
+    public boolean asignarUnidadCercana(int idAlerta) {
+        if (idAlerta <= 0) {
+            throw new IllegalArgumentException("ID de alerta inválido.");
+        }
+        return asignacionDAO.asignarUnidadCercana(idAlerta);
     }
 
     public boolean actualizar(AsignacionUnidad a) {

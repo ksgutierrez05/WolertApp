@@ -18,6 +18,7 @@ public class UnidadPolicial {
     private Barrio barrio;
     private double longitud;
     private double latitud;
+    
 
     public double getLongitud() {
         return longitud;
