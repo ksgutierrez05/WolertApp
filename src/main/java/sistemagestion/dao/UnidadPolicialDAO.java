@@ -53,16 +53,20 @@ public class UnidadPolicialDAO {
             String nombreActual,
             String nombreNuevo,
             String estado,
-            String nombreBarrio
+            String nombreBarrio,
+            double latitud,
+            double longitud
     ) {
-        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?)}";
-        try (CallableStatement cs = con().prepareCall(sql)) {
-            cs.setString(1, nombreActual);
-            cs.setString(2, nombreNuevo);
-            cs.setString(3, estado);
-            cs.setString(4, nombreBarrio);
-            cs.execute();
-            return true;
+        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?, ?, ?)}";
+  try (CallableStatement cs = con().prepareCall(sql)) {
+        cs.setString(1, nombreActual);
+        cs.setString(2, nombreNuevo);
+        cs.setString(3, estado);
+        cs.setString(4, nombreBarrio);
+        cs.setDouble(5, latitud);               
+        cs.setDouble(6, longitud);                  
+        cs.execute();
+        return true;
         } catch (SQLException e) {
             System.out.println("Error actualizar unidad: " + e.getMessage());
             return false;

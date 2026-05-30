@@ -24,30 +24,30 @@ public class ConexionDB {
 
     private static ConexionDB instancia;
     private Connection conexion;
- 
+
     private ConexionDB() throws SQLException {
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             this.conexion = DriverManager.getConnection(URL, USER, PASS);
+            this.conexion.setAutoCommit(true); // agrega esta línea
         } catch (ClassNotFoundException e) {
             throw new SQLException("Driver Oracle no encontrado. "
                     + "Agrega ojdbc11.jar a las librerías del proyecto.", e);
         }
     }
- 
 
     public static ConexionDB getInstancia() throws SQLException {
-        if (instancia == null || instancia.conexion.isClosed()) {
+        if (instancia == null || instancia.conexion.isClosed()
+                || !instancia.conexion.isValid(2)) {
             instancia = new ConexionDB();
         }
         return instancia;
     }
- 
-  
+
     public Connection getConexion() {
         return conexion;
     }
- 
+
     public void cerrar() throws SQLException {
         if (conexion != null && !conexion.isClosed()) {
             conexion.close();
