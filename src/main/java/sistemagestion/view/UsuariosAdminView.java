@@ -44,7 +44,6 @@ public class UsuariosAdminView {
     private UsuarioService usuarioService;
     private RolUsuarioService rolService;
     private BarrioService barrioService;
-    private PoliciaService policiaService;
     private ObservableList<Usuario> todosLosUsuarios = FXCollections.observableArrayList();
     private ObservableList<Usuario> usuariosFiltrados = FXCollections.observableArrayList();
 
@@ -72,7 +71,6 @@ public class UsuariosAdminView {
             usuarioService = new UsuarioService();
             rolService = new RolUsuarioService();
             barrioService = new BarrioService();
-            policiaService = new PoliciaService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
         }
@@ -768,19 +766,6 @@ public class UsuariosAdminView {
         TextField fUsername = dlgField("Username *", "");
         PasswordField fPassword = dlgPassword("Contraseña *");
 
-        // Campos policiales — visibles solo si el rol es ADMINISTRADOR_POLICIA
-        TextField fPlaca = dlgField("Placa policial *", "");
-        TextField fRango = dlgField("Rango policial *", "");
-
-        VBox seccionPolicia = new VBox(10);
-        seccionPolicia.getChildren().addAll(
-                seccion("DATOS POLICIALES"),
-                fPlaca,
-                fRango
-        );
-        seccionPolicia.setVisible(false);
-        seccionPolicia.setManaged(false);
-
         // Solo ADMIN y ADMINISTRADOR_POLICIA
         ComboBox<String> cmbRol = new ComboBox<>();
         cmbRol.setPromptText("Seleccionar Rol *");
@@ -800,9 +785,16 @@ public class UsuariosAdminView {
             try {
                 for (RolUsuario r : rolService.listar()) {
                     if (r != null && r.getNombre() != null) {
+<<<<<<< HEAD
                         String nombre = r.getNombre().toUpperCase().trim();
                         if (nombre.equals("ADMIN") || nombre.equals("ADMIN_POLICIA")) {
                             cmbRol.getItems().add(r.getNombre()); // guarda el nombre original
+=======
+                        String nombre = r.getNombre().toUpperCase();
+                        // Excluye POLICIA — ese se crea desde PoliciasAdminPoliciaView
+                        if (!nombre.equals("POLICIA")) {
+                            cmbRol.getItems().add(r.getNombre());
+>>>>>>> feature/view-1
                         }
                     }
                 }
@@ -810,6 +802,7 @@ public class UsuariosAdminView {
                 mostrarAlerta("Error roles", e.getMessage());
             }
         }
+<<<<<<< HEAD
 
         // Mostrar / ocultar sección policial según el rol elegido
         cmbRol.setOnAction(e -> {
@@ -820,6 +813,8 @@ public class UsuariosAdminView {
             seccionPolicia.setManaged(esPolicia);
         });
 
+=======
+>>>>>>> feature/view-1
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
 
@@ -834,7 +829,6 @@ public class UsuariosAdminView {
                 fPassword,
                 seccion("ROL"),
                 cmbRol,
-                seccionPolicia,
                 lblError
         );
 
@@ -848,6 +842,22 @@ public class UsuariosAdminView {
                 + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
 
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+<<<<<<< HEAD
+=======
+            lblError.setText("");
+
+            if (fPrimerNombre.getText().isBlank()
+                    || fPrimerApellido.getText().isBlank()
+                    || fCedula.getText().isBlank()
+                    || fUsername.getText().isBlank()
+                    || fPassword.getText().isBlank()
+                    || cmbRol.getValue() == null) {
+                lblError.setText("Completa los campos obligatorios (*).");
+                ev.consume();
+                return;
+            }
+
+>>>>>>> feature/view-1
             try {
                 Usuario nuevo = new Usuario();
                 nuevo.setPrimer_nombre(fPrimerNombre.getText().trim());
@@ -878,6 +888,7 @@ public class UsuariosAdminView {
                 nuevo.setDireccion(dir);
 
                 usuarioService.insertar(nuevo);
+<<<<<<< HEAD
 
                 boolean esPolicia = cmbRol.getValue() != null
                         && cmbRol.getValue().toUpperCase().trim().equals("ADMIN_POLICIA");
@@ -894,6 +905,8 @@ public class UsuariosAdminView {
                     policiaService.insertar(policia);
                 }
 
+=======
+>>>>>>> feature/view-1
                 cargarUsuarios();
 
             } catch (IllegalArgumentException ex) {

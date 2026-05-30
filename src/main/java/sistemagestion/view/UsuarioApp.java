@@ -75,6 +75,7 @@ public class UsuarioApp {
     // ── Constructor ───────────────────────────────────────────────
     public UsuarioApp(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
             alertaService = new AlertaService();
             notificacionService = new NotificacionService();
@@ -89,7 +90,7 @@ public class UsuarioApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
-        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
+
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
@@ -535,7 +536,8 @@ public class UsuarioApp {
         panicBtn.setOnMouseExited(e -> panicBtn.setStyle(base));
         panicBtn.setOnAction(e -> {
             Stage stage = (Stage) panicBtn.getScene().getWindow();
-            EmergencyDialog.show(stage, usuarioActual, alertaService, barrioService);
+            MapaAlerta mapaAlerta = new MapaAlerta(stage, usuarioActual, alertaService, barrioService);
+            mapaAlerta.mostrar();
         });
 
         banner.getChildren().addAll(iconBox, textBox, panicBtn);
@@ -721,7 +723,6 @@ public class UsuarioApp {
 
         Label verTodas = label("Ver todas  >", 12, BLUE, false);
         verTodas.setCursor(javafx.scene.Cursor.HAND);
-       
 
         verTodas.setOnMouseClicked(e -> {
             AlertasView alertasView = new AlertasView(
