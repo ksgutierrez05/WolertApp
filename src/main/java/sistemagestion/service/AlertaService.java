@@ -73,6 +73,21 @@ public class AlertaService {
         return alertaDAO.listar();
     }
 
+    public List<Alerta> listarPorUsuario(String username) {
+        Validador.validarCampoVacio(username);
+        return alertaDAO.listarPorUsuario(username);
+    }
+
+    public List<Alerta> listarPorBarrio(String nombreBarrio) {
+        Validador.validarCampoVacio(nombreBarrio);
+        return alertaDAO.listarPorBarrio(nombreBarrio);
+    }
+
+    public List<Alerta> buscarPorTipo(String tipoAlerta) {
+        Validador.validarCampoVacio(tipoAlerta);
+        return alertaDAO.buscarPorTipo(tipoAlerta);
+    }
+
     public Alerta buscarPorId(int id) {
 
         if (id <= 0) {

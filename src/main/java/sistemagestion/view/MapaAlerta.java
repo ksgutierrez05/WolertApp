@@ -675,21 +675,28 @@ public class MapaAlerta {
                 medio.setNombre(medioTranspSel);
                 alerta.setMediotransporte(medio);
             }
-            if (usuario.getDireccion() != null) {
-                alerta.setDireccion(usuario.getDireccion());
-            }
 
+            // ── COORDENADAS ────────────────────────────────────────────────
+            // Se guardan tanto en Alerta (campos directos) como en Direccion,
+            // para que AlertaService los encuentre de cualquier forma.
             alerta.setLatitud(posicionSeleccionada.getLatitude());
             alerta.setLongitud(posicionSeleccionada.getLongitude());
 
+            // Reutilizar la dirección del usuario si existe, o crear una nueva
+            Direccion dir = usuario.getDireccion() != null
+                    ? usuario.getDireccion()
+                    : new Direccion();
+            dir.setLatitud(posicionSeleccionada.getLatitude());
+            dir.setLongitud(posicionSeleccionada.getLongitude());
+            alerta.setDireccion(dir);
+            // ──────────────────────────────────────────────────────────────
+
             boolean ok = alertaService.insertar(alerta);
             if (ok) {
-                // Animación de confirmación: botón verde
                 panicBtn.setStyle(
                         "-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;"
                         + "-fx-effect:dropshadow(gaussian,rgba(22,163,74,0.45),20,0,0,6);");
-
-                lblFeedback.setStyle("-fx-text-fill:" + GREEN + ";");
+                lblFeedback.setStyle("-fx-text-fill:#16a34a;");
                 lblFeedback.setText("✅ Alerta enviada. Las autoridades han sido notificadas.");
                 panicBtn.setDisable(true);
 
@@ -707,17 +714,17 @@ public class MapaAlerta {
             }
         } catch (Exception ex) {
             error("Error inesperado: " + ex.getMessage());
+            ex.printStackTrace();   // <-- útil para depurar en consola
             panicActive = false;
             panicBtn.setStyle(estiloBotonPanico(false));
         }
     }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // BUILDERS DE COMPONENTES
-    // ════════════════════════════════════════════════════════════════════════
-    /**
-     * Tarjeta principal de categoría.
-     */
+        // ════════════════════════════════════════════════════════════════════════
+        // BUILDERS DE COMPONENTES
+        // ════════════════════════════════════════════════════════════════════════
+        /**
+         * Tarjeta principal de categoría.
+         */
     private HBox categoryCard(String unicodeFA, String bg, String texto) {
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(44, 44);
