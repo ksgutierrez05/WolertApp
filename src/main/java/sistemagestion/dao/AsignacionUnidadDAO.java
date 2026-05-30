@@ -108,7 +108,7 @@ public class AsignacionUnidadDAO {
             cs.execute();
             return true;
         } catch (SQLException e) {
-            System.err.println("Error al ejecutar procedure: " + e.getMessage());
+            System.err.println("Error asignar unidad cercana: " + e.getMessage());
             return false;
         }
     }
