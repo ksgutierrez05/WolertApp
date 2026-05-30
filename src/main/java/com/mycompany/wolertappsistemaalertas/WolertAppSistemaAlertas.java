@@ -16,6 +16,7 @@ import sistemagestion.view.AdministradorPoliciaApp;
 import sistemagestion.view.LoginApp;
 import sistemagestion.view.MapaAlarmas;
 import sistemagestion.view.MapaAlarmasRegistradas;
+import sistemagestion.view.PoliciaApp;
 //import sistemagestion.view.MapaAlarmas;
 //import sistemagestion.view.MapaAlarmasRegistradas;
 //import sistemagestion.view.MapaAlarmasRegistada;
@@ -28,7 +29,7 @@ public class WolertAppSistemaAlertas extends Application {
     @Override
     public void start(Stage stage) {
 
-       LoginApp login = new LoginApp();
+       /*LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
@@ -62,15 +63,14 @@ public class WolertAppSistemaAlertas extends Application {
         
 
         // ── Dashboard policía ──────────────────────
-        /*
+        
         Usuario policia = new Usuario();
         policia.setPrimer_nombre("Carlos");
         policia.setPrimer_apellido("Ramirez");
         policia.setUsername("cramirezt");
 
         new PoliciaApp(policia).show(stage);
-        */
-
+       
         // ── Mapas de prueba ──────────────────────
         //new MapaAlarmas().mostrar();
         //new MapaAlarmasRegistradas().mostrar();
