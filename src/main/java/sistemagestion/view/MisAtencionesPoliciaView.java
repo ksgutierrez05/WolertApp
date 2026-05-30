@@ -10,13 +10,15 @@ package sistemagestion.view;
  */
 
 
+
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.time.LocalDateTime;
@@ -43,27 +45,49 @@ public class MisAtencionesPoliciaView {
 
     public MisAtencionesPoliciaView(Usuario usuarioActual, Policia policiaActual,
             AtencionAlertaService atencionService, BorderPane root) {
-        this.usuarioActual  = usuarioActual;
-        this.policiaActual  = policiaActual;
+        this.usuarioActual   = usuarioActual;
+        this.policiaActual   = policiaActual;
         this.atencionService = atencionService;
-        this.root           = root;
+        this.root            = root;
     }
 
     public ScrollPane build() {
-        VBox content = new VBox(16);
-        content.setPadding(new Insets(22));
+        VBox content = new VBox(18);
+        content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: " + BG + ";");
 
-        Label title = new Label("📋 Mis atenciones");
-        title.setFont(Font.font("System", FontWeight.BOLD, 22));
-        title.setTextFill(Color.web("#111827"));
-        content.getChildren().add(title);
+        // ── Título ────────────────────────────────────────────────
+        HBox titleRow = new HBox(10);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane titleIcon = new StackPane();
+        Rectangle titleBg = new Rectangle(42, 42);
+        titleBg.setArcWidth(12); titleBg.setArcHeight(12);
+        titleBg.setFill(Color.web("#e8f0fe"));
+        Label titleIcoLbl = faIcon("\uf46d", 18, BLUE);
+        titleIcon.getChildren().addAll(titleBg, titleIcoLbl);
+
+        VBox titleText = new VBox(2);
+        Label titleLbl = new Label("Mis atenciones");
+        titleLbl.setFont(Font.font("System", FontWeight.BOLD, 22));
+        titleLbl.setTextFill(Color.web("#111827"));
+        Label subLbl = label("Registro y seguimiento de tus atenciones", 12, GRAY_TEXT, false);
+        titleText.getChildren().addAll(titleLbl, subLbl);
+
+        titleRow.getChildren().addAll(titleIcon, titleText);
+        content.getChildren().add(titleRow);
 
         try {
             List<AtencionAlerta> lista = obtenerMisAtenciones();
             if (lista.isEmpty()) {
-                VBox vacio = createPanel("Sin atenciones");
-                vacio.getChildren().add(label("No tienes atenciones registradas.", 13, GRAY_TEXT, false));
+                VBox vacio = new VBox(14);
+                vacio.setAlignment(Pos.CENTER);
+                vacio.setPadding(new Insets(40));
+                vacio.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 16;");
+                shadow(vacio);
+                Label icoVacio = faIcon("\uf46d", 40, "#d1d5db");
+                Label txtVacio = label("No tienes atenciones registradas.", 14, GRAY_TEXT, false);
+                vacio.getChildren().addAll(icoVacio, txtVacio);
                 content.getChildren().add(vacio);
             } else {
                 for (AtencionAlerta at : lista) {
@@ -71,7 +95,9 @@ public class MisAtencionesPoliciaView {
                 }
             }
         } catch (Exception e) {
-            VBox err = createPanel("Error");
+            VBox err = new VBox(8);
+            err.setPadding(new Insets(16));
+            err.setStyle("-fx-background-color: #fff0f0; -fx-background-radius: 12;");
             err.getChildren().add(label("Error: " + e.getMessage(), 12, RED, false));
             content.getChildren().add(err);
         }
@@ -80,9 +106,8 @@ public class MisAtencionesPoliciaView {
     }
 
     private VBox buildAtencionCard(AtencionAlerta at) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(16));
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
+        VBox card = new VBox(0);
+        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 16;");
         shadow(card);
 
         String estadoStr = at.getEstado() != null ? at.getEstado().name().replace("_", " ") : "—";
@@ -93,48 +118,114 @@ public class MisAtencionesPoliciaView {
             default         -> RED;
         };
 
-        HBox header = new HBox(10);
+        // ── Header coloreado ──────────────────────────────────────
+        HBox header = new HBox(12);
+        header.setPadding(new Insets(16, 18, 16, 18));
         header.setAlignment(Pos.CENTER_LEFT);
-        Circle dot = new Circle(7, Color.web(colorEst));
+        header.setStyle("-fx-background-color: " + colorEst + "18;"
+                + "-fx-background-radius: 16 16 0 0;");
+
+        StackPane dotBox = new StackPane();
+        Rectangle dotBg = new Rectangle(38, 38);
+        dotBg.setArcWidth(10); dotBg.setArcHeight(10);
+        dotBg.setFill(Color.web(colorEst + "33"));
+        Label dotIco = faIcon("\uf46d", 15, colorEst);
+        dotBox.getChildren().addAll(dotBg, dotIco);
+
         String unidadNom = at.getUnidad() != null ? at.getUnidad().getNombre() : "—";
-        VBox hTxt = new VBox(2);
+        VBox hTxt = new VBox(3);
         HBox.setHgrow(hTxt, Priority.ALWAYS);
         hTxt.getChildren().addAll(
-                label("📋 Atención #" + at.getId_atencion() + " — " + unidadNom, 14, "#111827", true),
+                label("Atención #" + at.getId_atencion() + "  —  " + unidadNom, 14, "#111827", true),
                 label("Fecha: " + formatFechaAt(at.getFechaatencion()), 11, GRAY_TEXT, false));
-        Label badge = label(estadoStr, 11, colorEst, true);
-        badge.setPadding(new Insets(3, 8, 3, 8));
-        badge.setStyle("-fx-background-color: " + colorEst + "22; -fx-background-radius: 6;");
-        header.getChildren().addAll(dot, hTxt, badge);
 
-        Label descActual = label(
-                "Situación: " + (at.getDescripcion() != null ? at.getDescripcion() : "—"), 12, "#374151", false);
-        descActual.setWrapText(true);
-        Label obsActual = label(
-                "Observación: " + (at.getObservacion() != null ? at.getObservacion() : "—"), 11, GRAY_TEXT, false);
-        obsActual.setWrapText(true);
+        Label badge = new Label(estadoStr);
+        badge.setFont(Font.font("System", FontWeight.BOLD, 10));
+        badge.setTextFill(Color.web(colorEst));
+        badge.setPadding(new Insets(4, 10, 4, 10));
+        badge.setStyle("-fx-background-color: " + colorEst + "22;"
+                + "-fx-background-radius: 20;"
+                + "-fx-border-color: " + colorEst + "55;"
+                + "-fx-border-radius: 20;"
+                + "-fx-border-width: 1;");
 
-        card.getChildren().add(separator());
+        header.getChildren().addAll(dotBox, hTxt, badge);
 
-        Label editTitle = label("✏ Actualizar situación / estado", 13, BLUE, true);
+        // ── Cuerpo ────────────────────────────────────────────────
+        VBox body = new VBox(12);
+        body.setPadding(new Insets(16, 18, 0, 18));
+
+        Label descLbl = label("Situación", 11, GRAY_TEXT, false);
+        Label descVal = label(at.getDescripcion() != null ? at.getDescripcion() : "—", 13, "#111827", false);
+        descVal.setWrapText(true);
+
+        Label obsLbl = label("Observación", 11, GRAY_TEXT, false);
+        Label obsVal = label(at.getObservacion() != null ? at.getObservacion() : "—", 12, "#374151", false);
+        obsVal.setWrapText(true);
+
+        body.getChildren().addAll(
+                infoBlock(descLbl, descVal),
+                infoBlock(obsLbl, obsVal));
+
+        // ── Panel de actualización (casi transparente) ────────────
+        VBox updatePanel = new VBox(10);
+        updatePanel.setPadding(new Insets(14, 18, 18, 18));
+        updatePanel.setStyle(
+                "-fx-background-color: rgba(21,101,192,0.04);"
+                + "-fx-border-color: rgba(21,101,192,0.10);"
+                + "-fx-border-width: 1 0 0 0;");
+
+        HBox updateHeader = new HBox(6);
+        updateHeader.setAlignment(Pos.CENTER_LEFT);
+        updateHeader.getChildren().addAll(
+                faIcon("\uf304", 12, BLUE),
+                label("Actualizar atención", 12, BLUE, true));
 
         TextArea nuevaSituacion = new TextArea();
-        nuevaSituacion.setPromptText("Agrega más detalles o actualiza la descripción...");
+        nuevaSituacion.setPromptText("Actualiza la descripción de la situación...");
         nuevaSituacion.setText(at.getDescripcion() != null ? at.getDescripcion() : "");
-        nuevaSituacion.setPrefRowCount(3);
+        nuevaSituacion.setPrefRowCount(2);
         nuevaSituacion.setWrapText(true);
-        nuevaSituacion.setStyle("-fx-font-size: 12; -fx-background-radius: 8;");
+        nuevaSituacion.setStyle(
+                "-fx-font-size: 12;"
+                + "-fx-background-color: rgba(255,255,255,0.7);"
+                + "-fx-background-radius: 8;"
+                + "-fx-border-color: " + BORDER + ";"
+                + "-fx-border-radius: 8;"
+                + "-fx-border-width: 1;");
 
-        Label nuevoEstLbl = label("Nuevo estado:", 12, "#374151", false);
+        // ComboBox casi transparente
         ComboBox<String> nuevoEstCombo = new ComboBox<>();
         nuevoEstCombo.getItems().addAll("PENDIENTE", "EN_PROCESO", "FINALIZADA", "CANCELADA");
         if (at.getEstado() != null) nuevoEstCombo.setValue(at.getEstado().name());
         nuevoEstCombo.setPrefWidth(200);
+        nuevoEstCombo.setStyle(
+                "-fx-font-size: 12px;"
+                + "-fx-background-color: rgba(255,255,255,0.5);"
+                + "-fx-background-radius: 8;"
+                + "-fx-border-color: rgba(21,101,192,0.25);"
+                + "-fx-border-radius: 8;"
+                + "-fx-border-width: 1;"
+                + "-fx-text-fill: #374151;");
 
-        Button actualizar = new Button("🔄  Actualizar atención");
-        actualizar.setStyle("-fx-background-color: " + ORANGE + "; -fx-text-fill: white; -fx-font-size: 12;"
-                + " -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 7 18 7 18;");
-        actualizar.setOnAction(ev -> {
+        Label nuevoEstLbl = label("Nuevo estado", 11, GRAY_TEXT, false);
+
+        Button btnActualizar = new Button();
+        Label btnIco = faIcon("\uf021", 12, WHITE);
+        Label btnTxt = label("  Actualizar", 12, WHITE, true);
+        HBox btnContent = new HBox(4, btnIco, btnTxt);
+        btnContent.setAlignment(Pos.CENTER);
+        btnActualizar.setGraphic(btnContent);
+        btnActualizar.setStyle(
+                "-fx-background-color: " + BLUE + ";"
+                + "-fx-background-radius: 8;"
+                + "-fx-cursor: hand;"
+                + "-fx-padding: 7 18 7 18;");
+
+        Label msgLbl = new Label("");
+        msgLbl.setFont(Font.font("System", 11));
+
+        btnActualizar.setOnAction(ev -> {
             String desc   = nuevaSituacion.getText().trim();
             String estado = nuevoEstCombo.getValue();
             if (desc.isEmpty()) {
@@ -153,20 +244,47 @@ public class MisAtencionesPoliciaView {
                 upd.setObservacion(at.getObservacion());
                 boolean ok = atencionService.actualizar(upd);
                 if (ok) {
-                    mostrarInfo("¡Actualizado!", "La atención fue actualizada correctamente.");
+                    msgLbl.setText("✔  Atención actualizada correctamente");
+                    msgLbl.setTextFill(Color.web(GREEN));
                     root.setCenter(new MisAtencionesPoliciaView(
                             usuarioActual, policiaActual, atencionService, root).build());
                 } else {
-                    mostrarAlerta("Error", "No se pudo actualizar la atención.");
+                    msgLbl.setText("✘  No se pudo actualizar");
+                    msgLbl.setTextFill(Color.web(RED));
                 }
             } catch (Exception ex) {
-                mostrarAlerta("Error", ex.getMessage());
+                msgLbl.setText("✘  " + ex.getMessage());
+                msgLbl.setTextFill(Color.web(RED));
             }
         });
 
-        card.getChildren().addAll(header, descActual, obsActual, separator(),
-                editTitle, nuevaSituacion, new VBox(4, nuevoEstLbl, nuevoEstCombo), actualizar);
+        HBox bottomRow = new HBox(10);
+        bottomRow.setAlignment(Pos.CENTER_LEFT);
+        VBox estadoBox = new VBox(4, nuevoEstLbl, nuevoEstCombo);
+        HBox.setHgrow(estadoBox, Priority.ALWAYS);
+        bottomRow.getChildren().addAll(estadoBox, btnActualizar);
+
+        updatePanel.getChildren().addAll(updateHeader, nuevaSituacion, bottomRow, msgLbl);
+
+        card.getChildren().addAll(header, body, updatePanel);
         return card;
+    }
+
+    // ── Info block ───────────────────────────────────────────────
+    private VBox infoBlock(Label lbl, Label val) {
+        VBox box = new VBox(2, lbl, val);
+        box.setPadding(new Insets(0, 0, 4, 0));
+        return box;
+    }
+
+    // ── FA icon ──────────────────────────────────────────────────
+    private Label faIcon(String code, double size, String color) {
+        Label lbl = new Label(code);
+        lbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: " + size + "px;"
+                + "-fx-text-fill: " + color + ";");
+        return lbl;
     }
 
     // ── Datos ────────────────────────────────────────────────────
@@ -183,15 +301,6 @@ public class MisAtencionesPoliciaView {
     }
 
     // ── Helpers UI ───────────────────────────────────────────────
-    private VBox createPanel(String title) {
-        VBox panel = new VBox(10);
-        panel.setPadding(new Insets(16));
-        panel.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
-        shadow(panel);
-        panel.getChildren().addAll(label(title, 14, "#111827", true), separator());
-        return panel;
-    }
-
     private Region separator() {
         Region sep = new Region();
         sep.setPrefHeight(1);
@@ -207,7 +316,7 @@ public class MisAtencionesPoliciaView {
     }
 
     private void shadow(Region node) {
-        node.setEffect(new DropShadow(10, 0, 2, Color.web("#0000001a")));
+        node.setEffect(new DropShadow(12, 0, 3, Color.web("#0000001a")));
     }
 
     private ScrollPane wrapScroll(VBox content) {
@@ -225,11 +334,6 @@ public class MisAtencionesPoliciaView {
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
-    }
-
-    private void mostrarInfo(String titulo, String msg) {
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
     }
 }

@@ -8,6 +8,8 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
+
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -24,16 +26,18 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.sql.SQLException;
 import java.util.List;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
 public class PoliciaApp {
 
-    private static final String WHITE = "#ffffff";
-    private static final String BG = "#f4f6fb";
-    private static final String RED = "#e53935";
-    private static final String GREEN = "#43a047";
-    private static final String BLUE = "#1565c0";
+    private static final String WHITE     = "#ffffff";
+    private static final String BG        = "#f4f6fb";
+    private static final String RED       = "#e53935";
+    private static final String GREEN     = "#43a047";
+    private static final String BLUE      = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
 
     private AlertaService alertaService;
@@ -50,12 +54,12 @@ public class PoliciaApp {
     public PoliciaApp(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
         try {
-            alertaService = new AlertaService();
-            atencionService = new AtencionAlertaService();
-            alarmaService = new AlarmaService();
+            alertaService      = new AlertaService();
+            atencionService    = new AtencionAlertaService();
+            alarmaService      = new AlarmaService();
             notificacionService = new NotificacionService();
-            asignacionService = new AsignacionUnidadService();
-            policiaService = new PoliciaService();
+            asignacionService  = new AsignacionUnidadService();
+            policiaService     = new PoliciaService();
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -76,6 +80,7 @@ public class PoliciaApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 14);
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(new CentroOperacionesPoliciaView(
@@ -87,6 +92,7 @@ public class PoliciaApp {
         stage.setTitle("WolertApp – Policía");
         stage.setScene(scene);
         stage.setResizable(true);
+        stage.setMaximized(true);
         stage.show();
     }
 
@@ -106,49 +112,62 @@ public class PoliciaApp {
         HBox logoBox = new HBox(10);
         logoBox.setPadding(new Insets(20, 16, 20, 16));
         logoBox.setAlignment(Pos.CENTER_LEFT);
-        StackPane wolfIcon = new StackPane();
-        Circle iconCircle = new Circle(22, Color.web("#2a3560"));
-        wolfIcon.getChildren().addAll(iconCircle, label("🐺", 18, WHITE, false));
+
+        ImageView logoImg = new ImageView(
+                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
+        logoImg.setFitWidth(65);
+        logoImg.setFitHeight(65);
+        logoImg.setPreserveRatio(true);
+        logoImg.setTranslateY(-2);
+
         VBox logoText = new VBox(2);
         logoText.getChildren().addAll(
                 label("WolertApp", 15, WHITE, true),
                 label("Portal Policía", 9, "#8899bb", false));
-        logoBox.getChildren().addAll(wolfIcon, logoText);
 
-        HBox profileCard = buildProfileCard();
+        logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
 
+        // Nav
         VBox nav = new VBox(2);
         nav.setPadding(new Insets(12, 8, 12, 8));
         nav.getChildren().addAll(
-                navItem("🏠", "Centro de operaciones"),
-                navItem("🚨", "Mis alertas"),
-                navItem("📋", "Mis atenciones"),
-                navItem("🔔", "Alarmas"),
-                navItem("📜", "Historial"),
-                navItem("🗺", "Mapa por zonas"),
-                navItem("📢", "Notificaciones"),
-                navItem("⚙", "Mi perfil")
+                navItem("\uf015", "Centro de operaciones"),
+                navItem("\uf0f3", "Mis alertas"),
+                navItem("\uf46d", "Mis atenciones"),
+                navItem("\uf0f3", "Alarmas"),
+                navItem("\uf1da", "Historial"),
+                navItem("\uf279", "Mapas"),
+                navItem("\uf0e0", "Notificaciones"),
+                navItem("\uf007", "Mi perfil")
         );
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
+        // Logout
         HBox logout = new HBox(10);
         logout.setPadding(new Insets(14, 16, 18, 16));
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
         logout.setStyle("-fx-background-color: transparent;");
-        logout.setOnMouseEntered(e -> logout.setStyle("-fx-background-color: rgba(229,57,53,0.15); -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
+        logout.setOnMouseEntered(e -> logout.setStyle(
+                "-fx-background-color: rgba(229,57,53,0.15); -fx-background-radius: 8;"));
+        logout.setOnMouseExited(e -> logout.setStyle(
+                "-fx-background-color: transparent;"));
         logout.setOnMouseClicked(e -> cerrarSesion());
-        logout.getChildren().addAll(
-                label("🚪", 15, RED, false),
-                label("Cerrar sesión", 13, RED, true));
 
-        sidebar.getChildren().addAll(logoBox, profileCard, nav, spacer, logout);
+        Label logoutIcon = new Label("\uf2f5");
+        logoutIcon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: " + RED + ";");
+        logout.getChildren().addAll(logoutIcon, label("Cerrar sesión", 13, WHITE, true));
+
+        sidebar.getChildren().addAll(logoBox, buildProfileCard(), nav, spacer, logout);
         return sidebar;
     }
 
+    // ── Profile card ─────────────────────────────────────────────
     private HBox buildProfileCard() {
         HBox card = new HBox(10);
         card.setPadding(new Insets(10, 16, 10, 16));
@@ -169,7 +188,9 @@ public class PoliciaApp {
 
         HBox statusRow = new HBox(4);
         statusRow.setAlignment(Pos.CENTER_LEFT);
-        statusRow.getChildren().addAll(new Circle(4, Color.web(GREEN)), label("En servicio", 10, GREEN, false));
+        statusRow.getChildren().addAll(
+                new Circle(4, Color.web(GREEN)),
+                label("En servicio", 10, GREEN, false));
 
         info.getChildren().addAll(
                 label(nombre.trim(), 12, WHITE, true),
@@ -188,11 +209,17 @@ public class PoliciaApp {
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
         item.setStyle("-fx-background-radius: 8;");
-        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
         item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
-        item.getChildren().addAll(
-                label(icon, 14, WHITE, false),
-                label(text, 13, "#f8fafc", true));
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: #8899bb;");
+
+        item.getChildren().addAll(iconLbl, label(text, 13, "#f8fafc", true));
 
         item.setOnMouseClicked(e -> {
             switch (text) {
@@ -201,32 +228,25 @@ public class PoliciaApp {
                             usuarioActual, policiaActual,
                             alertaService, atencionService,
                             alarmaService, notificacionService, root).build());
-
                 case "Mis alertas" ->
                     root.setCenter(new MisAlertasPoliciaView(
                             usuarioActual, policiaActual,
                             alertaService, atencionService, root).build());
-
                 case "Mis atenciones" ->
                     root.setCenter(new MisAtencionesPoliciaView(
                             usuarioActual, policiaActual,
                             atencionService, root).build());
-
                 case "Alarmas" ->
-                    root.setCenter(pantallaEnConstruccion("🔔", "Alarmas"));
-
+                    root.setCenter(pantallaEnConstruccion("\uf0f3", "Alarmas"));
                 case "Historial" ->
                     root.setCenter(new HistorialPoliciaView(
                             usuarioActual, policiaActual,
                             atencionService, root).build());
-
-                case "Mapa por zonas" ->
-                    root.setCenter(pantallaEnConstruccion("🗺", "Mapa por zonas"));
-
+                case "Mapas" ->
+                    root.setCenter(pantallaEnConstruccion("\uf279", "Mapas"));
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesPoliciaView(
                             usuarioActual, notificacionService).build());
-
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
                             usuarioActual, policiaActual).build());
@@ -244,7 +264,10 @@ public class PoliciaApp {
         pane.setStyle("-fx-background-color: " + BG + ";");
 
         Label iconLbl = new Label(icono);
-        iconLbl.setFont(Font.font("System", 64));
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 64px;"
+                + "-fx-text-fill: #fb8c00;");
 
         Label titleLbl = new Label(nombreVista);
         titleLbl.setFont(Font.font("System", FontWeight.BOLD, 26));
@@ -283,7 +306,9 @@ public class PoliciaApp {
     // ── Helpers ──────────────────────────────────────────────────
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
-        lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size) : Font.font("System", size));
+        lbl.setFont(bold
+                ? Font.font("System", FontWeight.BOLD, size)
+                : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }

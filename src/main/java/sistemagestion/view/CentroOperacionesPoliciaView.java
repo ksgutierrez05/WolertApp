@@ -142,16 +142,16 @@ public class CentroOperacionesPoliciaView {
     }
 
     // ── Stats ────────────────────────────────────────────────────
-   private HBox buildStats() {
-    HBox row = new HBox(16);
-    row.getChildren().addAll(
-            statCard(RED_LIGHT,    RED,    "\uf0f3", "Mis alertas activas", contarMisAlertasActivas(), "PENDIENTE / EN ATENCIÓN"),
-            statCard(ORANGE_LIGHT, ORANGE, "\uf046", "Mis atenciones",      contarMisAtenciones(),     "Total registradas"),
-            statCard(GREEN_LIGHT,  GREEN,  "\uf0f3", "Alarmas activas",     contarAlarmasActivas(),    "ACTIVA / EN MANTENIMIENTO"),
-            statCard(BLUE_LIGHT,   BLUE,   "\uf0e0", "Notificaciones",      contarNotificaciones(),    "Total recibidas")
-    );
-    return row;
-}
+    private HBox buildStats() {
+        HBox row = new HBox(16);
+        row.getChildren().addAll(
+                statCard(RED_LIGHT, RED, "\uf0f3", "Mis alertas activas", contarMisAlertasActivas(), "PENDIENTE / EN ATENCIÓN"),
+                statCard(ORANGE_LIGHT, ORANGE, "\uf046", "Mis atenciones", contarMisAtenciones(), "Total registradas"),
+                statCard(GREEN_LIGHT, GREEN, "\uf0f3", "Alarmas activas", contarAlarmasActivas(), "ACTIVA / EN MANTENIMIENTO"),
+                statCard(BLUE_LIGHT, BLUE, "\uf0e0", "Notificaciones", contarNotificaciones(), "Total recibidas")
+        );
+        return row;
+    }
 
     // ── Bottom panels (solo alertas recientes y alarmas) ─────────
     private HBox buildBottomPanels() {
@@ -316,11 +316,10 @@ public class CentroOperacionesPoliciaView {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
-        card.setPrefWidth(260);
+        card.setMaxWidth(Double.MAX_VALUE);          // ← igual que Admin
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
-        // Ícono FA en rectángulo redondeado
         StackPane iconWrap = new StackPane();
         iconWrap.setPrefSize(52, 52);
         iconWrap.setMinSize(52, 52);
@@ -339,7 +338,6 @@ public class CentroOperacionesPoliciaView {
 
         iconWrap.getChildren().addAll(iconBg, iconLbl);
 
-        // Textos
         Label titleLbl = new Label(title);
         titleLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;");
 
@@ -355,15 +353,8 @@ public class CentroOperacionesPoliciaView {
         topRow.setAlignment(Pos.CENTER_LEFT);
         card.getChildren().add(topRow);
 
-        card.setOnMouseEntered(e -> {
-            card.setTranslateY(-3);
-            card.setStyle("-fx-background-color: white; -fx-background-radius: 18;"
-                    + "-fx-border-color: " + accentColor + "; -fx-border-width: 1.5; -fx-border-radius: 18;");
-        });
-        card.setOnMouseExited(e -> {
-            card.setTranslateY(0);
-            card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
-        });
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));  // ← solo lift, sin borde
+        card.setOnMouseExited(e -> card.setTranslateY(0));
 
         return card;
     }
