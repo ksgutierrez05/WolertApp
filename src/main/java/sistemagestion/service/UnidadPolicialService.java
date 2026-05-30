@@ -14,6 +14,7 @@ import sistemagestion.util.Validador;
  *
  * @author Maria Cristina
  */
+
 public class UnidadPolicialService {
 
     private UnidadPolicialDAO dao;
@@ -47,7 +48,9 @@ public class UnidadPolicialService {
                 u.getNombre(),
                 u.getNombre(),
                 u.getEstado().name(),
-                u.getBarrio().getNombre()
+                u.getBarrio().getNombre(),
+                u.getLatitud(),
+                u.getLongitud()
         );
     }
 
