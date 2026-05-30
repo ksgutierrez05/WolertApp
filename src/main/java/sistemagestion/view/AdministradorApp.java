@@ -6,7 +6,7 @@ package sistemagestion.view;
 
 /**
  *
- * @author Maria Cristina
+ * @author Maria Cristina  
  */
 import java.time.LocalDateTime;
 import java.time.ZoneId;
