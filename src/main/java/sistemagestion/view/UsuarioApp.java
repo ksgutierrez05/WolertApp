@@ -400,6 +400,14 @@ public class UsuarioApp {
                     VecinosView vecinosView = new VecinosView(usuarioActual, alertaService);
                     root.setCenter(vecinosView.getView());
                 }
+                case "Notificaciones" -> {
+                    NotificacionesView view = new NotificacionesView(
+                            usuarioActual,
+                            notificacionService,
+                            root
+                    );
+                    root.setCenter(view.getView());
+                }
 
                 default ->
                     root.setCenter(buildPlaceholder(text));
@@ -522,6 +530,17 @@ public class UsuarioApp {
         } else {
             bell.getChildren().add(bellIcon);
         }
+
+        // Al hacer clic en la campana → ir a notificaciones
+        bell.setCursor(javafx.scene.Cursor.HAND);
+        bell.setOnMouseClicked(e -> {
+            NotificacionesView view = new NotificacionesView(
+                    usuarioActual,
+                    notificacionService,
+                    root
+            );
+            root.setCenter(view.getView());
+        });
 
         rightBox.getChildren().addAll(dateBox, bell);
         bar.getChildren().addAll(greeting, rightBox);
