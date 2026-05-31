@@ -28,7 +28,7 @@ import org.json.*;
 import sistemagestion.model.Usuario;
 
 public class ChatBotView {
-
+ private static final String  API_KEY= "";
     private static final String WHITE = "#ffffff";
     private static final String BG = "#f4f6fb";
     private static final String BLUE = "#1565c0";
