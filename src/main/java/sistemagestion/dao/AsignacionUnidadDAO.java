@@ -85,7 +85,7 @@ public class AsignacionUnidadDAO {
         }
     }
 
-    public List<AsignacionUnidad> listar() {
+    /*public List<AsignacionUnidad> listar() {
         List<AsignacionUnidad> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
@@ -99,22 +99,42 @@ public class AsignacionUnidadDAO {
             System.out.println("Error listar asignaciones: " + e.getMessage());
         }
         return lista;
-    }
-
+    }*/
     public boolean asignarUnidadCercana(int idAlerta) {
-        String sql = "{CALL pr_asignar_unidad_cercana(?)}";
+        String sql = "{CALL pkg_alertas.pr_asignar_unidad_cercana(?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.execute();
+            System.out.println("asignarUnidadCercana OK para alerta " + idAlerta);
             return true;
         } catch (SQLException e) {
-            System.err.println("Error asignar unidad cercana: " + e.getMessage());
+            System.err.println("Error asignarUnidadCercana: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
+    public List<AsignacionUnidad> listar() {
+        List<AsignacionUnidad> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.registerOutParameter(1, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            System.out.println("listar asignaciones OK: " + lista.size() + " registros");
+        } catch (SQLException e) {
+            System.err.println("Error listar asignaciones: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
     // vw_asignaciones retorna
     private AsignacionUnidad mapear(ResultSet rs) throws SQLException {
+        System.out.println("Mapeando fila...");
         AsignacionUnidad a = new AsignacionUnidad();
         a.setId_asignacion(rs.getInt("ID_ASIGNACION"));
         a.setObservacion(rs.getString("OBSERVACION"));

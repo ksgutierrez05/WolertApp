@@ -6,6 +6,7 @@ sistemagestion\dao\RolUsuarioDAO.class
 sistemagestion\view\VecinosView$DatosVecino.class
 sistemagestion\view\EstadisticasAdminView$1PolInfo.class
 sistemagestion\service\ComunaService.class
+sistemagestion\view\AsignacionesAdminPoliciaView$2.class
 sistemagestion\view\MisAlertasPoliciaView.class
 sistemagestion\view\MapaAlerta$4.class
 sistemagestion\view\ComunaAdminView.class
@@ -48,6 +49,7 @@ sistemagestion\view\MapaAlerta$2.class
 sistemagestion\view\MapaAdminPoliciaView.class
 sistemagestion\view\MapaAlarmasRegistada$5.class
 sistemagestion\view\AdministradorPoliciaApp$1.class
+sistemagestion\view\AsignacionesAdminPoliciaView$4.class
 sistemagestion\service\AtencionAlertaService.class
 sistemagestion\view\MapaAlarmas$2.class
 sistemagestion\dao\PoliciaDAO.class
@@ -110,6 +112,7 @@ sistemagestion\view\MapaAlarmasRegistradas$7.class
 sistemagestion\view\MapaUnidadesPoliciales$4.class
 sistemagestion\dao\NotificacionDAO.class
 sistemagestion\view\MapaAlarmas$6.class
+sistemagestion\view\AsignacionesAdminPoliciaView$3.class
 sistemagestion\model\EstadoPolicia.class
 sistemagestion\view\PruebaFX.class
 sistemagestion\dao\UsuarioDAO.class
@@ -134,6 +137,7 @@ sistemagestion\view\MapaAlarmasRegistradas$3.class
 sistemagestion\view\MapaUnidadesPoliciales.class
 sistemagestion\dao\TipoAlertaDAO.class
 sistemagestion\view\UnidadesAdminPoliciaView.class
+sistemagestion\view\AsignacionesAdminPoliciaView$1.class
 sistemagestion\view\PoliciaApp.class
 sistemagestion\view\AlarmasAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmas$5.class
