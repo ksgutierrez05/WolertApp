@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 target/*.class*.jarmaven-archiver/maven-status/  
+=======
+# Maven / buildtarget/build/dist/# Java compilado*.class# NetBeansnbproject/private/# Logs*.log
+>>>>>>> abf6ea8 (Remove Gemini API key and compiled files)
