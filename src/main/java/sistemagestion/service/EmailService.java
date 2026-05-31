@@ -8,8 +8,6 @@ package sistemagestion.service;
  *
  * @author Maria Cristina
  */
-
-
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 import java.util.Properties;
@@ -17,14 +15,17 @@ import java.util.Properties;
 public class EmailService {
 
     private static final String REMITENTE = "wolertapp.notificaciones@gmail.com";
-    private static final String PASSWORD  = "nimn pmfh opeq udgp";
+    private static final String PASSWORD = "nimnpmfhopequdgp";
 
     public static boolean enviarCorreo(String destinatario, String asunto, String cuerpo) {
         Properties props = new Properties();
-        props.put("mail.smtp.host",            "smtp.gmail.com");
-        props.put("mail.smtp.port",            "587");
-        props.put("mail.smtp.auth",            "true");
-        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "465");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.ssl.enable", "true");      // ← cambia socketFactory por esto
+        props.put("mail.smtp.user", REMITENTE);   // ← agrega esta línea
+        props.put("mail.smtp.password", PASSWORD);    // ← agrega esta línea
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com"); // ← agrega esta línea
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
