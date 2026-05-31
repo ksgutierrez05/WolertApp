@@ -92,7 +92,7 @@ public class UsuarioService {
     public Usuario login(String username, String password) throws SQLException {
 
         Validador.validarUsername(username);
-        Validador.validarPassword(password);
+        Validador.validarCampoVacio(password);
 
         return dao.login(username, password);
     }

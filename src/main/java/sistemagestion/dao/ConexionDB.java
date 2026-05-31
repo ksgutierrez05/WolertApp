@@ -29,7 +29,13 @@ public class ConexionDB {
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
             this.conexion = DriverManager.getConnection(URL, USER, PASS);
-            this.conexion.setAutoCommit(true); // agrega esta línea
+            this.conexion.setAutoCommit(true); 
+            
+            try (java.sql.Statement st = this.conexion.createStatement()) {
+            st.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '.,'");
+            System.out.println("NLS_NUMERIC_CHARACTERS configurado: punto decimal");
+        }
+            
         } catch (ClassNotFoundException e) {
             throw new SQLException("Driver Oracle no encontrado. "
                     + "Agrega ojdbc11.jar a las librerías del proyecto.", e);
