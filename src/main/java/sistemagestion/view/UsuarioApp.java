@@ -33,6 +33,7 @@ import java.util.Locale;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Popup;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
@@ -90,19 +91,68 @@ public class UsuarioApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
-
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
         root.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        BorderPane.setAlignment(root.getLeft(), Pos.TOP_LEFT);
         root.setStyle("-fx-background-color: " + BG + ";");
 
-        Scene scene = new Scene(root, 1200, 620);
+        // ── Botón flotante del chatbot ────────────────────────────────
+        ChatBotView chatbotView = new ChatBotView(usuarioActual);
+        Popup chatPopup = chatbotView.buildPopup(stage);
+
+        Button chatBtn = new Button();
+        Label chatIco = new Label("\uf544"); // robot FA
+        chatIco.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px;"
+                + "-fx-text-fill: white;");
+        chatBtn.setGraphic(chatIco);
+        chatBtn.setStyle(
+                "-fx-background-color: #1565c0;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px;"
+                + "-fx-min-height: 56px;"
+                + "-fx-max-width: 56px;"
+                + "-fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(21,101,192,0.45), 18, 0, 0, 5);");
+        chatBtn.setOnMouseEntered(e -> chatBtn.setStyle(
+                "-fx-background-color: #0d47a1;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px; -fx-min-height: 56px;"
+                + "-fx-max-width: 56px; -fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(21,101,192,0.55), 22, 0, 0, 7);"));
+        chatBtn.setOnMouseExited(e -> chatBtn.setStyle(
+                "-fx-background-color: #1565c0;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px; -fx-min-height: 56px;"
+                + "-fx-max-width: 56px; -fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(21,101,192,0.45), 18, 0, 0, 5);"));
+
+        chatBtn.setOnAction(e -> {
+            if (chatPopup.isShowing()) {
+                chatPopup.hide();
+            } else {
+                javafx.geometry.Bounds b = chatBtn.localToScreen(chatBtn.getBoundsInLocal());
+                chatPopup.show(stage,
+                        b.getMaxX() - 370,
+                        b.getMinY() - 530);
+            }
+        });
+
+        StackPane overlay = new StackPane(root, chatBtn);
+        StackPane.setAlignment(chatBtn, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(chatBtn, new Insets(0, 24, 24, 0));
+
+        Scene scene = new Scene(overlay, 1200, 620);
         stage.setTitle("WolertApp – Sistema de Alertas Comunitarias");
         stage.setScene(scene);
-        stage.setResizable(true);   // permite redimensionar
-        stage.setMaximized(false);  // inicia normal
+        stage.setResizable(true);
+        stage.setMaximized(false);
         stage.show();
     }
 
