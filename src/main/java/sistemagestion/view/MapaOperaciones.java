@@ -99,7 +99,18 @@ public class MapaOperaciones {
     private StackPane rootStack;
     private Label lblContador;
     private Label lblCoordFooter;
-    private final List<VBox> flotantes = new ArrayList<>();
+
+    private static class Flotante {
+
+        VBox card;
+        GeoPosition geo;
+
+        Flotante(VBox card, GeoPosition geo) {
+            this.card = card;
+            this.geo = geo;
+        }
+    }
+    private final List<Flotante> flotantes = new ArrayList<>();
 
 // ── Font Awesome ──────────────────────────────────────────────
     private String FA_FAMILY = "Font Awesome 6 Free Solid";
@@ -281,9 +292,8 @@ public class MapaOperaciones {
         VBox leyendaFlotante = buildLeyendaFlotante();
         rootStack.getChildren().addAll(swingNode, leyendaFlotante, lblCoordFooter);
         leyendaFlotante.setMaxHeight(Region.USE_PREF_SIZE);  // ← antes de añadirlo al StackPane
-        StackPane.setAlignment(leyendaFlotante, Pos.TOP_LEFT);
-        StackPane.setMargin(leyendaFlotante, new Insets(12, 0, 0, 12));
-        StackPane.setMargin(leyendaFlotante, new Insets(12, 0, 0, 12));
+        StackPane.setAlignment(leyendaFlotante, Pos.BOTTOM_LEFT);
+        StackPane.setMargin(leyendaFlotante, new Insets(0, 0, 50, 12));
         StackPane.setAlignment(lblCoordFooter, Pos.BOTTOM_CENTER);
         StackPane.setMargin(lblCoordFooter, new Insets(0, 0, 18, 0));
 
@@ -564,38 +574,29 @@ public class MapaOperaciones {
             {"#757575", "CANCELADA"}
         };
 
-        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
-        grid.setHgap(10);
-        grid.setVgap(4);
-        grid.setMaxWidth(180);           // ← NUEVO: limita ancho del grid
-        grid.setMinWidth(0);
+        VBox lista = new VBox(4);
 
-        for (int i = 0; i < items.length; i++) {
-            javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(3.5);
-            dot.setFill(Color.web(items[i][0]));
+        for (String[] item : items) {
+            javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
+            dot.setFill(Color.web(item[0]));
 
-            Label lbl = new Label(items[i][1]);
-            lbl.setFont(Font.font("Arial", 8));
+            Label lbl = new Label(item[1]);
+            lbl.setFont(Font.font("Arial", 10));
             lbl.setTextFill(Color.web(GRAY_TEXT));
-            lbl.setMaxWidth(72);                // ← NUEVO: corta texto largo
-            lbl.setEllipsisString("…");
 
-            HBox cell = new HBox(4, dot, lbl);
+            HBox cell = new HBox(6, dot, lbl);
             cell.setAlignment(Pos.CENTER_LEFT);
-            cell.setMaxWidth(88);               // ← NUEVO: limita celda
-            grid.add(cell, i % 2, i / 2);
+            lista.getChildren().add(cell);
         }
 
         Label tit = new Label("ESTADOS ALERTA");
         tit.setFont(Font.font("Arial", FontWeight.BOLD, 9));
         tit.setTextFill(Color.web(GRAY_TEXT));
 
-        VBox box = new VBox(4, tit, grid);
+        VBox box = new VBox(5, tit, lista);
         box.setPadding(new Insets(8, 10, 8, 10));
-        box.setMaxWidth(192);                   // ← NUEVO: fija ancho máximo del panel
-        box.setMinWidth(0);
-        box.setPrefWidth(Region.USE_COMPUTED_SIZE);
-        // Quitar -fx-background-radius repetido, unificar estilo
+        box.setMinWidth(130);
+        box.setMaxWidth(Region.USE_PREF_SIZE);
         box.setStyle(
                 "-fx-background-color:rgba(255,255,255,0.88);"
                 + "-fx-background-radius:10;"
@@ -611,7 +612,8 @@ public class MapaOperaciones {
     // DETALLE FLOTANTE (inf-derecha)
     // ═══════════════════════════════════════════════════════════════
     private void mostrarDetalleEn(String nombre, String tipo, String info,
-            String accentColor, double screenX, double screenY) {
+            String accentColor, double screenX, double screenY,
+            double geoLat, double geoLng) {
 
         Label lblNombre = new Label(nombre);
         lblNombre.setFont(Font.font("Arial", FontWeight.BOLD, 11));
@@ -675,13 +677,12 @@ public class MapaOperaciones {
         StackPane.setAlignment(card, Pos.TOP_LEFT);
         StackPane.setMargin(card, new Insets(marTop, 0, 0, marLeft));
         rootStack.getChildren().add(card);
-        flotantes.add(card);
+        flotantes.add(new Flotante(card, new GeoPosition(geoLat, geoLng)));
 
         btnCerrar.setOnAction(ev -> {
             rootStack.getChildren().remove(card);
-            flotantes.remove(card);
+            flotantes.removeIf(f -> f.card == card);
         });
-
         FadeTransition ft = new FadeTransition(Duration.millis(150), card);
         ft.setFromValue(0);
         ft.setToValue(1);
@@ -689,9 +690,8 @@ public class MapaOperaciones {
     }
 
     private void cerrarTodosFlotantes() {
-        new ArrayList<>(flotantes).forEach(c -> {
-            rootStack.getChildren().remove(c);
-        });
+        new ArrayList<>(flotantes).forEach(f
+                -> rootStack.getChildren().remove(f.card));
         flotantes.clear();
     }
 
@@ -707,8 +707,19 @@ public class MapaOperaciones {
         sub.setFont(Font.font("Arial", 11));
         sub.setTextFill(Color.web(GRAY_TEXT));
 
-        Label icono = new Label("🚨");
-        icono.setFont(Font.font(18));
+        javafx.scene.image.ImageView iconoImg = new javafx.scene.image.ImageView();
+        try {
+            java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(
+                    getClass().getResourceAsStream("/PinOperaciones3.png"));
+            iconoImg.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(
+                    recortarTransparencia(raw), null));
+        } catch (Exception ignored) {
+        }
+        iconoImg.setFitHeight(22);
+        iconoImg.setFitWidth(22);
+        iconoImg.setPreserveRatio(true);
+
+        StackPane icono = new StackPane(iconoImg);
         icono.setStyle("-fx-background-color:" + DARK_GRAD
                 + ";-fx-background-radius:8;-fx-padding:6 10 6 10;");
 
@@ -839,34 +850,41 @@ public class MapaOperaciones {
         ComboBox<String> cb = new ComboBox<>(FXCollections.observableArrayList(items));
         cb.setValue("Todos");
         cb.setMaxWidth(Double.MAX_VALUE);
-        cb.setPrefHeight(44);
-        cb.setStyle("-fx-background-color:#f7f7f7;"
+        cb.setPrefHeight(48);
+        cb.setStyle(
+                "-fx-background-color:#f7f7f7;"
+                + "-fx-text-fill:#4b5563;"
+                + "-fx-prompt-text-fill:#9ca3af;"
                 + "-fx-border-color:transparent;"
                 + "-fx-border-radius:30;-fx-background-radius:30;"
-                + "-fx-font-size:13px;");
+                + "-fx-font-size:14px;");
+
         cb.setCellFactory(lv -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item);
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;");
-                setOnMouseEntered(e -> setStyle("-fx-background-color:" + DARK_GRAD
-                        + ";-fx-background-radius:6;-fx-text-fill:white;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;"));
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;");
+                setOnMouseEntered(e -> setStyle(
+                        "-fx-background-color:" + DARK_GRAD + ";"
+                        + "-fx-background-radius:6;-fx-text-fill:white;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
                 setOnMouseExited(e -> setStyle(
                         "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;"));
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
             }
         });
+
         cb.setButtonCell(new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? cb.getPromptText() : item);
                 setStyle(item != null
-                        ? "-fx-background-color:#f7f7f7;-fx-text-fill:black;-fx-font-size:13px;"
-                        : "-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:13px;");
+                        ? "-fx-background-color:#f7f7f7;-fx-text-fill:black;"
+                        + "-fx-background-radius:30;-fx-font-size:14px;-fx-padding:4 14 4 14;"
+                        : "-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:14px;");
             }
         });
         return cb;
@@ -945,8 +963,18 @@ public class MapaOperaciones {
                 Platform.runLater(() -> lblCoordFooter.setText("📍  " + c));
             }
         });
+
+        mapa.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                Platform.runLater(MapaOperaciones.this::cerrarTodosFlotantes);
+            }
+        });
         mapa.setOverlayPainter(this::pintarOverlay);
         sn.setContent(mapa);
+
+        mapa.addMouseWheelListener(ev
+                -> Platform.runLater(MapaOperaciones.this::cerrarTodosFlotantes));
     }
 
     // ── Click ─────────────────────────────────────────────────────
@@ -959,11 +987,12 @@ public class MapaOperaciones {
                     seleccionado = new GeoPosition(a.getLatitud(), a.getLongitud());
                     String bar = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
                     String est = a.getEstado() != null ? a.getEstado().name() : "—";
+                    double _lat = a.getLatitud(), _lng = a.getLongitud();
                     double _px = e.getX(), _py = e.getY();
                     Platform.runLater(() -> mostrarDetalleEn(
                             a.getNombre(), "Alarma",
                             "Estado: " + est + "\nBarrio: " + bar + "\nRadio: " + (int) a.getRadio_cobertura() + " m",
-                            "#ffc107", _px, _py));
+                            "#ffc107", _px, _py, _lat, _lng));
                     repintarMapa();
                     return;
                 }
@@ -976,11 +1005,12 @@ public class MapaOperaciones {
                     seleccionado = new GeoPosition(u.getLatitud(), u.getLongitud());
                     String bar = u.getBarrio() != null ? u.getBarrio().getNombre() : "—";
                     String est = u.getEstado() != null ? u.getEstado().name() : "—";
+                    double _lat2 = u.getLatitud(), _lng2 = u.getLongitud();
                     double _px2 = e.getX(), _py2 = e.getY();
                     Platform.runLater(() -> mostrarDetalleEn(
                             u.getNombre(), "Unidad Policial",
                             "Estado: " + est + "\nBarrio: " + bar,
-                            toHex(fxColorUnidad(u.getEstado())), _px2, _py2));
+                            toHex(fxColorUnidad(u.getEstado())), _px2, _py2, _lat2, _lng2));
                     repintarMapa();
                     return;
                 }
@@ -1007,7 +1037,7 @@ public class MapaOperaciones {
                     Platform.runLater(() -> mostrarDetalleEn(
                             tipo, "Alerta — " + est,
                             "Barrio: " + bar + (desc.isBlank() ? "" : "\nDescripción: " + desc),
-                            toHex(fxColorAlerta(al.getEstado())), _px3, _py3));
+                            toHex(fxColorAlerta(al.getEstado())), _px3, _py3, alLat, alLng));
                     repintarMapa();
                     return;
                 }
@@ -1016,6 +1046,19 @@ public class MapaOperaciones {
         seleccionado = null;
         Platform.runLater(this::ocultarDetalle);
         repintarMapa();
+    }
+
+    private void reposicionarFlotantes() {
+        if (mapa == null || flotantes.isEmpty()) {
+            return;
+        }
+        for (Flotante f : flotantes) {
+            Point2D pt = toScreen(mapa, f.geo.getLatitude(), f.geo.getLongitude());
+            double marTop = Math.max(4, pt.getY() - 40);
+            double marLeft = Math.max(4, pt.getX() + 16);
+            Platform.runLater(()
+                    -> StackPane.setMargin(f.card, new Insets(marTop, 0, 0, marLeft)));
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1289,7 +1332,7 @@ public class MapaOperaciones {
         int t = (mostrarAlarmas ? alarmas.size() : 0)
                 + (mostrarUnidades ? unidades.size() : 0)
                 + (mostrarAlertas ? alertas.size() : 0);
-        lblContador.setText("Mostrando " + t + " elemento" + (t != 1 ? "s" : ""));
+        lblContador.setText(" Mostrando " + t + " elemento" + (t != 1 ? "s" : ""));
     }
 
     private void centrarEn(double lat, double lng) {

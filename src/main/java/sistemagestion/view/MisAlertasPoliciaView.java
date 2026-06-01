@@ -15,23 +15,26 @@ import javafx.util.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
 public class MisAlertasPoliciaView {
 
-    private static final String WHITE      = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String BLUE      = "#1565c0";
-    private static final String GREEN     = "#43a047";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
+    private static final String GREEN = "#43a047";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
+    private static final String ORANGE = "#fb8c00";
     private static final String YELLOW_BG = "#fffde7";
-    private static final String PURPLE    = "#7b1fa2";
-    private static final String TEAL      = "#00796b";
+    private static final String PURPLE = "#7b1fa2";
+    private static final String TEAL = "#00796b";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
+    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
 
     // ── Opciones de combos ─────────────────────────────────────────
     private static final List<String> TIPOS_ARMA = List.of(
@@ -43,22 +46,22 @@ public class MisAlertasPoliciaView {
             "— Sin transporte —", "A pie", "Motocicleta", "Automóvil",
             "Camioneta", "Bicicleta", "Mototaxi", "Bus", "Camión", "Otro");
 
-    private final Usuario               usuarioActual;
-    private final Policia               policiaActual;
-    private final AlertaService         alertaService;
+    private final Usuario usuarioActual;
+    private final Policia policiaActual;
+    private final AlertaService alertaService;
     private final AtencionAlertaService atencionService;
-    private final BorderPane            root;
+    private final BorderPane root;
 
     public MisAlertasPoliciaView(Usuario usuarioActual, Policia policiaActual,
             AlertaService alertaService, AtencionAlertaService atencionService,
             BorderPane root) {
         javafx.scene.text.Font.loadFont(
                 getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
-        this.usuarioActual   = usuarioActual;
-        this.policiaActual   = policiaActual;
-        this.alertaService   = alertaService;
+        this.usuarioActual = usuarioActual;
+        this.policiaActual = policiaActual;
+        this.alertaService = alertaService;
         this.atencionService = atencionService;
-        this.root            = root;
+        this.root = root;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -116,19 +119,19 @@ public class MisAlertasPoliciaView {
         List<Alerta> lista = cargarAlertas();
 
         long pendientes = lista.stream().filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE).count();
-        long enAtencion = lista.stream().filter(a ->
-                a.getEstado() == EstadoAlerta.EN_ATENCION ||
-                a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA).count();
-        long resueltas  = lista.stream().filter(a -> a.getEstado() == EstadoAlerta.RESUELTA).count();
-        long total      = lista.size();
+        long enAtencion = lista.stream().filter(a
+                -> a.getEstado() == EstadoAlerta.EN_ATENCION
+                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA).count();
+        long resueltas = lista.stream().filter(a -> a.getEstado() == EstadoAlerta.RESUELTA).count();
+        long total = lista.size();
 
         HBox row = new HBox(16);
         HBox.setHgrow(row, Priority.ALWAYS);
         row.getChildren().addAll(
-                statCard(RED_LIGHT,  RED,    "\uf0f3", "Pendientes",  boldNum(String.valueOf(pendientes), RED),    "Sin atender"),
-                statCard("#fff8e1",  ORANGE, "\uf017", "En atención", boldNum(String.valueOf(enAtencion), ORANGE), "En proceso"),
-                statCard("#e8f5e9",  GREEN,  "\uf058", "Resueltas",   boldNum(String.valueOf(resueltas),  GREEN),  "Completadas"),
-                statCard("#e3f2fd",  BLUE,   "\uf0c9", "Total",       boldNum(String.valueOf(total),      BLUE),   "Alertas asignadas")
+                statCard(RED_LIGHT, RED, "\uf0f3", "Pendientes", boldNum(String.valueOf(pendientes), RED), "Sin atender"),
+                statCard("#fff8e1", ORANGE, "\uf017", "En atención", boldNum(String.valueOf(enAtencion), ORANGE), "En proceso"),
+                statCard("#e8f5e9", GREEN, "\uf058", "Resueltas", boldNum(String.valueOf(resueltas), GREEN), "Completadas"),
+                statCard("#e3f2fd", BLUE, "\uf0c9", "Total", boldNum(String.valueOf(total), BLUE), "Alertas asignadas")
         );
         return row;
     }
@@ -141,7 +144,7 @@ public class MisAlertasPoliciaView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -153,7 +156,8 @@ public class MisAlertasPoliciaView {
         iconWrap.setMinSize(52, 52);
         iconWrap.setMaxSize(52, 52);
         Rectangle iconBg = new Rectangle(52, 52);
-        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
         Label iconLbl = new Label(iconFA);
         iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid';"
@@ -173,7 +177,7 @@ public class MisAlertasPoliciaView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -190,7 +194,7 @@ public class MisAlertasPoliciaView {
         HBox titulo = new HBox(8);
         titulo.setAlignment(Pos.CENTER_LEFT);
         Label filtroFA = new Label("\uf0b0");
-        filtroFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 12px; -fx-text-fill: " + BLUE + ";");
+        filtroFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 12px; -fx-text-fill: " + C_DARK_GRAD + ";");
         Label filtroTxt = new Label("Filtrar alertas");
         filtroTxt.setFont(Font.font("System", FontWeight.BOLD, 13));
         filtroTxt.setTextFill(Color.web(BLUE));
@@ -209,28 +213,30 @@ public class MisAlertasPoliciaView {
                 + "-fx-border-color: " + BORDER + "; -fx-border-radius: 10; -fx-border-width: 1.5;"
                 + "-fx-font-size: 13px; -fx-text-fill: #1E293B; -fx-prompt-text-fill: #94A3B8;"
                 + "-fx-padding: 0 14; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;";
-        String bFocus = bBase.replace(BORDER, "#93c5fd");
+        String bFocus = bBase.replace(BORDER, C_DARK_GRAD);
         busqueda.setStyle(bBase);
-        busqueda.focusedProperty().addListener((o, ov, focused) ->
-                busqueda.setStyle(focused ? bFocus : bBase));
+        busqueda.focusedProperty().addListener((o, ov, focused)
+                -> busqueda.setStyle(focused ? bFocus : bBase));
 
         // Botones de estado (tipo pill toggle)
-        record FiltroBtn(String label, String estado, String icono, String color, String bgActive) {}
+        record FiltroBtn(String label, String estado, String icono, String color, String bgActive) {
+
+        }
         List<FiltroBtn> filtros = List.of(
-            new FiltroBtn("Todos",        null,             "\uf0c9", BLUE,   "#e3f2fd"),
-            new FiltroBtn("Pendientes",   "PENDIENTE",      "\uf017", RED,    RED_LIGHT),
-            new FiltroBtn("Recibidas",    "RECIBIDA",       "\uf058", GREEN,  "#e8f5e9"),
-            new FiltroBtn("En atención",  "EN_ATENCION",    "\uf0e7", ORANGE, YELLOW_BG),
-            new FiltroBtn("Unidad asig.", "UNIDAD_ASIGNADA","\uf505", BLUE,   "#e3f2fd"),
-            new FiltroBtn("Resueltas",    "RESUELTA",       "\uf058", GREEN,  "#e8f5e9"),
-            new FiltroBtn("Canceladas",   "CANCELADA",      "\uf057", GRAY_TEXT, "#f3f4f6")
+                new FiltroBtn("Todos", null, "\uf0c9", C_DARK_GRAD, WHITE),
+                new FiltroBtn("Pendientes", "PENDIENTE", "\uf017", RED, RED_LIGHT),
+                new FiltroBtn("Recibidas", "RECIBIDA", "\uf058", GREEN, "#e8f5e9"),
+                new FiltroBtn("En atención", "EN_ATENCION", "\uf0e7", ORANGE, YELLOW_BG),
+                new FiltroBtn("Unidad asig.", "UNIDAD_ASIGNADA", "\uf505", BLUE, "#e3f2fd"),
+                new FiltroBtn("Resueltas", "RESUELTA", "\uf058", GREEN, "#e8f5e9"),
+                new FiltroBtn("Canceladas", "CANCELADA", "\uf057", GRAY_TEXT, "#f3f4f6")
         );
 
         HBox pillRow = new HBox(8);
         pillRow.setAlignment(Pos.CENTER_LEFT);
         // Estado activo guardado en un array para mutabilidad desde lambdas
         final String[] estadoActivo = {null};
-        final Button[] activoBtn    = {null};
+        final Button[] activoBtn = {null};
 
         for (FiltroBtn fb : filtros) {
             Button btn = new Button();
@@ -259,13 +265,25 @@ public class MisAlertasPoliciaView {
             };
 
             // "Todos" arranca activo
-            if (fb.estado() == null) { applyActive.run(); activoBtn[0] = btn; }
-            else applyInactive.run();
+            if (fb.estado() == null) {
+                applyActive.run();
+                activoBtn[0] = btn;
+            } else {
+                applyInactive.run();
+            }
 
-            btn.setOnMouseEntered(e -> { if (activoBtn[0] != btn) btn.setStyle(
-                    "-fx-background-color: " + fb.bgActive() + "; -fx-background-radius: 20;"
-                    + "-fx-border-color: " + fb.color() + "88; -fx-border-radius: 20; -fx-border-width: 1;"); });
-            btn.setOnMouseExited(e  -> { if (activoBtn[0] != btn) applyInactive.run(); });
+            btn.setOnMouseEntered(e -> {
+                if (activoBtn[0] != btn) {
+                    btn.setStyle(
+                            "-fx-background-color: " + fb.bgActive() + "; -fx-background-radius: 20;"
+                            + "-fx-border-color: " + fb.color() + "88; -fx-border-radius: 20; -fx-border-width: 1;");
+                }
+            });
+            btn.setOnMouseExited(e -> {
+                if (activoBtn[0] != btn) {
+                    applyInactive.run();
+                }
+            });
 
             btn.setOnAction(e -> {
                 if (activoBtn[0] != null) {
@@ -278,10 +296,11 @@ public class MisAlertasPoliciaView {
                     if (prev.getGraphic() instanceof HBox ph) {
                         ph.getChildren().forEach(n -> {
                             if (n instanceof Label ll) {
-                                if (ll.getStyle().contains("Font Awesome"))
+                                if (ll.getStyle().contains("Font Awesome")) {
                                     ll.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 10px; -fx-text-fill: " + GRAY_TEXT + ";");
-                                else
+                                } else {
                                     ll.setStyle("-fx-text-fill: " + GRAY_TEXT + ";");
+                                }
                             }
                         });
                     }
@@ -296,35 +315,13 @@ public class MisAlertasPoliciaView {
         }
 
         // Listener en el campo de búsqueda
-        busqueda.textProperty().addListener((o, ov, nv) ->
-                renderAlertas(listaContainer, todas, estadoActivo[0], nv.trim()));
+        busqueda.textProperty().addListener((o, ov, nv)
+                -> renderAlertas(listaContainer, todas, estadoActivo[0], nv.trim()));
 
         // Botón limpiar
-        Button limpiar = new Button();
-        HBox limpiarContent = new HBox(5);
-        limpiarContent.setAlignment(Pos.CENTER);
-        Label limpFA = new Label("\uf2ed");
-        limpFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
-        Label limpTxt = new Label("Limpiar");
-        limpTxt.setFont(Font.font("System", 12));
-        limpTxt.setStyle("-fx-text-fill: " + GRAY_TEXT + ";");
-        limpiarContent.getChildren().addAll(limpFA, limpTxt);
-        limpiar.setGraphic(limpiarContent);
-        limpiar.setPrefHeight(34);
-        limpiar.setCursor(javafx.scene.Cursor.HAND);
-        limpiar.setStyle("-fx-background-color: transparent; -fx-border-color: " + BORDER
-                + "; -fx-border-radius: 20; -fx-border-width: 1; -fx-background-radius: 20;");
-        limpiar.setOnAction(e -> {
-            busqueda.clear();
-            // simular clic en "Todos" (primer botón)
-            pillRow.getChildren().get(0).fireEvent(
-                new javafx.scene.input.MouseEvent(javafx.scene.input.MouseEvent.MOUSE_CLICKED,
-                    0,0,0,0, javafx.scene.input.MouseButton.PRIMARY, 1,
-                    false,false,false,false,false,false,false,false,false,false,null));
-        });
-
-        HBox spacer = new HBox(); HBox.setHgrow(spacer, Priority.ALWAYS);
-        controles.getChildren().addAll(busqueda, pillRow, spacer, limpiar);
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        controles.getChildren().addAll(busqueda, pillRow, spacer);
 
         panel.getChildren().addAll(titulo, controles);
         return panel;
@@ -334,29 +331,45 @@ public class MisAlertasPoliciaView {
     // RENDER DINÁMICO DE LA LISTA (aplica filtros)
     // ═══════════════════════════════════════════════════════════════
     private void renderAlertas(VBox container, List<Alerta> todas,
-                                String estadoFiltro, String textoBusqueda) {
+            String estadoFiltro, String textoBusqueda) {
         container.getChildren().clear();
 
         List<Alerta> filtradas = todas.stream().filter(a -> {
             // filtro por estado
             if (estadoFiltro != null) {
-                if (a.getEstado() == null) return false;
-                if (!a.getEstado().name().equals(estadoFiltro)) return false;
+                if (a.getEstado() == null) {
+                    return false;
+                }
+                if (!a.getEstado().name().equals(estadoFiltro)) {
+                    return false;
+                }
             }
             // filtro por texto
             if (!textoBusqueda.isEmpty()) {
                 String q = textoBusqueda.toLowerCase();
                 boolean match = false;
-                if (a.getDescripcion() != null && a.getDescripcion().toLowerCase().contains(q)) match = true;
+                if (a.getDescripcion() != null && a.getDescripcion().toLowerCase().contains(q)) {
+                    match = true;
+                }
                 if (!match && a.getBarrio() != null && a.getBarrio().getNombre() != null
-                        && a.getBarrio().getNombre().toLowerCase().contains(q)) match = true;
+                        && a.getBarrio().getNombre().toLowerCase().contains(q)) {
+                    match = true;
+                }
                 if (!match && a.getTipoalerta() != null && a.getTipoalerta().getNombre() != null
-                        && a.getTipoalerta().getNombre().toLowerCase().contains(q)) match = true;
+                        && a.getTipoalerta().getNombre().toLowerCase().contains(q)) {
+                    match = true;
+                }
                 if (!match && a.getTipoarma() != null && a.getTipoarma().getNombre() != null
-                        && a.getTipoarma().getNombre().toLowerCase().contains(q)) match = true;
+                        && a.getTipoarma().getNombre().toLowerCase().contains(q)) {
+                    match = true;
+                }
                 if (!match && a.getMediotransporte() != null && a.getMediotransporte().getNombre() != null
-                        && a.getMediotransporte().getNombre().toLowerCase().contains(q)) match = true;
-                if (!match) return false;
+                        && a.getMediotransporte().getNombre().toLowerCase().contains(q)) {
+                    match = true;
+                }
+                if (!match) {
+                    return false;
+                }
             }
             return true;
         }).collect(java.util.stream.Collectors.toList());
@@ -391,22 +404,28 @@ public class MisAlertasPoliciaView {
         String[] badge = badgeAlerta(a.getTipoalerta() != null
                 ? a.getTipoalerta().getNombre() : null);
 
-        boolean resuelta   = a.getEstado() == EstadoAlerta.RESUELTA;
+        boolean resuelta = a.getEstado() == EstadoAlerta.RESUELTA;
         boolean enAtencion = a.getEstado() == EstadoAlerta.EN_ATENCION
-                          || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA;
+                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA;
 
         String accentColor, bgLight, iconAvatar;
         if (resuelta) {
-            accentColor = GREEN;  bgLight = "#e8f5e9"; iconAvatar = "\uf058";
+            accentColor = GREEN;
+            bgLight = "#e8f5e9";
+            iconAvatar = "\uf058";
         } else if (enAtencion) {
-            accentColor = ORANGE; bgLight = YELLOW_BG; iconAvatar = "\uf0e7";
+            accentColor = ORANGE;
+            bgLight = YELLOW_BG;
+            iconAvatar = "\uf0e7";
         } else {
-            accentColor = badge[3]; bgLight = badge[2]; iconAvatar = badge[0];
+            accentColor = badge[3];
+            bgLight = badge[2];
+            iconAvatar = badge[0];
         }
 
-        String tipo   = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-        String barrio = a.getBarrio()     != null ? a.getBarrio().getNombre()     : "—";
-        String estado = a.getEstado()     != null ? a.getEstado().name().replace("_", " ") : "—";
+        String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
+        String barrio = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
+        String estado = a.getEstado() != null ? a.getEstado().name().replace("_", " ") : "—";
 
         VBox card = new VBox(0);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -442,12 +461,12 @@ public class MisAlertasPoliciaView {
 
         HBox fechaRow = new HBox(8);
         fechaRow.setAlignment(Pos.CENTER_LEFT);
-        Label calFA  = new Label("\uf073");
+        Label calFA = new Label("\uf073");
         calFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
         Label fechaTxt = new Label(formatFecha(a.getFechaHora()));
         fechaTxt.setFont(Font.font("System", 11));
         fechaTxt.setTextFill(Color.web(GRAY_TEXT));
-        Label pinFA  = new Label("\uf3c5");
+        Label pinFA = new Label("\uf3c5");
         pinFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
         Label dirTxt = new Label(formatDireccion(a.getDireccion()));
         dirTxt.setFont(Font.font("System", 11));
@@ -485,12 +504,21 @@ public class MisAlertasPoliciaView {
 
         HBox chips = new HBox(10);
         chips.setAlignment(Pos.CENTER_LEFT);
-        if (a.getTipoarma()        != null) chips.getChildren().add(chipFA("\uf6ff", a.getTipoarma().getNombre(),        "#fef2f2", RED));
-        if (a.getMediotransporte() != null) chips.getChildren().add(chipFA("\uf1b9", a.getMediotransporte().getNombre(), "#e3f2fd", BLUE));
-        if (a.getBarrio()          != null) chips.getChildren().add(chipFA("\uf3c5", a.getBarrio().getNombre(),          "#e8f5e9", GREEN));
+        if (a.getTipoarma() != null) {
+            chips.getChildren().add(chipImagen("/PistolaPin.png",
+                    a.getTipoarma().getNombre(), "#fef2f2", RED));
+        }
+        if (a.getMediotransporte() != null) {
+            chips.getChildren().add(chipFA("\uf1b9", a.getMediotransporte().getNombre(), "#e3f2fd", BLUE));
+        }
+        if (a.getBarrio() != null) {
+            chips.getChildren().add(chipFA("\uf3c5", a.getBarrio().getNombre(), "#e8f5e9", GREEN));
+        }
 
         body.getChildren().add(new VBox(4, descTitleLbl, descLbl));
-        if (!chips.getChildren().isEmpty()) body.getChildren().add(chips);
+        if (!chips.getChildren().isEmpty()) {
+            body.getChildren().add(chips);
+        }
 
         // ── Acordeón de atención ───────────────────────────────────
         card.getChildren().addAll(cardHeader, body, buildAtencionAcordeon(a));
@@ -526,15 +554,19 @@ public class MisAlertasPoliciaView {
         // Mini-chips resumen del ciudadano (arma / transporte)
         HBox resumenChips = new HBox(8);
         resumenChips.setAlignment(Pos.CENTER_LEFT);
-        HBox spacer = new HBox(); HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        String armaResumen  = a.getTipoarma()        != null ? a.getTipoarma().getNombre()        : null;
+        String armaResumen = a.getTipoarma() != null ? a.getTipoarma().getNombre() : null;
         String transResumen = a.getMediotransporte() != null ? a.getMediotransporte().getNombre() : null;
 
-        if (armaResumen != null)
-            resumenChips.getChildren().add(miniChip("\uf6ff", "Arma: " + armaResumen, "#fef2f2", RED));
-        if (transResumen != null)
+        if (armaResumen != null) {
+            resumenChips.getChildren().add(chipImagen("/PistolaPin.png",
+                    "Arma: " + armaResumen, "#fef2f2", RED));
+        }
+        if (transResumen != null) {
             resumenChips.getChildren().add(miniChip("\uf1b9", "Transporte: " + transResumen, "#e3f2fd", BLUE));
+        }
         if (armaResumen == null && transResumen == null) {
             Label noInfo = new Label("Sin datos previos del ciudadano");
             noInfo.setFont(Font.font("System", 11));
@@ -565,7 +597,7 @@ public class MisAlertasPoliciaView {
         header.setOnMouseEntered(e -> header.setStyle(
                 "-fx-background-color: #e8f0fe; -fx-background-radius: "
                 + (abierto[0] ? "0" : "0 0 18 18") + "; -fx-cursor: hand;"));
-        header.setOnMouseExited(e  -> header.setStyle(
+        header.setOnMouseExited(e -> header.setStyle(
                 "-fx-background-color: " + (abierto[0] ? "#f0f7ff" : "#f8fafc")
                 + "; -fx-background-radius: " + (abierto[0] ? "0" : "0 0 18 18")
                 + "; -fx-cursor: hand;"));
@@ -583,7 +615,7 @@ public class MisAlertasPoliciaView {
         box.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 0 0 18 18;");
 
         // ── Banner informativo: datos del ciudadano ────────────────
-        String armaOriginal  = a.getTipoarma()        != null ? a.getTipoarma().getNombre()        : null;
+        String armaOriginal = a.getTipoarma() != null ? a.getTipoarma().getNombre() : null;
         String transOriginal = a.getMediotransporte() != null ? a.getMediotransporte().getNombre() : null;
 
         if (armaOriginal != null || transOriginal != null) {
@@ -595,7 +627,7 @@ public class MisAlertasPoliciaView {
             Label infoFA = new Label("\uf05a");
             infoFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 13px; -fx-text-fill: #b45309;");
             Label infoTxt = new Label("El ciudadano reportó: "
-                    + (armaOriginal  != null ? "arma (" + armaOriginal + ") " : "")
+                    + (armaOriginal != null ? "arma (" + armaOriginal + ") " : "")
                     + (transOriginal != null ? "· transporte (" + transOriginal + ")" : ""));
             infoTxt.setFont(Font.font("System", FontWeight.BOLD, 11));
             infoTxt.setTextFill(Color.web("#92400e"));
@@ -612,12 +644,12 @@ public class MisAlertasPoliciaView {
         estadoAlertaBox.getChildren().addAll(
                 labelCampo("\uf0f3", "Estado de la alerta"),
                 styledCombo(
-                    List.of("PENDIENTE","RECIBIDA","EN_ATENCION","UNIDAD_ASIGNADA","RESUELTA","CANCELADA"),
-                    a.getEstado() != null ? a.getEstado().name() : "PENDIENTE"));
+                        List.of("PENDIENTE", "RECIBIDA", "EN_ATENCION", "UNIDAD_ASIGNADA", "RESUELTA", "CANCELADA"),
+                        a.getEstado() != null ? a.getEstado().name() : "PENDIENTE"));
 
         VBox estadoAtencionBox = new VBox(6);
         ComboBox<String> estadoAtencionCombo = styledCombo(
-                List.of("PENDIENTE","EN_PROCESO","FINALIZADA","CANCELADA"), "EN_PROCESO");
+                List.of("PENDIENTE", "EN_PROCESO", "FINALIZADA", "CANCELADA"), "EN_PROCESO");
         estadoAtencionBox.getChildren().addAll(
                 labelCampo("\uf46d", "Estado de la atención"),
                 estadoAtencionCombo);
@@ -645,7 +677,7 @@ public class MisAlertasPoliciaView {
         HBox.setHgrow(armaBox, Priority.ALWAYS);
         ComboBox<String> armaCombo = styledComboFull(TIPOS_ARMA,
                 resolverValorCombo(armaOriginal, TIPOS_ARMA));
-        armaBox.getChildren().addAll(labelCampo("\uf6ff", "Tipo de arma"), armaCombo);
+        armaBox.getChildren().addAll(labelCampo("\uf6de", "Tipo de arma"), armaCombo);
 
         // Medio de transporte — combo con valor precargado del ciudadano
         VBox transBox = new VBox(6);
@@ -684,11 +716,11 @@ public class MisAlertasPoliciaView {
         guardar.setPrefHeight(42);
         guardar.setStyle(btnPrimaryStyle());
         guardar.setOnMouseEntered(e -> guardar.setStyle(btnPrimaryHoverStyle()));
-        guardar.setOnMouseExited(e  -> guardar.setStyle(btnPrimaryStyle()));
+        guardar.setOnMouseExited(e -> guardar.setStyle(btnPrimaryStyle()));
 
         guardar.setOnAction(ev -> {
-            String desc        = situacion.getText().trim();
-            String nuevoEst    = estadoAlertaCombo.getValue();
+            String desc = situacion.getText().trim();
+            String nuevoEst = estadoAlertaCombo.getValue();
             String estAtencion = estadoAtencionCombo.getValue();
 
             if (desc.isEmpty()) {
@@ -697,8 +729,9 @@ public class MisAlertasPoliciaView {
                 return;
             }
             try {
-                if (nuevoEst != null && alertaService != null)
+                if (nuevoEst != null && alertaService != null) {
                     alertaService.actualizarEstado(a.getId_alerta(), nuevoEst);
+                }
             } catch (Exception ex) {
                 feedback.setTextFill(Color.web(RED));
                 feedback.setText("Error al actualizar estado: " + ex.getMessage());
@@ -716,7 +749,9 @@ public class MisAlertasPoliciaView {
                             : obs);
                     UnidadPolicial u = (policiaActual != null && policiaActual.getUnidadpolicial() != null)
                             ? policiaActual.getUnidadpolicial() : new UnidadPolicial();
-                    if (u.getNombre() == null) u.setNombre("Sin unidad");
+                    if (u.getNombre() == null) {
+                        u.setNombre("Sin unidad");
+                    }
                     at.setUnidad(u);
 
                     // Tipo de arma desde combo
@@ -774,7 +809,9 @@ public class MisAlertasPoliciaView {
      * (normalmente "— Sin X —").
      */
     private String resolverValorCombo(String valorCiudadano, List<String> opciones) {
-        if (valorCiudadano == null || valorCiudadano.isBlank()) return opciones.get(0);
+        if (valorCiudadano == null || valorCiudadano.isBlank()) {
+            return opciones.get(0);
+        }
         String v = valorCiudadano.trim().toLowerCase();
         return opciones.stream()
                 .filter(o -> o.toLowerCase().contains(v) || v.contains(o.toLowerCase()))
@@ -786,29 +823,56 @@ public class MisAlertasPoliciaView {
     // BADGES
     // ═══════════════════════════════════════════════════════════════
     private String[] badgeAlerta(String nombre) {
-        if (nombre == null) return new String[]{"\uf0f3", "General", "#f3f4f6", GRAY_TEXT};
+        if (nombre == null) {
+            return new String[]{"\uf0f3", "General", "#f3f4f6", GRAY_TEXT};
+        }
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT"))   return new String[]{"\uf505", "Delito",      RED_LIGHT,  RED};
-        if (n.contains("HOMICID"))                       return new String[]{"\uf071", "Homicidio",   "#fff0f0",  RED};
-        if (n.contains("SOSPECH"))                       return new String[]{"\uf441", "Vigilancia",  "#fef9c3",  "#92400e"};
-        if (n.contains("ANIMAL"))                        return new String[]{"\uf6d3", "Fauna",       "#ecfdf5",  "#065f46"};
-        if (n.contains("INCEND"))                        return new String[]{"\uf06d", "Incendio",    "#fff7ed",  "#c2410c"};
-        if (n.contains("RUIDO") || n.contains("ALTER"))  return new String[]{"\uf028", "Alteración",  "#fffbeb",  "#b45309"};
-        if (n.contains("MÉDI") || n.contains("MEDIC"))   return new String[]{"\uf0fa", "Médica",      "#f0fdf4",  "#15803d"};
-        if (n.contains("ACCID"))                         return new String[]{"\uf5e4", "Accidente",   "#eff6ff",  BLUE};
+        if (n.contains("ROB") || n.contains("ASALT")) {
+            return new String[]{"\uf505", "Delito", RED_LIGHT, RED};
+        }
+        if (n.contains("HOMICID")) {
+            return new String[]{"\uf071", "Homicidio", "#fff0f0", RED};
+        }
+        if (n.contains("SOSPECH")) {
+            return new String[]{"\uf441", "Vigilancia", "#fef9c3", "#92400e"};
+        }
+        if (n.contains("ANIMAL")) {
+            return new String[]{"\uf6d3", "Fauna", "#ecfdf5", "#065f46"};
+        }
+        if (n.contains("INCEND")) {
+            return new String[]{"\uf06d", "Incendio", "#fff7ed", "#c2410c"};
+        }
+        if (n.contains("RUIDO") || n.contains("ALTER")) {
+            return new String[]{"\uf028", "Alteración", "#fffbeb", "#b45309"};
+        }
+        if (n.contains("MÉDI") || n.contains("MEDIC")) {
+            return new String[]{"\uf0fa", "Médica", "#f0fdf4", "#15803d"};
+        }
+        if (n.contains("ACCID")) {
+            return new String[]{"\uf5e4", "Accidente", "#eff6ff", BLUE};
+        }
         return new String[]{"\uf0f3", "General", "#f3f4f6", GRAY_TEXT};
     }
 
     private String[] badgeEstado(EstadoAlerta estado) {
-        if (estado == null) return new String[]{"\uf128", "#f3f4f6", GRAY_TEXT};
+        if (estado == null) {
+            return new String[]{"\uf128", "#f3f4f6", GRAY_TEXT};
+        }
         return switch (estado) {
-            case PENDIENTE       -> new String[]{"\uf017", RED_LIGHT,   RED};
-            case RECIBIDA        -> new String[]{"\uf058", "#e8f5e9",   GREEN};
-            case EN_ATENCION     -> new String[]{"\uf0e7", YELLOW_BG,   ORANGE};
-            case UNIDAD_ASIGNADA -> new String[]{"\uf505", "#e3f2fd",   BLUE};
-            case RESUELTA        -> new String[]{"\uf058", "#e8f5e9",   GREEN};
-            case CANCELADA       -> new String[]{"\uf057", "#f3f4f6",   GRAY_TEXT};
-            default              -> new String[]{"\uf128", "#f3f4f6",   GRAY_TEXT};
+            case PENDIENTE ->
+                new String[]{"\uf017", RED_LIGHT, RED};
+            case RECIBIDA ->
+                new String[]{"\uf058", "#e8f5e9", GREEN};
+            case EN_ATENCION ->
+                new String[]{"\uf0e7", YELLOW_BG, ORANGE};
+            case UNIDAD_ASIGNADA ->
+                new String[]{"\uf505", "#e3f2fd", BLUE};
+            case RESUELTA ->
+                new String[]{"\uf058", "#e8f5e9", GREEN};
+            case CANCELADA ->
+                new String[]{"\uf057", "#f3f4f6", GRAY_TEXT};
+            default ->
+                new String[]{"\uf128", "#f3f4f6", GRAY_TEXT};
         };
     }
 
@@ -829,16 +893,24 @@ public class MisAlertasPoliciaView {
                 + "-fx-prompt-text-fill: #94A3B8; -fx-padding: 12 14 12 14;"
                 + "-fx-focus-color: transparent; -fx-faint-focus-color: transparent;";
         ta.setStyle(taBase);
-        ta.focusedProperty().addListener((obs, o, focused) ->
-                ta.setStyle(focused ? taFocus : taBase));
+        ta.focusedProperty().addListener((obs, o, focused)
+                -> ta.setStyle(focused ? taFocus : taBase));
         ta.skinProperty().addListener((obs, o, skin) -> {
-            if (skin == null) return;
+            if (skin == null) {
+                return;
+            }
             javafx.scene.Node sp = ta.lookup(".scroll-pane");
-            if (sp != null) sp.setStyle("-fx-background-color: white; -fx-background-insets: 0;");
+            if (sp != null) {
+                sp.setStyle("-fx-background-color: white; -fx-background-insets: 0;");
+            }
             javafx.scene.Node vp = ta.lookup(".scroll-pane .viewport");
-            if (vp != null) vp.setStyle("-fx-background-color: white;");
+            if (vp != null) {
+                vp.setStyle("-fx-background-color: white;");
+            }
             javafx.scene.Node ct = ta.lookup(".content");
-            if (ct != null) ct.setStyle("-fx-background-color: white;");
+            if (ct != null) {
+                ct.setStyle("-fx-background-color: white;");
+            }
         });
     }
 
@@ -857,7 +929,9 @@ public class MisAlertasPoliciaView {
         return chip;
     }
 
-    /** Mini-chip más compacto para el header del acordeón */
+    /**
+     * Mini-chip más compacto para el header del acordeón
+     */
     private HBox miniChip(String iconFA, String texto, String bg, String fg) {
         HBox chip = new HBox(5);
         chip.setAlignment(Pos.CENTER_LEFT);
@@ -870,6 +944,34 @@ public class MisAlertasPoliciaView {
         txt.setFont(Font.font("System", FontWeight.BOLD, 10));
         txt.setTextFill(Color.web(fg));
         chip.getChildren().addAll(ico, txt);
+        return chip;
+    }
+
+    private HBox chipImagen(String rutaImagen, String texto, String bg, String fg) {
+        HBox chip = new HBox(6);
+        chip.setAlignment(Pos.CENTER_LEFT);
+        chip.setPadding(new Insets(4, 10, 4, 10));
+        chip.setStyle("-fx-background-color: " + bg + "; -fx-background-radius: 20;"
+                + "-fx-border-color: " + fg + "44; -fx-border-radius: 20; -fx-border-width: 1;");
+        try {
+            java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(
+                    getClass().getResourceAsStream(rutaImagen));
+            java.awt.image.BufferedImage recortada = recortarTransparencia(raw);
+            javafx.scene.image.ImageView ico = new javafx.scene.image.ImageView(
+                    javafx.embed.swing.SwingFXUtils.toFXImage(recortada, null));
+            ico.setFitWidth(14);
+            ico.setFitHeight(14);
+            ico.setPreserveRatio(true);
+            chip.getChildren().add(ico);
+        } catch (Exception e) {
+            Label fallback = new Label("⚠");
+            fallback.setFont(Font.font("System", 12));
+            chip.getChildren().add(fallback);
+        }
+        Label txt = new Label(texto);
+        txt.setFont(Font.font("System", FontWeight.BOLD, 11));
+        txt.setTextFill(Color.web(fg));
+        chip.getChildren().add(txt);
         return chip;
     }
 
@@ -889,14 +991,18 @@ public class MisAlertasPoliciaView {
         node.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
     }
 
-    /** Combo estándar con ancho fijo 220 (para combos de estado) */
+    /**
+     * Combo estándar con ancho fijo 220 (para combos de estado)
+     */
     private ComboBox<String> styledCombo(List<String> opciones, String valorInicial) {
         ComboBox<String> cb = buildBaseCombo(opciones, valorInicial);
         cb.setPrefWidth(220);
         return cb;
     }
 
-    /** Combo que se expande al máximo disponible (para arma y transporte) */
+    /**
+     * Combo que se expande al máximo disponible (para arma y transporte)
+     */
     private ComboBox<String> styledComboFull(List<String> opciones, String valorInicial) {
         ComboBox<String> cb = buildBaseCombo(opciones, valorInicial);
         cb.setMaxWidth(Double.MAX_VALUE);
@@ -913,21 +1019,26 @@ public class MisAlertasPoliciaView {
                 + "-fx-border-color: " + BORDER + "; -fx-border-radius: 10;"
                 + "-fx-border-width: 1.5; -fx-font-size: 13px; -fx-cursor: hand;");
         cb.setCellFactory(lv -> new ListCell<>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setText(null); return; }
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
                 setText(item.startsWith("—") ? item : item.replace("_", " "));
                 setStyle("-fx-background-color: transparent; -fx-text-fill: #374151;"
                         + "-fx-font-size: 13px; -fx-padding: 9 14 9 14;");
                 setOnMouseEntered(e -> setStyle("-fx-background-color: " + BLUE
                         + "; -fx-background-radius: 6; -fx-text-fill: white;"
                         + "-fx-font-size: 13px; -fx-padding: 9 14 9 14;"));
-                setOnMouseExited(e  -> setStyle("-fx-background-color: transparent;"
+                setOnMouseExited(e -> setStyle("-fx-background-color: transparent;"
                         + "-fx-text-fill: #374151; -fx-font-size: 13px; -fx-padding: 9 14 9 14;"));
             }
         });
         cb.setButtonCell(new ListCell<>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? "" : item.replace("_", " "));
                 setStyle("-fx-background-color: transparent; -fx-text-fill: #111827;"
@@ -938,8 +1049,9 @@ public class MisAlertasPoliciaView {
     }
 
     private String btnPrimaryStyle() {
-        return "-fx-background-color: " + BLUE + "; -fx-background-radius: 10; -fx-padding: 0 22; -fx-cursor: hand;";
+        return "-fx-background-color: " + C_DARK_GRAD + "; -fx-background-radius: 10; -fx-padding: 0 22; -fx-cursor: hand;";
     }
+
     private String btnPrimaryHoverStyle() {
         return "-fx-background-color: #0d47a1; -fx-background-radius: 10; -fx-padding: 0 22; -fx-cursor: hand;";
     }
@@ -948,37 +1060,93 @@ public class MisAlertasPoliciaView {
     // DATOS
     // ═══════════════════════════════════════════════════════════════
     private List<Alerta> cargarAlertas() {
-        if (alertaService == null) return List.of();
+        if (alertaService == null) {
+            return List.of();
+        }
         try {
             List<Alerta> todas = alertaService.listar();
-            if (usuarioActual == null) return todas;
+            if (usuarioActual == null) {
+                return todas;
+            }
             List<Alerta> mias = todas.stream()
                     .filter(a -> a.getUsuario() != null
-                            && usuarioActual.getUsername() != null
-                            && usuarioActual.getUsername().equals(a.getUsuario().getUsername()))
+                    && usuarioActual.getUsername() != null
+                    && usuarioActual.getUsername().equals(a.getUsuario().getUsername()))
                     .collect(java.util.stream.Collectors.toList());
             return mias.isEmpty() ? todas : mias;
-        } catch (Exception e) { return List.of(); }
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
     // FORMATEO
     // ═══════════════════════════════════════════════════════════════
     private String formatFecha(LocalDateTime dt) {
-        if (dt == null) return "—";
+        if (dt == null) {
+            return "—";
+        }
         long mins = java.time.Duration.between(dt, LocalDateTime.now()).toMinutes();
-        if (mins < 1)    return "Hace un momento";
-        if (mins < 60)   return "Hace " + mins + " min";
-        if (mins < 1440) return "Hace " + (mins / 60) + " h";
+        if (mins < 1) {
+            return "Hace un momento";
+        }
+        if (mins < 60) {
+            return "Hace " + mins + " min";
+        }
+        if (mins < 1440) {
+            return "Hace " + (mins / 60) + " h";
+        }
         return dt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     private String formatDireccion(Direccion d) {
-        if (d == null) return "—";
+        if (d == null) {
+            return "—";
+        }
         StringBuilder sb = new StringBuilder();
-        if (d.getCalle()   != null && !d.getCalle().isBlank())   sb.append("Calle ").append(d.getCalle()).append(" ");
-        if (d.getCarrera() != null && !d.getCarrera().isBlank()) sb.append("# ").append(d.getCarrera());
-        if (d.getCasa()    != null && !d.getCasa().isBlank())    sb.append(" Casa ").append(d.getCasa());
+        if (d.getCalle() != null && !d.getCalle().isBlank()) {
+            sb.append("Calle ").append(d.getCalle()).append(" ");
+        }
+        if (d.getCarrera() != null && !d.getCarrera().isBlank()) {
+            sb.append("# ").append(d.getCarrera());
+        }
+        if (d.getCasa() != null && !d.getCasa().isBlank()) {
+            sb.append(" Casa ").append(d.getCasa());
+        }
         return sb.isEmpty() ? "Sin dirección" : sb.toString().trim();
     }
+
+    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
+        if (img == null) {
+            return null;
+        }
+        if (!img.getColorModel().hasAlpha()) {
+            return img;
+        }
+        int w = img.getWidth(), h = img.getHeight();
+        int top = h, bottom = -1, left = w, right = -1;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
+                    if (y < top) {
+                        top = y;
+                    }
+                    if (y > bottom) {
+                        bottom = y;
+                    }
+                    if (x < left) {
+                        left = x;
+                    }
+                    if (x > right) {
+                        right = x;
+                    }
+                }
+            }
+        }
+        if (bottom < 0 || right < 0) {
+            return img;
+        }
+        return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
+    }
+
 }
