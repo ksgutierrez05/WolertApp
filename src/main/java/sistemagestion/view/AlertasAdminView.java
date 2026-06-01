@@ -4,11 +4,12 @@
  */
 package sistemagestion.view;
 
+
+
 /**
  *
  * @author Maria Cristina
  */
-// view/AlertasAdminView.java
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,22 +20,28 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import sistemagestion.model.Alerta;
-import static sistemagestion.model.EstadoAlarma.ACTIVA;
 import sistemagestion.model.EstadoAlerta;
-import static sistemagestion.model.EstadoAtencionAlerta.EN_PROCESO;
 import sistemagestion.service.AlertaService;
 
 public class AlertasAdminView {
 
-    private static final String WHITE = "#ffffff";
-    private static final String BG = "#f4f6fb";
-    private static final String RED = "#e53935";
+    private static final String WHITE     = "#ffffff";
+    private static final String BG        = "#f4f6fb";
+    private static final String RED       = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE = "#fb8c00";
-    private static final String GREEN = "#43a047";
-    private static final String BLUE = "#1565c0";
+    private static final String ORANGE    = "#fb8c00";
+    private static final String GREEN     = "#43a047";
+    private static final String BLUE      = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER = "#e5e7eb";
+    private static final String BORDER    = "#e5e7eb";
+
+    // ── Anchos de columna fijos para alinear cabecera y filas ─────
+    private static final double W_TIPO   = 160;
+    private static final double W_BARRIO = 140;
+    private static final double W_USER   = 140;
+    private static final double W_ESTADO = 160;
+    private static final double W_FECHA  = 110;
+    // Descripción crece con el espacio restante
 
     private final AlertaService alertaService;
 
@@ -71,21 +78,27 @@ public class AlertasAdminView {
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         card.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
 
-        // Encabezado
-        HBox header = new HBox();
-        header.setPadding(new Insets(14, 16, 14, 16));
-        header.setStyle("-fx-border-color: transparent transparent " + BORDER
-                + " transparent; -fx-border-width: 0 0 1 0;");
+        // ── Cabecera ─────────────────────────────────────────────────
+        HBox header = new HBox(0);
+        header.setPadding(new Insets(12, 16, 12, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle(
+                "-fx-background-color: #f8fafc;"
+                + "-fx-background-radius: 12 12 0 0;"
+                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
+                + "-fx-border-width: 0 0 1 0;");
+
         header.getChildren().addAll(
-                colHeader("Tipo"),
-                colHeader("Barrio"),
-                colHeader("Usuario"),
-                colHeader("Estado"),
-                colHeader("Fecha"),
-                colHeader("Descripción")
+                colHeaderFixed("Tipo",        W_TIPO),
+                colHeaderFixed("Barrio",      W_BARRIO),
+                colHeaderFixed("Usuario",     W_USER),
+                colHeaderFixed("Estado",      W_ESTADO),
+                colHeaderFixed("Fecha",       W_FECHA),
+                colHeaderGrow("Descripción")
         );
         card.getChildren().add(header);
 
+        // ── Filas ─────────────────────────────────────────────────────
         List<Alerta> alertas = cargarAlertas();
 
         if (alertas.isEmpty()) {
@@ -100,44 +113,68 @@ public class AlertasAdminView {
             card.getChildren().add(buildFila(a, par));
             par = !par;
         }
+
+        // ── Pie ───────────────────────────────────────────────────────
+        HBox footer = new HBox();
+        footer.setPadding(new Insets(12, 16, 12, 16));
+        footer.setStyle("-fx-border-color: " + BORDER
+                + " transparent transparent transparent; -fx-border-width: 1 0 0 0;");
+        footer.getChildren().add(
+                label("Total: " + alertas.size() + " alertas", 12, GRAY_TEXT, false));
+        card.getChildren().add(footer);
+
         return card;
     }
 
     private HBox buildFila(Alerta a, boolean par) {
-        HBox fila = new HBox();
+        HBox fila = new HBox(0);
         fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setPadding(new Insets(12, 16, 12, 16));
-        fila.setStyle("-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
+        fila.setPadding(new Insets(11, 16, 11, 16));
+
+        String bgNormal = "-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
                 + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
-                + "-fx-border-width: 0 0 1 0;");
+                + "-fx-border-width: 0 0 1 0;";
+        fila.setStyle(bgNormal);
         fila.setOnMouseEntered(e -> fila.setStyle(
                 "-fx-background-color: #EEF2FF; -fx-cursor: hand;"
                 + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width: 0 0 1 0;"));
-        fila.setOnMouseExited(e -> fila.setStyle(
-                "-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
-                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
-                + "-fx-border-width: 0 0 1 0;"));
+        fila.setOnMouseExited(e -> fila.setStyle(bgNormal));
 
-        String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "—";
-        String barrio = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
-        String usuario = a.getUsuario() != null ? a.getUsuario().getPrimer_nombre() : "—";
-        String estado = a.getEstado() != null ? a.getEstado().name() : "—";
-        String fecha = a.getFechaHora() != null ? a.getFechaHora().toLocalDate().toString() : "—";
-        String desc = a.getDescripcion() != null ? a.getDescripcion() : "—";
+        String tipo    = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "—";
+        String barrio  = a.getBarrio()     != null ? a.getBarrio().getNombre()     : "—";
+        String usuario = a.getUsuario()    != null ? a.getUsuario().getPrimer_nombre() : "—";
+        String estado  = a.getEstado()     != null ? a.getEstado().name()          : "—";
+        String fecha   = a.getFechaHora()  != null ? a.getFechaHora().toLocalDate().toString() : "—";
+        String desc    = a.getDescripcion()!= null ? a.getDescripcion()            : "—";
 
+        // Badge de estado
         Label estadoLbl = label(estado, 11, estadoColor(a.getEstado()), true);
         estadoLbl.setPadding(new Insets(3, 8, 3, 8));
-        estadoLbl.setStyle("-fx-background-color: " + estadoBg(a.getEstado())
-                + "; -fx-background-radius: 20;");
+        estadoLbl.setStyle(
+                "-fx-background-color: " + estadoBg(a.getEstado()) + ";"
+                + "-fx-background-radius: 20;"
+                + "-fx-text-fill: " + estadoColor(a.getEstado()) + ";"
+                + "-fx-font-size: 11px; -fx-font-weight: bold;");
         HBox estadoBox = new HBox(estadoLbl);
-        HBox.setHgrow(estadoBox, Priority.ALWAYS);
+        estadoBox.setAlignment(Pos.CENTER_LEFT);
+        estadoBox.setPrefWidth(W_ESTADO);
+        estadoBox.setMinWidth(W_ESTADO);
+        estadoBox.setMaxWidth(W_ESTADO);
+
+        // Descripción crece
+        Label descLbl = label(desc.length() > 50 ? desc.substring(0, 50) + "…" : desc,
+                13, "#374151", false);
+        descLbl.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(descLbl, Priority.ALWAYS);
 
         fila.getChildren().addAll(
-                celda(tipo), celda(barrio), celda(usuario),
+                celdaFija(tipo,    W_TIPO),
+                celdaFija(barrio,  W_BARRIO),
+                celdaFija(usuario, W_USER),
                 estadoBox,
-                celda(fecha),
-                celda(desc.length() > 40 ? desc.substring(0, 40) + "…" : desc)
+                celdaFija(fecha,   W_FECHA),
+                descLbl
         );
         return fila;
     }
@@ -150,57 +187,60 @@ public class AlertasAdminView {
         }
     }
 
+    // ── Color / fondo del estado ──────────────────────────────────
     private String estadoColor(EstadoAlerta e) {
-        if (e == null) {
-            return GRAY_TEXT;
-        }
+        if (e == null) return GRAY_TEXT;
         return switch (e) {
-            case PENDIENTE ->
-                ORANGE;
-            case RECIBIDA ->
-                BLUE;
-            case EN_ATENCION ->
-                "#7b1fa2";
-            case UNIDAD_ASIGNADA ->
-                "#0288d1";
-            case RESUELTA ->
-                GREEN;
-            case CANCELADA ->
-                GRAY_TEXT;
+            case PENDIENTE       -> ORANGE;
+            case RECIBIDA        -> BLUE;
+            case EN_ATENCION     -> "#7b1fa2";
+            case UNIDAD_ASIGNADA -> "#0288d1";
+            case RESUELTA        -> GREEN;
+            case CANCELADA       -> GRAY_TEXT;
         };
     }
 
     private String estadoBg(EstadoAlerta e) {
-        if (e == null) {
-            return "#f3f4f6";
-        }
+        if (e == null) return "#f3f4f6";
         return switch (e) {
-            case PENDIENTE ->
-                "#fff8e1";
-            case RECIBIDA ->
-                "#e8f0fe";
-            case EN_ATENCION ->
-                "#f3e5f5";
-            case UNIDAD_ASIGNADA ->
-                "#e1f5fe";
-            case RESUELTA ->
-                "#e8f5e9";
-            case CANCELADA ->
-                "#f3f4f6";
+            case PENDIENTE       -> "#fff8e1";
+            case RECIBIDA        -> "#e8f0fe";
+            case EN_ATENCION     -> "#f3e5f5";
+            case UNIDAD_ASIGNADA -> "#e1f5fe";
+            case RESUELTA        -> "#e8f5e9";
+            case CANCELADA       -> "#f3f4f6";
         };
     }
 
-    private Label colHeader(String text) {
-        Label l = label(text, 12, GRAY_TEXT, false);
+    // ── Helpers UI ────────────────────────────────────────────────
+    /** Cabecera con ancho fijo. */
+    private Label colHeaderFixed(String text, double width) {
+        Label l = new Label(text.toUpperCase());
+        l.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;"
+                + "-fx-text-fill: #9ca3af; -fx-letter-spacing: 0.5px;");
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        return l;
+    }
+
+    /** Cabecera que crece (última columna). */
+    private Label colHeaderGrow(String text) {
+        Label l = new Label(text.toUpperCase());
+        l.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;"
+                + "-fx-text-fill: #9ca3af; -fx-letter-spacing: 0.5px;");
         l.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(l, Priority.ALWAYS);
         return l;
     }
 
-    private Label celda(String txt) {
+    /** Celda con ancho fijo. */
+    private Label celdaFija(String txt, double width) {
         Label l = label(txt != null ? txt : "—", 13, "#374151", false);
-        l.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(l, Priority.ALWAYS);
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        l.setEllipsisString("…");
         return l;
     }
 

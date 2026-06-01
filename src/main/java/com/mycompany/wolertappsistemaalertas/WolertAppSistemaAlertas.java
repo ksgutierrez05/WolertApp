@@ -9,7 +9,11 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import sistemagestion.service.EmailService;
+<<<<<<< HEAD
 
+=======
+//import sistemagestion.view.MapaView;
+>>>>>>> origin/feature/view-2
 
 /**
  *
@@ -72,9 +76,13 @@ public class WolertAppSistemaAlertas extends Application {
         //new MapaAlarmasRegistada().mostrar();
         //new MapaAlerta(null, null, null, null).mostrar();
         //new MapaUnidadesPoliciales().mostrar();
+<<<<<<< HEAD
         //new MApaOperaciones().
         //new MApaOperaciones().
   }
+=======
+  
+>>>>>>> origin/feature/view-2
 
         // Temporalmente abre el mapa directo, sin login ni dashboard
         //new MapaView().mostrar();

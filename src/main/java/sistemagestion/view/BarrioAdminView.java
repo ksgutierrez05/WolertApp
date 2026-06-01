@@ -24,21 +24,21 @@ import sistemagestion.service.ComunaService;
 public class BarrioAdminView {
 
     // ── Colores — idénticos a ComunaAdminView/UsuariosAdminView ──
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String BLUE      = "#1565c0";
-    private static final String GREEN     = "#43a047";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
+    private static final String GREEN = "#43a047";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String PURPLE    = "#7b1fa2";
+    private static final String ORANGE = "#fb8c00";
+    private static final String PURPLE = "#7b1fa2";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
-    private BarrioService  barrioService;
-    private ComunaService  comunaService;
-    private VBox           tablaContainer;
-    private TextField      campoBusqueda;
+    private BarrioService barrioService;
+    private ComunaService comunaService;
+    private VBox tablaContainer;
+    private TextField campoBusqueda;
     private ComboBox<String> filtroComuna;
 
     private static final int FILAS_POR_PAGINA = 8;
@@ -105,7 +105,7 @@ public class BarrioAdminView {
         Button btnNuevo = new Button("+ Nuevo barrio");
         btnNuevo.setStyle(btnPrimaryStyle());
         btnNuevo.setOnMouseEntered(e -> btnNuevo.setStyle(btnPrimaryHoverStyle()));
-        btnNuevo.setOnMouseExited(e  -> btnNuevo.setStyle(btnPrimaryStyle()));
+        btnNuevo.setOnMouseExited(e -> btnNuevo.setStyle(btnPrimaryStyle()));
         btnNuevo.setOnAction(e -> abrirFormulario(null));
 
         right.getChildren().add(btnNuevo);
@@ -132,16 +132,16 @@ public class BarrioAdminView {
         long sinComuna = barrios.stream()
                 .filter(b -> b.getComuna() == null).count();
 
-        Label lblBarriosVal   = boldNum(String.valueOf(totalBarrios),  BLUE);
-        Label lblComunasVal   = boldNum(String.valueOf(totalComunas),  GREEN);
-        Label lblCoberVal     = boldNum(comunasConBarrios + "/" + totalComunas, ORANGE);
-        Label lblSinComunaVal = boldNum(String.valueOf(sinComuna),     sinComuna > 0 ? RED : GRAY_TEXT);
+        Label lblBarriosVal = boldNum(String.valueOf(totalBarrios), BLUE);
+        Label lblComunasVal = boldNum(String.valueOf(totalComunas), GREEN);
+        Label lblCoberVal = boldNum(comunasConBarrios + "/" + totalComunas, ORANGE);
+        Label lblSinComunaVal = boldNum(String.valueOf(sinComuna), sinComuna > 0 ? RED : GRAY_TEXT);
 
         row.getChildren().addAll(
-                statCard("#e8f0fe", BLUE,   "\uf015", "Total barrios",       lblBarriosVal,   "Divisiones registradas"),
-                statCard("#e8f5e9", GREEN,  "\uf5a0", "Comunas",             lblComunasVal,   "Con barrios: " + comunasConBarrios),
-                statCard("#fff8e1", ORANGE, "\uf279", "Cobertura",           lblCoberVal,     "Comunas cubiertas"),
-                statCard(RED_LIGHT, RED,    "\uf071", "Sin comuna",          lblSinComunaVal, "Barrios sin asignar")
+                statCard("#e8f0fe", BLUE, "\uf015", "Total barrios", lblBarriosVal, "Divisiones registradas"),
+                statCard("#e8f5e9", GREEN, "\uf5a0", "Comunas", lblComunasVal, "Con barrios: " + comunasConBarrios),
+                statCard("#fff8e1", ORANGE, "\uf279", "Cobertura", lblCoberVal, "Comunas cubiertas"),
+                statCard(RED_LIGHT, RED, "\uf071", "Sin comuna", lblSinComunaVal, "Barrios sin asignar")
         );
         return row;
     }
@@ -156,7 +156,7 @@ public class BarrioAdminView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -194,7 +194,7 @@ public class BarrioAdminView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -278,9 +278,9 @@ public class BarrioAdminView {
 
         header.getChildren().addAll(
                 hNombreWrap,
-                colHeaderFixed("Comuna",      180),
+                colHeaderFixed("Comuna", 180),
                 colHeaderFixed("Coordenadas", 180),
-                colHeaderFixed("Acciones",    160)
+                colHeaderFixed("Acciones", 160)
         );
         card.getChildren().add(header);
 
@@ -330,18 +330,18 @@ public class BarrioAdminView {
     }
 
     private void filtrarYMostrar() {
-        String texto  = campoBusqueda.getText().toLowerCase().trim();
+        String texto = campoBusqueda.getText().toLowerCase().trim();
         String comuna = filtroComuna.getValue();
 
         barrosFiltrados = cargarBarrios().stream()
                 .filter(b -> {
                     boolean matchNombre = texto.isEmpty()
                             || (b.getNombre() != null
-                                && b.getNombre().toLowerCase().contains(texto));
+                            && b.getNombre().toLowerCase().contains(texto));
                     boolean matchComuna = comuna == null
                             || comuna.equals("Todas las comunas")
                             || (b.getComuna() != null
-                                && comuna.equals(b.getComuna().getNombre()));
+                            && comuna.equals(b.getComuna().getNombre()));
                     return matchNombre && matchComuna;
                 })
                 .collect(java.util.stream.Collectors.toList());
@@ -377,39 +377,54 @@ public class BarrioAdminView {
     }
 
     private void actualizarPaginacion() {
-        if (paginacionBox == null) return;
+        if (paginacionBox == null) {
+            return;
+        }
         paginacionBox.getChildren().clear();
 
         int total = barrosFiltrados.size();
         int totalPaginas = (int) Math.ceil((double) total / FILAS_POR_PAGINA);
-        if (totalPaginas <= 1) return;
+        if (totalPaginas <= 1) {
+            return;
+        }
 
         paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1, () -> {
-            paginaActual--; renderizarPagina();
+            paginaActual--;
+            renderizarPagina();
         }));
 
         int inicio = Math.max(1, paginaActual - 2);
-        int fin    = Math.min(totalPaginas, paginaActual + 2);
+        int fin = Math.min(totalPaginas, paginaActual + 2);
 
         if (inicio > 1) {
             paginacionBox.getChildren().addAll(
-                    btnPag("1", true, () -> { paginaActual = 1; renderizarPagina(); }),
+                    btnPag("1", true, () -> {
+                        paginaActual = 1;
+                        renderizarPagina();
+                    }),
                     label("...", 13, GRAY_TEXT, false));
         }
         for (int i = inicio; i <= fin; i++) {
             final int pg = i;
             paginacionBox.getChildren().add(
-                    btnPag(String.valueOf(i), true, () -> { paginaActual = pg; renderizarPagina(); }));
+                    btnPag(String.valueOf(i), true, () -> {
+                        paginaActual = pg;
+                        renderizarPagina();
+                    }));
         }
         if (fin < totalPaginas) {
             paginacionBox.getChildren().addAll(
                     label("...", 13, GRAY_TEXT, false),
                     btnPag(String.valueOf(totalPaginas), true,
-                            () -> { paginaActual = totalPaginas; renderizarPagina(); }));
+                            () -> {
+                                paginaActual = totalPaginas;
+                                renderizarPagina();
+                            }));
         }
 
         paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPaginas, () -> {
-            paginaActual++; renderizarPagina();
+            paginaActual++;
+            renderizarPagina();
         }));
     }
 
@@ -418,7 +433,7 @@ public class BarrioAdminView {
         b.setDisable(!enabled);
         boolean esActual = txt.equals(String.valueOf(paginaActual));
         b.setStyle("-fx-background-color: " + (esActual ? BLUE : WHITE) + ";"
-                + "-fx-text-fill: "         + (esActual ? WHITE : "#374151") + ";"
+                + "-fx-text-fill: " + (esActual ? WHITE : "#374151") + ";"
                 + "-fx-background-radius: 6; -fx-padding: 6 11; -fx-cursor: hand;"
                 + "-fx-font-size: 13px; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
         b.setOnAction(e -> accion.run());
@@ -492,7 +507,7 @@ public class BarrioAdminView {
         coordBox.setPrefWidth(180);
         coordBox.setMinWidth(180);
         coordBox.setMaxWidth(180);
-        Label latLbl = label("Lat: " + b.getLatitudcentro(),  11, GRAY_TEXT, false);
+        Label latLbl = label("Lat: " + b.getLatitudcentro(), 11, GRAY_TEXT, false);
         Label lngLbl = label("Lng: " + b.getLongitudcentro(), 11, GRAY_TEXT, false);
         coordBox.getChildren().addAll(latLbl, lngLbl);
 
@@ -503,9 +518,9 @@ public class BarrioAdminView {
         acciones.setMinWidth(160);
         acciones.setMaxWidth(160);
         acciones.getChildren().addAll(
-                btnAccion("\uf06e", BLUE,   "#e8f0fe", "Ver",      () -> abrirDialogoVer(b)),
-                btnAccion("\uf044", ORANGE, "#fff8e1", "Editar",   () -> abrirFormulario(b)),
-                btnAccion("\uf2ed", RED,    RED_LIGHT, "Eliminar", () -> confirmarEliminar(b))
+                btnAccion("\uf06e", BLUE, "#e8f0fe", "Ver", () -> abrirDialogoVer(b)),
+                btnAccion("\uf044", ORANGE, "#fff8e1", "Editar", () -> abrirFormulario(b)),
+                btnAccion("\uf2ed", RED, RED_LIGHT, "Eliminar", () -> confirmarEliminar(b))
         );
 
         fila.getChildren().addAll(celdaNombre, comunaBox, coordBox, acciones);
@@ -540,10 +555,10 @@ public class BarrioAdminView {
         content.getChildren().addAll(
                 header,
                 new Separator(),
-                detalleRow("📍 Nombre",    b.getNombre() != null ? b.getNombre() : "—"),
-                detalleRow("🏘 Comuna",    comunaNombre),
-                detalleRow("🌐 Latitud",   String.valueOf(b.getLatitudcentro())),
-                detalleRow("🌐 Longitud",  String.valueOf(b.getLongitudcentro()))
+                detalleRow("📍 Nombre", b.getNombre() != null ? b.getNombre() : "—"),
+                detalleRow("🏘 Comuna", comunaNombre),
+                detalleRow("🌐 Latitud", String.valueOf(b.getLatitudcentro())),
+                detalleRow("🌐 Longitud", String.valueOf(b.getLongitudcentro()))
         );
 
         dlg.getDialogPane().setContent(content);
@@ -572,13 +587,13 @@ public class BarrioAdminView {
 
         Label lblSub = label(
                 esEdicion ? "Modifica los datos del barrio"
-                          : "Registra un nuevo barrio en el sistema",
+                        : "Registra un nuevo barrio en el sistema",
                 13, GRAY_TEXT, false);
 
         // Nombre
         TextField txtNombre = dlgField("Ej: El Prado, Centro...",
                 esEdicion && barrioExistente.getNombre() != null
-                        ? barrioExistente.getNombre() : "");
+                ? barrioExistente.getNombre() : "");
 
         // Comuna
         List<Comuna> comunas = cargarComunas();
@@ -609,7 +624,7 @@ public class BarrioAdminView {
                 lblTitulo, lblSub,
                 new Separator(),
                 label("Nombre del barrio *", 12, GRAY_TEXT, false), txtNombre,
-                label("Comuna *",            12, GRAY_TEXT, false), cmbComuna,
+                label("Comuna *", 12, GRAY_TEXT, false), cmbComuna,
                 label("Coordenadas (opcional)", 12, GRAY_TEXT, false), coordRow,
                 lblError
         );
@@ -629,11 +644,13 @@ public class BarrioAdminView {
 
             if (nombre.isEmpty()) {
                 lblError.setText("El nombre del barrio no puede estar vacío.");
-                ev.consume(); return;
+                ev.consume();
+                return;
             }
             if (comunaNombre == null || comunaNombre.isBlank()) {
                 lblError.setText("Debe seleccionar una comuna.");
-                ev.consume(); return;
+                ev.consume();
+                return;
             }
 
             Comuna comunaObj = comunas.stream()
@@ -641,18 +658,22 @@ public class BarrioAdminView {
                     .findFirst().orElse(null);
             if (comunaObj == null) {
                 lblError.setText("Comuna no encontrada.");
-                ev.consume(); return;
+                ev.consume();
+                return;
             }
 
             double lat = 0.0, lng = 0.0;
             try {
-                if (!txtLat.getText().trim().isEmpty())
+                if (!txtLat.getText().trim().isEmpty()) {
                     lat = Double.parseDouble(txtLat.getText().trim());
-                if (!txtLng.getText().trim().isEmpty())
+                }
+                if (!txtLng.getText().trim().isEmpty()) {
                     lng = Double.parseDouble(txtLng.getText().trim());
+                }
             } catch (NumberFormatException ex) {
                 lblError.setText("Latitud y longitud deben ser valores numéricos.");
-                ev.consume(); return;
+                ev.consume();
+                return;
             }
 
             try {
@@ -709,22 +730,32 @@ public class BarrioAdminView {
     // HELPERS DE DATOS
     // ═══════════════════════════════════════════════════════════════
     private List<Barrio> cargarBarrios() {
-        if (barrioService == null) return List.of();
-        try { return barrioService.listar(); }
-        catch (Exception e) { return List.of(); }
+        if (barrioService == null) {
+            return List.of();
+        }
+        try {
+            return barrioService.listar();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private List<Comuna> cargarComunas() {
-        if (comunaService == null) return List.of();
-        try { return comunaService.listar(); }
-        catch (Exception e) { return List.of(); }
+        if (comunaService == null) {
+            return List.of();
+        }
+        try {
+            return comunaService.listar();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
     // HELPERS UI
     // ═══════════════════════════════════════════════════════════════
     private Button btnAccion(String iconFA, String iconColor,
-                              String bgColor, String tooltip, Runnable accion) {
+            String bgColor, String tooltip, Runnable accion) {
         Button b = new Button(iconFA);
         String base = "-fx-background-color: " + bgColor + ";"
                 + "-fx-text-fill: " + iconColor + ";"
@@ -738,7 +769,7 @@ public class BarrioAdminView {
                 + "-fx-padding: 7 10; -fx-cursor: hand;";
         b.setStyle(base);
         b.setOnMouseEntered(e -> b.setStyle(hover));
-        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         Tooltip.install(b, new Tooltip(tooltip));
         return b;
@@ -779,7 +810,9 @@ public class BarrioAdminView {
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg);
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
         a.showAndWait();
     }
 
@@ -790,14 +823,20 @@ public class BarrioAdminView {
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String iniciales(String nombre) {
-        if (nombre == null || nombre.isBlank()) return "?";
+        if (nombre == null || nombre.isBlank()) {
+            return "?";
+        }
         String[] p = nombre.trim().split("\\s+");
-        if (p.length == 1) return p[0].substring(0, 1).toUpperCase();
+        if (p.length == 1) {
+            return p[0].substring(0, 1).toUpperCase();
+        }
         return (p[0].substring(0, 1) + p[1].substring(0, 1)).toUpperCase();
     }
 
@@ -808,8 +847,7 @@ public class BarrioAdminView {
         {"#e8f5e9", "#2e7d32"},
         {"#fff3e0", "#e65100"},
         {"#f3e5f5", "#6a1b9a"},
-        {"#e0f7fa", "#00695c"},
-    };
+        {"#e0f7fa", "#00695c"},};
 
     private String[] comunaBadge(int idComuna) {
         return COMUNA_PALETA[Math.abs(idComuna) % COMUNA_PALETA.length];
@@ -817,14 +855,17 @@ public class BarrioAdminView {
 
     // ── Estilos de botón primario ─────────────────────────────────
     private String btnPrimaryStyle() {
-        return "-fx-background-color: #1565c0; -fx-text-fill: white;"
+        return "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white;"
                 + "-fx-font-size: 13px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
     }
 
     private String btnPrimaryHoverStyle() {
-        return "-fx-background-color: #0d47a1; -fx-text-fill: white;"
+        return "-fx-background-color: linear-gradient(to right, #0f1e30, #16283d);"
+                + "-fx-text-fill: white;"
                 + "-fx-font-size: 13px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
     }
+
 }

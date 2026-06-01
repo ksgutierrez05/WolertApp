@@ -33,16 +33,12 @@ import java.util.Locale;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Popup;
+import javafx.stage.Screen;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
-/**
- *
- *
- *
- * @author Maria Cristina
- */
 public class UsuarioApp {
 
     // ── Paleta ────────────────────────────────────────────────────
@@ -90,19 +86,76 @@ public class UsuarioApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
-
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
         root.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        BorderPane.setAlignment(root.getLeft(), Pos.TOP_LEFT);
-        root.setStyle("-fx-background-color: " + BG + ";");
+        root.setStyle("-fx-background-color: " + BG + "; -fx-padding: 0;");
 
-        Scene scene = new Scene(root, 1200, 620);
+        // ── Botón flotante del chatbot ────────────────────────────────
+        ChatBotView chatbotView = new ChatBotView(usuarioActual);
+        Popup chatPopup = chatbotView.buildPopup(stage);
+
+        Button chatBtn = new Button();
+        Label chatIco = new Label("\uf544");
+        chatIco.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px;"
+                + "-fx-text-fill: white;");
+        chatBtn.setGraphic(chatIco);
+        // ── DESPUÉS ──
+        chatBtn.setStyle(
+                "-fx-background-color: #1f3a56;"
+                + "-fx-text-fill: #F5F7FA;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px; -fx-min-height: 56px;"
+                + "-fx-max-width: 56px; -fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(31,58,86,0.55), 18, 0, 0, 5);");
+
+        chatBtn.setOnMouseEntered(e -> chatBtn.setStyle(
+                "-fx-background-color: #16283d;"
+                + "-fx-text-fill: #F5F7FA;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px; -fx-min-height: 56px;"
+                + "-fx-max-width: 56px; -fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(22,40,61,0.70), 22, 0, 0, 7);"));
+
+        chatBtn.setOnMouseExited(e -> chatBtn.setStyle(
+                "-fx-background-color: #1f3a56;"
+                + "-fx-text-fill: #F5F7FA;"
+                + "-fx-background-radius: 50%;"
+                + "-fx-min-width: 56px; -fx-min-height: 56px;"
+                + "-fx-max-width: 56px; -fx-max-height: 56px;"
+                + "-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian, rgba(31,58,86,0.55), 18, 0, 0, 5);"));
+        chatBtn.setOnAction(e -> {
+            if (chatPopup.isShowing()) {
+                chatPopup.hide();
+            } else {
+                javafx.geometry.Bounds b = chatBtn.localToScreen(chatBtn.getBoundsInLocal());
+                chatPopup.show(stage, b.getMaxX() - 370, b.getMinY() - 530);
+            }
+        });
+
+        StackPane overlay = new StackPane(root, chatBtn);
+        StackPane.setAlignment(chatBtn, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(chatBtn, new Insets(0, 24, 24, 0));
+        overlay.setStyle("-fx-padding: 0;");
+
+        // ── Tamaño según pantalla del usuario ─────────────────────────
+        Screen screen = Screen.getPrimary();
+        double w = screen.getVisualBounds().getWidth();
+        double h = screen.getVisualBounds().getHeight();
+
+        Scene scene = new Scene(overlay, w * 0.85, h * 0.85);
         stage.setTitle("WolertApp – Sistema de Alertas Comunitarias");
         stage.setScene(scene);
-        stage.setResizable(true);   // permite redimensionar
-        stage.setMaximized(false);  // inicia normal
+        stage.setResizable(true);
+        stage.setMinWidth(900);
+        stage.setMinHeight(580);
         stage.show();
     }
 
@@ -112,39 +165,40 @@ public class UsuarioApp {
     private ScrollPane buildSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPrefWidth(250);
-        sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);");
+        sidebar.setMaxHeight(Double.MAX_VALUE);
+        sidebar.setFillWidth(true);
+        VBox.setVgrow(sidebar, Priority.ALWAYS);
+        sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56); -fx-padding: 0;");
 
-        // Logo
-        HBox logoBox = new HBox(15);
-        logoBox.setPadding(new Insets(25, 16, 25, 16));
+        // ── Logo ──────────────────────────────────────────────────────
+        HBox logoBox = new HBox(10);
+        logoBox.setPadding(new Insets(20, 16, 20, 16));
         logoBox.setAlignment(Pos.CENTER_LEFT);
-        ImageView logoView = new ImageView(
-                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png"))
-        );
 
-        logoView.setFitWidth(70);
-        logoView.setFitHeight(70);
-        logoView.setPreserveRatio(true);
-        logoView.setTranslateX(-2);
+        ImageView logoImg = new ImageView(
+                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
+        logoImg.setFitWidth(65);
+        logoImg.setFitHeight(65);
+        logoImg.setPreserveRatio(true);
+        logoImg.setTranslateY(-2);
 
-        StackPane wolfIcon = new StackPane(logoView);
-        VBox logoText = new VBox(2);
-        logoText.setTranslateX(-5);
+        VBox logoText = new VBox(1);
+        logoText.setAlignment(Pos.CENTER_LEFT);
         logoText.getChildren().addAll(
-                label("WolertApp", 22, WHITE, true),
+                label("WolertApp", 18, WHITE, true),
                 label("Sistema de Alertas Comunitarias", 9, "#8899bb", false)
         );
-        logoBox.getChildren().addAll(wolfIcon, logoText);
+        logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
 
-        // User card con datos reales
-        HBox userCard = new HBox(10);
+        // ── User card ─────────────────────────────────────────────────
+        HBox userCard = new HBox(12);
         userCard.setPadding(new Insets(12, 16, 12, 16));
         userCard.setAlignment(Pos.CENTER_LEFT);
         userCard.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 12;");
 
-        Circle avatar = new Circle(20, Color.web("#3a4a70"));
-        Label avatarLbl = label("👤", 16, WHITE, false);
-        StackPane avatarStack = new StackPane(avatar, avatarLbl);
+        Circle avatar = new Circle(20, Color.web("#334155"));
+        Label avatarLbl = label("👤", 15, WHITE, false);
+        StackPane avatarBox = new StackPane(avatar, avatarLbl);
 
         VBox userInfo = new VBox(2);
         String nombreCompleto = usuarioActual != null
@@ -155,14 +209,21 @@ public class UsuarioApp {
                 && usuarioActual.getDireccion().getBarrio() != null
                 ? "Barrio " + usuarioActual.getDireccion().getBarrio().getNombre()
                 : "Sin barrio asignado";
+
+        HBox statusRow = new HBox(4);
+        statusRow.setAlignment(Pos.CENTER_LEFT);
+        statusRow.getChildren().addAll(
+                new Circle(4, Color.web(GREEN)),
+                label("En línea", 10, GREEN, false));
+
         userInfo.getChildren().addAll(
                 label(nombreCompleto, 13, WHITE, true),
                 label(barrioNombre, 10, "#8899bb", false),
-                label("● En línea", 10, GREEN, false)
+                statusRow
         );
-        userCard.getChildren().addAll(avatarStack, userInfo);
+        userCard.getChildren().addAll(avatarBox, userInfo);
 
-        // Nav — todos los ítems van a placeholder excepto Dashboard
+        // ── Nav ───────────────────────────────────────────────────────
         nav = new VBox(2);
         nav.setPadding(new Insets(16, 8, 16, 8));
         nav.getChildren().addAll(
@@ -171,132 +232,62 @@ public class UsuarioApp {
                 navItem("🗺️", "Mapa"),
                 navItem("👥", "Vecinos"),
                 navItem("🔔", "Mis Alertas"),
-                navItem("📋", "Mis Suscripciones"),
                 navItem("💬", "Notificaciones"),
-                navItem("📄", "Mis Reportes"),
-                navItem("ℹ️", "Información Útil"),
-                navItem("👤", "Perfil"),
-                navItem("⚙️", "Configuración")
+                navItem("👤", "Mi Cuenta")
         );
 
-        // Logout
-        String styleLogout
-                = "-fx-background-color: white; "
-                + "-fx-border-color: white; "
-                + "-fx-border-width: 2; "
-                + "-fx-text-fill: #16283d; "
-                + "-fx-font-size: 13px; "
-                + "-fx-font-weight: bold; "
-                + "-fx-background-radius: 30; "
-                + "-fx-border-radius: 30; "
-                + "-fx-padding: 10 35; "
-                + "-fx-cursor: hand;";
-        String styleLogoutHover
-                = "-fx-background-color: #f0f4ff; "
-                + "-fx-border-color: white; "
-                + "-fx-border-width: 2; "
-                + "-fx-text-fill: #16283d; "
-                + "-fx-font-size: 13px; "
-                + "-fx-font-weight: bold; "
-                + "-fx-background-radius: 30; "
-                + "-fx-border-radius: 30; "
-                + "-fx-padding: 10 35; "
-                + "-fx-cursor: hand;";
-
-        Button logoutBtn = new Button("🚪  Cerrar sesión");
-        logoutBtn.setStyle(styleLogout);
-        logoutBtn.setMaxWidth(Double.MAX_VALUE);
-        logoutBtn.setOnMouseEntered(e -> logoutBtn.setStyle(styleLogoutHover));
-        logoutBtn.setOnMouseExited(e -> logoutBtn.setStyle(styleLogout));
-        logoutBtn.setOnAction(e -> cerrarSesion());
-
-        VBox logoutBox = new VBox(logoutBtn);
-        logoutBox.setPadding(new Insets(12, 16, 18, 16));
-        logoutBox.setAlignment(Pos.CENTER);
+        // ── Cerrar sesión ─────────────────────────────────────────────
+        HBox logout = new HBox(10);
+        logout.setPadding(new Insets(10, 16, 10, 16));
+        logout.setAlignment(Pos.CENTER_LEFT);
+        logout.setCursor(javafx.scene.Cursor.HAND);
+        logout.setStyle("-fx-background-color: transparent;");
+        logout.setOnMouseEntered(e -> logout.setStyle(
+                "-fx-background-color: #ffffff15; -fx-background-radius: 8;"));
+        logout.setOnMouseExited(e -> logout.setStyle(
+                "-fx-background-color: transparent;"));
+        logout.setOnMouseClicked(e -> cerrarSesion());
+        logout.getChildren().addAll(
+                label("🚪", 14, RED, false),
+                label("Cerrar sesión", 13, RED, false));
 
         VBox spacer = new VBox();
-
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        sidebar.getChildren().addAll(
-                logoBox,
-                userCard,
-                nav,
-                spacer,
-                logoutBox
-        );
+        sidebar.getChildren().addAll(logoBox, userCard, nav, spacer, logout);
 
-        sidebar.setMinHeight(Region.USE_PREF_SIZE);
-
+        // ── ScrollPane transparente que ocupa toda la altura ──────────
         ScrollPane scroll = new ScrollPane(sidebar);
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);           // ← ocupa toda la altura, elimina la raya blanca
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // ← sin barra visible
         scroll.setStyle(
                 "-fx-background: transparent;"
                 + "-fx-background-color: transparent;"
                 + "-fx-border-color: transparent;"
-        );
-
-        scroll.skinProperty().addListener((obs, oldSkin, newSkin) -> {
-            scroll.lookupAll(".scroll-bar").forEach(node
-                    -> node.setStyle(
-                            "-fx-opacity: 0.05;"
-                            + "-fx-pref-width: 3;"
-                    )
-            );
-        });
-
+                + "-fx-padding: 0;");
         return scroll;
-
     }
 
     private HBox navItem(String icon, String text) {
-
         HBox item = new HBox(12);
-
-        item.setPadding(new Insets(12, 16, 12, 16));
+        item.setPadding(new Insets(10, 12, 10, 12));
         item.setAlignment(Pos.CENTER_LEFT);
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
 
-        String normalStyle = """
-    -fx-background-radius: 10;
-    -fx-background-color: transparent;
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
-""";
-
-        String hoverStyle = """
-    -fx-background-color: #ffffff18;
-    -fx-background-radius: 10;
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
-""";
-        String activeStyle = """
-    -fx-background-color: rgba(255,255,255,0.05);
-    -fx-background-radius: 10;
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
-""";
+        String normalStyle = "-fx-background-radius:8;-fx-background-color:transparent;"
+                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;";
+        String hoverStyle = "-fx-background-color:#ffffff18;-fx-background-radius:8;"
+                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;";
+        String activeStyle = "-fx-background-color:#ffffff22;-fx-background-radius:8;"
+                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;";
 
         item.setStyle(normalStyle);
 
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("""
-        -fx-font-size: 18px;
-        -fx-font-weight: bold;
-        -fx-text-fill: white;
-    """);
-
-        Label textLabel = new Label(text);
-        textLabel.setStyle("""
-        -fx-font-size: 14px;
-        -fx-font-weight: bold;
-        -fx-text-fill: white;
-    """);
-
+        Label iconLabel = label(icon, 16, "#8899bb", false);
+        Label textLabel = label(text, 13, "#8899bb", false);
         item.getChildren().addAll(iconLabel, textLabel);
 
         item.setOnMouseEntered(e -> {
@@ -304,7 +295,6 @@ public class UsuarioApp {
                 item.setStyle(hoverStyle);
             }
         });
-
         item.setOnMouseExited(e -> {
             if (!item.getStyle().equals(activeStyle)) {
                 item.setStyle(normalStyle);
@@ -312,45 +302,41 @@ public class UsuarioApp {
         });
 
         item.setOnMouseClicked((MouseEvent e) -> {
-
-            for (javafx.scene.Node node : nav.getChildren()) {
+            // Resetear todos los items
+            nav.getChildren().forEach(node -> {
                 if (node instanceof HBox hbox) {
                     hbox.setStyle(normalStyle);
+                    hbox.getChildren().forEach(child -> {
+                        if (child instanceof Label lbl) {
+                            lbl.setTextFill(Color.web("#8899bb"));
+                        }
+                    });
                 }
-            }
+            });
+            // Activar item actual
+            item.setStyle(activeStyle);
+            iconLabel.setTextFill(Color.WHITE);
+            textLabel.setTextFill(Color.WHITE);
 
             switch (text) {
-
                 case "Dashboard" ->
                     root.setCenter(buildMainContent());
-
                 case "Alertas" -> {
-                    AlertasView alertasView = new AlertasView(
-                            usuarioActual,
-                            alertaService,
-                            barrioService
-                    );
+                    AlertasView alertasView = new AlertasView(usuarioActual, alertaService, barrioService);
                     root.setCenter(alertasView.getView());
                 }
-
                 case "Mis Alertas" -> {
-                    MisAlertasView misAlertasView = new MisAlertasView(
-                            usuarioActual,
-                            alertaService,
-                            barrioService,
-                            root
-                    );
+                    MisAlertasView misAlertasView = new MisAlertasView(usuarioActual, alertaService, barrioService, root);
                     root.setCenter(misAlertasView.getView());
                 }
-
-                case "Mapa" -> {
+                case "Mapa" ->
                     toggleMapaSubMenu(item);
-                }
-                case "Vecinos" -> {
-                    VecinosView vecinosView = new VecinosView(usuarioActual, alertaService);
-                    root.setCenter(vecinosView.getView());
-                }
-
+                case "Vecinos" ->
+                    root.setCenter(new VecinosView(usuarioActual, alertaService).getView());
+                case "Notificaciones" ->
+                    root.setCenter(new NotificacionesView(usuarioActual, notificacionService, root).getView());
+                case "Mi Cuenta" ->
+                    root.setCenter(new MiCuentaView(usuarioActual, suscripcionService, root, () -> root.setCenter(buildMainContent())).getView());
                 default ->
                     root.setCenter(buildPlaceholder(text));
             }
@@ -375,7 +361,10 @@ public class UsuarioApp {
     private VBox buildMapaSubMenu() {
         VBox sub = new VBox(5);
         sub.setPadding(new Insets(0, 0, 0, 25));
-        sub.getChildren().addAll(subItem("📍 Mapa de alertas"), subItem("⚠ Zonas peligrosas"), subItem("👥 Alertas comunitarias"));
+        sub.getChildren().addAll(
+                subItem("📍 Mapa de alertas"),
+                subItem("⚠ Zonas peligrosas"),
+                subItem("👥 Alertas comunitarias"));
         return sub;
     }
 
@@ -389,9 +378,11 @@ public class UsuarioApp {
         lbl.setFont(Font.font(12));
         item.getChildren().add(lbl);
         item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-background-color: #ffffff15; -fx-background-radius: 6; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
+                "-fx-background-color:#ffffff15;-fx-background-radius:6;"
+                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
         item.setOnMouseExited(e -> item.setStyle(
-                "-fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;"));
+                "-fx-background-color:transparent;"
+                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
         item.setOnMouseClicked(e -> root.setCenter(buildPlaceholder(text)));
         return item;
     }
@@ -412,19 +403,12 @@ public class UsuarioApp {
         );
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
-        scroll.setPannable(true); // permite desplazamiento más fluido
+        scroll.setPannable(true);
         scroll.setFocusTraversable(false);
-
-        scroll.setStyle(
-                "-fx-background-color: " + BG + ";"
-                + "-fx-background: " + BG + ";"
-        );
-
+        scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
         return scroll;
-
     }
 
     // ── Top bar ───────────────────────────────────────────────────
@@ -436,13 +420,13 @@ public class UsuarioApp {
         Label hello = new Label(saludo);
         hello.setFont(Font.font("System", FontWeight.BOLD, 28));
         hello.setTextFill(Color.web("#111827"));
-        greeting.getChildren().addAll(hello, label("Tu seguridad es importante. Estamos aquí para ayudarte.", 13, GRAY_TEXT, false));
+        greeting.getChildren().addAll(hello,
+                label("Tu seguridad es importante. Estamos aquí para ayudarte.", 13, GRAY_TEXT, false));
 
         HBox rightBox = new HBox(16);
         rightBox.setAlignment(Pos.CENTER_RIGHT);
         HBox.setHgrow(rightBox, Priority.ALWAYS);
-        VBox dateBox = new VBox(2);
-        dateBox.setAlignment(Pos.CENTER_RIGHT);
+
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "CO"));
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm:ss a", new Locale("es", "CO"));
         LocalDateTime now0 = LocalDateTime.now(ZoneId.of("America/Bogota"));
@@ -455,9 +439,10 @@ public class UsuarioApp {
         }));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
+        VBox dateBox = new VBox(2);
+        dateBox.setAlignment(Pos.CENTER_RIGHT);
         dateBox.getChildren().addAll(dateLbl, timeLbl);
 
-        // Badge notificaciones en tiempo real
         int notiCount = contarNotificaciones();
         StackPane bell = new StackPane();
         Label bellIcon = label("🔔", 20, "#374151", false);
@@ -472,6 +457,9 @@ public class UsuarioApp {
         } else {
             bell.getChildren().add(bellIcon);
         }
+        bell.setCursor(javafx.scene.Cursor.HAND);
+        bell.setOnMouseClicked(e -> root.setCenter(
+                new NotificacionesView(usuarioActual, notificacionService, root).getView()));
 
         rightBox.getChildren().addAll(dateBox, bell);
         bar.getChildren().addAll(greeting, rightBox);
@@ -495,12 +483,8 @@ public class UsuarioApp {
         Region iconBg = new Region();
         iconBg.setPrefSize(56, 56);
         iconBg.setStyle("-fx-background-color:" + RED + ";-fx-background-radius:50%;");
-
         Label bellLbl = new Label("\uf0f3");
-        bellLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:22px;"
-                + "-fx-text-fill:white;");
+        bellLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:22px;-fx-text-fill:white;");
         iconBox.getChildren().addAll(iconBg, bellLbl);
 
         javafx.animation.ScaleTransition pulse
@@ -523,32 +507,29 @@ public class UsuarioApp {
         HBox.setHgrow(textBox, Priority.ALWAYS);
 
         Button panicBtn = new Button("⚠  PÁNICO");
-        String base = "-fx-background-color:" + RED + ";-fx-text-fill:white;"
-                + "-fx-font-size:15px;-fx-font-weight:bold;"
-                + "-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
+        String base = "-fx-background-color:" + RED + ";-fx-text-fill:white;-fx-font-size:15px;"
+                + "-fx-font-weight:bold;-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
                 + "-fx-effect:dropshadow(gaussian,rgba(229,57,53,0.42),18,0,0,5);";
-        String hover = "-fx-background-color:#c62828;-fx-text-fill:white;"
-                + "-fx-font-size:15px;-fx-font-weight:bold;"
-                + "-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
+        String hover = "-fx-background-color:#c62828;-fx-text-fill:white;-fx-font-size:15px;"
+                + "-fx-font-weight:bold;-fx-background-radius:30;-fx-padding:13 32;-fx-cursor:hand;"
                 + "-fx-effect:dropshadow(gaussian,rgba(198,40,40,0.58),22,0,0,7);";
         panicBtn.setStyle(base);
         panicBtn.setOnMouseEntered(e -> panicBtn.setStyle(hover));
         panicBtn.setOnMouseExited(e -> panicBtn.setStyle(base));
         panicBtn.setOnAction(e -> {
             Stage stage = (Stage) panicBtn.getScene().getWindow();
-            MapaAlerta mapaAlerta = new MapaAlerta(stage, usuarioActual, alertaService, barrioService);
-            mapaAlerta.mostrar();
+            new MapaAlerta(stage, usuarioActual, alertaService, barrioService).mostrar();
         });
 
         banner.getChildren().addAll(iconBox, textBox, panicBtn);
         return banner;
     }
 
-    // ── Stat cards — datos reales ─────────────────────────────────
+    // ── Stat cards ────────────────────────────────────────────────
     private HBox buildStatCards() {
         HBox row = new HBox(16);
-
         long incidentesMes = 0, alertasPendientes = 0, vecinosActivos = 0;
+
         if (alertaService != null && usuarioActual != null) {
             try {
                 List<Alerta> misAlertas = alertaService.listar().stream()
@@ -582,31 +563,23 @@ public class UsuarioApp {
         }
 
         row.getChildren().addAll(
-                statCard("#fff0f0", "#e53935", "Incidentes este mes",
-                        incidentesMes, "+3 vs mes anterior"),
-                statCard("#fff8e1", "#fb8c00", "Alertas pendientes",
-                        alertasPendientes, "PENDIENTE / EN PROCESO"),
-                statCard("#e8f5e9", "#43a047", "Vecinos del barrio",
-                        vecinosActivos, "Reportaron en tu barrio")
+                statCard("#fff0f0", "#e53935", "Incidentes este mes", incidentesMes, "+3 vs mes anterior"),
+                statCard("#fff8e1", "#fb8c00", "Alertas pendientes", alertasPendientes, "PENDIENTE / EN PROCESO"),
+                statCard("#e8f5e9", "#43a047", "Vecinos del barrio", vecinosActivos, "Reportaron en tu barrio")
         );
         return row;
     }
 
-    private VBox statCard(String bgIcon, String accentColor,
-            String title, long value, String sub) {
-
+    private VBox statCard(String bgIcon, String accentColor, String title, long value, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color:white;-fx-background-radius:18;");
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
-        // ── Nombre del PNG según color ─────────────────────────────────
         String iconName = accentColor.equals("#e53935") ? "IncidentesPin"
-                : accentColor.equals("#fb8c00") ? "AlertasPendientesPin"
-                : "VecinoPin";
+                : accentColor.equals("#fb8c00") ? "AlertasPendientesPin" : "VecinoPin";
 
-        // ── Fondo + icono PNG ──────────────────────────────────────────
         StackPane iconWrap = new StackPane();
         iconWrap.setPrefSize(52, 52);
         iconWrap.setMinSize(52, 52);
@@ -614,75 +587,41 @@ public class UsuarioApp {
 
         Region colorBg = new Region();
         colorBg.setPrefSize(52, 52);
-        colorBg.setStyle(
-                "-fx-background-color:" + bgIcon + ";"
-                + "-fx-background-radius:14;");
+        colorBg.setStyle("-fx-background-color:" + bgIcon + ";-fx-background-radius:14;");
 
         ImageView iv = new ImageView();
         iv.setFitWidth(28);
         iv.setFitHeight(28);
         iv.setPreserveRatio(true);
-
         try {
-
-            java.io.InputStream is = getClass()
-                    .getResourceAsStream("/" + iconName + ".png");
-
+            java.io.InputStream is = getClass().getResourceAsStream("/" + iconName + ".png");
             if (is != null) {
-
-                java.awt.image.BufferedImage original
-                        = javax.imageio.ImageIO.read(is);
-
-                java.awt.image.BufferedImage recortada
-                        = recortarTransparencia(original);
-
-                javafx.scene.image.WritableImage fxImage
-                        = javafx.embed.swing.SwingFXUtils
-                                .toFXImage(recortada, null);
-
-                iv.setImage(fxImage);
+                java.awt.image.BufferedImage original = javax.imageio.ImageIO.read(is);
+                java.awt.image.BufferedImage recortada = recortarTransparencia(original);
+                iv.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(recortada, null));
             }
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
         iconWrap.getChildren().addAll(colorBg, iv);
 
-        // ── Número ─────────────────────────────────────────────────────
         Label valLbl = new Label(String.valueOf(value));
-        valLbl.setStyle(
-                "-fx-font-size:36px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-text-fill:" + accentColor + ";");
-
-        // ── Título ─────────────────────────────────────────────────────
+        valLbl.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + accentColor + ";");
         Label titleLbl = new Label(title);
-        titleLbl.setStyle(
-                "-fx-font-size:13px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-text-fill:#374151;");
-
-        // ── Subtexto ───────────────────────────────────────────────────
+        titleLbl.setStyle("-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#374151;");
         Label subLbl = new Label(sub);
-        subLbl.setStyle(
-                "-fx-font-size:11px;"
-                + "-fx-text-fill:" + GRAY_TEXT + ";");
+        subLbl.setStyle("-fx-font-size:11px;-fx-text-fill:" + GRAY_TEXT + ";");
 
-        VBox textBlock = new VBox(3, titleLbl, valLbl, subLbl);
-
-        HBox topRow = new HBox(16, iconWrap, textBlock);
+        HBox topRow = new HBox(16, iconWrap, new VBox(3, titleLbl, valLbl, subLbl));
         topRow.setAlignment(Pos.CENTER_LEFT);
-
         card.getChildren().add(topRow);
-
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
         card.setOnMouseExited(e -> card.setTranslateY(0));
-
         return card;
     }
 
-    // ── Bottom row: lista alertas + mapa ─────────────────────────
+    // ── Bottom row ────────────────────────────────────────────────
     private HBox buildBottomRow() {
         HBox row = new HBox(16);
         row.getChildren().addAll(buildAlertsList(), buildMapPanel());
@@ -697,10 +636,8 @@ public class UsuarioApp {
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
-        // ── Header ────────────────────────────────────────────────────
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
-
         HBox titleRow = new HBox(8);
         titleRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -708,14 +645,9 @@ public class UsuarioApp {
         iconBox.setPrefSize(32, 32);
         iconBox.setMinSize(32, 32);
         iconBox.setMaxSize(32, 32);
-        iconBox.setStyle(
-                "-fx-background-color:#e8f0fe;"
-                + "-fx-background-radius:8;");
+        iconBox.setStyle("-fx-background-color:#e8f0fe;-fx-background-radius:8;");
         Label iconLbl = new Label("\uf133");
-        iconLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:16px;"
-                + "-fx-text-fill:#1565c0;");
+        iconLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:16px;-fx-text-fill:#1565c0;");
         iconBox.getChildren().add(iconLbl);
 
         titleRow.getChildren().addAll(iconBox, label("Alertas recientes", 15, "#111827", true));
@@ -723,51 +655,28 @@ public class UsuarioApp {
 
         Label verTodas = label("Ver todas  >", 12, BLUE, false);
         verTodas.setCursor(javafx.scene.Cursor.HAND);
-
-        verTodas.setOnMouseClicked(e -> {
-            AlertasView alertasView = new AlertasView(
-                    usuarioActual,
-                    alertaService,
-                    barrioService
-            );
-            root.setCenter(alertasView.getView());
-        });
+        verTodas.setOnMouseClicked(e -> root.setCenter(
+                new AlertasView(usuarioActual, alertaService, barrioService).getView()));
 
         header.getChildren().addAll(titleRow, verTodas);
         card.getChildren().addAll(header, separator());
 
-        // ── Contenido ─────────────────────────────────────────────────
         if (alertaService != null) {
             try {
                 List<Alerta> alertas = alertaService.listar();
-                String miBarrio = usuarioActual != null
-                        && usuarioActual.getDireccion() != null
-                        && usuarioActual.getDireccion().getBarrio() != null
-                        ? usuarioActual.getDireccion().getBarrio().getNombre() : null;
-
-                List<Alerta> filtradas = miBarrio != null
-                        ? alertas.stream()
-                                .filter(a -> a.getBarrio() != null
-                                && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
-                                .toList()
-                        : alertas;
-
-                if (filtradas.isEmpty()) {
-                    card.getChildren().add(
-                            label("No hay alertas en tu barrio", 13, GRAY_TEXT, false));
+                if (alertas.isEmpty()) {
+                    card.getChildren().add(label("No hay alertas registradas", 13, GRAY_TEXT, false));
                 } else {
-                    filtradas.stream().limit(4).forEach(a -> {
-                        card.getChildren().addAll(alertaItem(a), separator());
-                    });
+                    alertas.stream().limit(4).forEach(a
+                            -> card.getChildren().addAll(alertaItem(a), separator()));
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 card.getChildren().add(label("Error al cargar alertas", 13, RED, false));
             }
         } else {
-            card.getChildren().add(
-                    label("Sin conexión al servicio de alertas", 13, GRAY_TEXT, false));
+            card.getChildren().add(label("Sin conexión al servicio de alertas", 13, GRAY_TEXT, false));
         }
-
         return card;
     }
 
@@ -777,12 +686,9 @@ public class UsuarioApp {
         row.setPadding(new Insets(10, 4, 10, 4));
         row.setCursor(javafx.scene.Cursor.HAND);
         row.setStyle("-fx-background-color:transparent;-fx-background-radius:8;");
-        row.setOnMouseEntered(e -> row.setStyle(
-                "-fx-background-color:#f8f9fb;-fx-background-radius:8;"));
-        row.setOnMouseExited(e -> row.setStyle(
-                "-fx-background-color:transparent;-fx-background-radius:8;"));
+        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color:#f8f9fb;-fx-background-radius:8;"));
+        row.setOnMouseExited(e -> row.setStyle("-fx-background-color:transparent;-fx-background-radius:8;"));
 
-        // ── Punto de estado (pequeño, a la izquierda) ──────────────────
         String estado = a.getEstado() != null ? a.getEstado().name() : "—";
         String dotColor = switch (estado) {
             case "PENDIENTE" ->
@@ -796,78 +702,61 @@ public class UsuarioApp {
         };
         Circle dot = new Circle(5, Color.web(dotColor));
 
-        // ── Ícono circular con fondo de color según tipo ───────────────
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(40, 40);
         iconBox.setMinSize(40, 40);
         iconBox.setMaxSize(40, 40);
 
-        String tipo = a.getTipoalerta() != null
-                ? a.getTipoalerta().getNombre().toUpperCase() : "";
-
-        // Color de fondo del círculo según tipo de alerta
+        String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre().toUpperCase() : "";
         String circleBg = switch (tipo) {
-            case "ROBO", "HURTO" ->
-                "#fce4ec"; // rosa
-            case "SOSPECHOSO", "PERSONA" ->
+            case "ROBO", "HURTO", "SOSPECHOSO", "PERSONA" ->
                 "#fce4ec";
             case "ANIMAL" ->
-                "#fff8e1"; // amarillo
+                "#fff8e1";
             case "ACCIDENTE" ->
-                "#fff3e0"; // naranja
+                "#fff3e0";
             case "VANDALISMO" ->
-                "#e8eaf6"; // morado suave
+                "#e8eaf6";
             default ->
-                "#e3f2fd"; // azul suave
+                "#e3f2fd";
         };
 
-        // Ícono CSS (forma geométrica) según tipo — sin emojis
-        Region iconShape = new Region();
-        iconShape.setPrefSize(20, 20);
-
-        String iconStyle = switch (tipo) {
+        // ── DESPUÉS (poner esto) ──
+        String faIcon = switch (tipo) {
             case "ROBO", "HURTO" ->
-                // Candado: rectángulo + arco simulado
-                "-fx-background-color:" + dotColor + ";"
-                + "-fx-background-radius:3 3 2 2;"
-                + "-fx-pref-width:14px;-fx-pref-height:11px;";
+                "\uf505";
+            case "ACCIDENTE" ->
+                "\uf071";
+            case "INCENDIO" ->
+                "\uf46a";
             case "ANIMAL" ->
-                // Rombo
-                "-fx-background-color:" + dotColor + ";"
-                + "-fx-background-radius:3;"
-                + "-fx-pref-width:14px;-fx-pref-height:14px;"
-                + "-fx-rotate:45;";
+                "\uf6d3";
+            case "VANDALISMO" ->
+                "\uf6e3";
+            case "SOSPECHOSO", "PERSONA" ->
+                "\uf007";
             default ->
-                // Círculo sólido genérico
-                "-fx-background-color:" + dotColor + ";"
-                + "-fx-background-radius:50%;"
-                + "-fx-pref-width:14px;-fx-pref-height:14px;";
+                "\uf0f3";
         };
-        iconShape.setStyle(iconStyle);
-        iconShape.setPrefSize(14, 14);
-        iconShape.setMinSize(14, 14);
-        iconShape.setMaxSize(14, 14);
 
         Region circleBgRegion = new Region();
         circleBgRegion.setPrefSize(40, 40);
-        circleBgRegion.setStyle(
-                "-fx-background-color:" + circleBg + ";"
-                + "-fx-background-radius:50%;");
+        circleBgRegion.setStyle("-fx-background-color:" + circleBg + ";-fx-background-radius:50%;");
 
-        iconBox.getChildren().addAll(circleBgRegion, iconShape);
+        Label faLbl = new Label(faIcon);
+        faLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:16px;-fx-text-fill:" + dotColor + ";");
 
-        // ── Texto ──────────────────────────────────────────────────────
+        iconBox.getChildren().addAll(circleBgRegion, faLbl);
+
         VBox text = new VBox(3);
         HBox.setHgrow(text, Priority.ALWAYS);
 
         String tipoNombre = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
         String barrio = a.getBarrio() != null ? " en " + a.getBarrio().getNombre() : "";
 
-        // Tiempo transcurrido aproximado
         String tiempo = "Hace un momento";
         if (a.getFechaHora() != null) {
-            long mins = java.time.Duration.between(
-                    a.getFechaHora(), LocalDateTime.now()).toMinutes();
+            long mins = java.time.Duration.between(a.getFechaHora(), LocalDateTime.now()).toMinutes();
             if (mins < 60) {
                 tiempo = "Hace " + mins + " min";
             } else if (mins < 1440) {
@@ -879,25 +768,26 @@ public class UsuarioApp {
 
         String desc = a.getDescripcion() != null && a.getDescripcion().length() > 50
                 ? a.getDescripcion().substring(0, 50) + "…" : a.getDescripcion();
-        String reportado = a.getUsuario() != null
-                ? " · Reportado por " + a.getUsuario().getPrimer_nombre()
-                + " " + a.getUsuario().getPrimer_apellido().charAt(0) + "." : "";
 
-        Label titleLbl = new Label(
-                (desc != null && !desc.isBlank() ? desc : tipoNombre + barrio));
-        titleLbl.setStyle(
-                "-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#1e293b;");
+        String reportado = "";
+        if (a.getUsuario() != null) {
+            String nombre = a.getUsuario().getPrimer_nombre() != null ? a.getUsuario().getPrimer_nombre() : "";
+            String apellido = a.getUsuario().getPrimer_apellido() != null
+                    ? " " + a.getUsuario().getPrimer_apellido().charAt(0) + "." : "";
+            if (!nombre.isBlank() || !apellido.isBlank()) {
+                reportado = " · Reportado por " + nombre + apellido;
+            }
+        }
+
+        Label titleLbl = new Label(desc != null && !desc.isBlank() ? desc : tipoNombre + barrio);
+        titleLbl.setStyle("-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#1e293b;");
         titleLbl.setWrapText(true);
-
         Label subLbl = new Label(tiempo + reportado);
         subLbl.setStyle("-fx-font-size:11px;-fx-text-fill:" + GRAY_TEXT + ";");
-
         text.getChildren().addAll(titleLbl, subLbl);
 
-        // ── Chevron ────────────────────────────────────────────────────
         Label chevron = new Label("›");
-        chevron.setStyle(
-                "-fx-font-size:18px;-fx-text-fill:#cbd5e1;-fx-font-weight:bold;");
+        chevron.setStyle("-fx-font-size:18px;-fx-text-fill:#cbd5e1;-fx-font-weight:bold;");
 
         row.getChildren().addAll(dot, iconBox, text, chevron);
         return row;
@@ -910,30 +800,20 @@ public class UsuarioApp {
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         shadow(card);
 
-        // ── Header con círculo azul claro + emoji 📍 ──────────────────
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
-
         StackPane pinBox = new StackPane();
         pinBox.setPrefSize(32, 32);
         pinBox.setMinSize(32, 32);
         pinBox.setMaxSize(32, 32);
-        pinBox.setStyle(
-                "-fx-background-color:#e8f0fe;"
-                + "-fx-background-radius:50%;");
+        pinBox.setStyle("-fx-background-color:#e8f0fe;-fx-background-radius:50%;");
         Label pinLbl = new Label("\uf3c5");
-        pinLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:15px;"
-                + "-fx-text-fill:#1565c0");
+        pinLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:15px;-fx-text-fill:#1565c0");
         pinBox.getChildren().add(pinLbl);
-
         header.getChildren().addAll(pinBox, label("Mapa del barrio", 15, "#111827", true));
 
-        // ── Área del mapa ─────────────────────────────────────────────
         StackPane mapArea = new StackPane();
         mapArea.setPrefHeight(220);
-
         Rectangle mapBg = new Rectangle();
         mapBg.setFill(Color.web("#d1e8d1"));
         mapBg.widthProperty().bind(mapArea.widthProperty());
@@ -956,19 +836,12 @@ public class UsuarioApp {
             streets.getChildren().add(v);
         }
         streets.getChildren().addAll(
-                mapDot(80, 60, RED),
-                mapDot(200, 40, ORANGE),
-                mapDot(300, 55, GREEN),
-                mapDot(60, 140, GREEN),
-                mapDot(310, 150, RED)
-        );
+                mapDot(80, 60, RED), mapDot(200, 40, ORANGE), mapDot(300, 55, GREEN),
+                mapDot(60, 140, GREEN), mapDot(310, 150, RED));
 
-        // ── Popup con botón "Abrir mapa" ──────────────────────────────
         VBox popup = new VBox(6);
         popup.setPadding(new Insets(10, 14, 10, 14));
-        popup.setStyle(
-                "-fx-background-color:white;"
-                + "-fx-background-radius:8;");
+        popup.setStyle("-fx-background-color:white;-fx-background-radius:8;");
         popup.setEffect(new DropShadow(8, Color.web("#0000001a")));
         popup.setTranslateX(30);
         popup.setTranslateY(10);
@@ -977,52 +850,28 @@ public class UsuarioApp {
         String barrioDisplay = usuarioActual != null
                 && usuarioActual.getDireccion() != null
                 && usuarioActual.getDireccion().getBarrio() != null
-                ? usuarioActual.getDireccion().getBarrio().getNombre()
-                : "Tu barrio";
+                ? usuarioActual.getDireccion().getBarrio().getNombre() : "Tu barrio";
 
         Button abrirMapaBtn = new Button("Abrir mapa  ↗");
-        abrirMapaBtn.setStyle(
-                "-fx-background-color:" + BLUE + ";"
-                + "-fx-text-fill:white;"
-                + "-fx-font-size:12px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-background-radius:6;"
-                + "-fx-padding:7 16;"
-                + "-fx-cursor:hand;");
-        abrirMapaBtn.setOnMouseEntered(e -> abrirMapaBtn.setStyle(
-                "-fx-background-color:#0d47a1;"
-                + "-fx-text-fill:white;"
-                + "-fx-font-size:12px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-background-radius:6;"
-                + "-fx-padding:7 16;"
-                + "-fx-cursor:hand;"));
-        abrirMapaBtn.setOnMouseExited(e -> abrirMapaBtn.setStyle(
-                "-fx-background-color:" + BLUE + ";"
-                + "-fx-text-fill:white;"
-                + "-fx-font-size:12px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-background-radius:6;"
-                + "-fx-padding:7 16;"
-                + "-fx-cursor:hand;"));
+        String bBase = "-fx-background-color:" + BLUE + ";-fx-text-fill:white;-fx-font-size:12px;"
+                + "-fx-font-weight:bold;-fx-background-radius:6;-fx-padding:7 16;-fx-cursor:hand;";
+        String bHover = "-fx-background-color:#0d47a1;-fx-text-fill:white;-fx-font-size:12px;"
+                + "-fx-font-weight:bold;-fx-background-radius:6;-fx-padding:7 16;-fx-cursor:hand;";
+        abrirMapaBtn.setStyle(bBase);
+        abrirMapaBtn.setOnMouseEntered(e -> abrirMapaBtn.setStyle(bHover));
+        abrirMapaBtn.setOnMouseExited(e -> abrirMapaBtn.setStyle(bBase));
         abrirMapaBtn.setOnAction(e -> root.setCenter(buildPlaceholder("Mapa")));
-
         popup.getChildren().addAll(
                 label("Mapa interactivo", 12, "#374151", true),
                 label(barrioDisplay, 11, BLUE, false),
-                abrirMapaBtn
-        );
+                abrirMapaBtn);
 
         mapArea.getChildren().addAll(mapBg, streets, popup);
 
-        // ── Leyenda ───────────────────────────────────────────────────
         HBox legend = new HBox(16);
         legend.setAlignment(Pos.CENTER);
         legend.getChildren().addAll(
-                legendItem(RED, "Activo"),
-                legendItem(ORANGE, "En revisión"),
-                legendItem(GREEN, "Resuelto")
-        );
+                legendItem(RED, "Activo"), legendItem(ORANGE, "En revisión"), legendItem(GREEN, "Resuelto"));
 
         card.getChildren().addAll(header, mapArea, legend);
         return card;
@@ -1037,19 +886,13 @@ public class UsuarioApp {
         footer.setPrefHeight(120);
         footer.setStyle("-fx-background-color:" + BLUE_LIGHT + ";-fx-background-radius:10;");
 
-        // Círculo azul claro con 🔒
         StackPane lockBox = new StackPane();
         lockBox.setPrefSize(60, 60);
         lockBox.setMinSize(60, 60);
         lockBox.setMaxSize(60, 60);
-        lockBox.setStyle(
-                "-fx-background-color:#dbeafe;"
-                + "-fx-background-radius:50%;");
-        Label lockLbl = new Label("\uf023");  // lock FA
-        lockLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:25px;"
-                + "-fx-text-fill:#1565c0;");
+        lockBox.setStyle("-fx-background-color:#dbeafe;-fx-background-radius:50%;");
+        Label lockLbl = new Label("\uf023");
+        lockLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:25px;-fx-text-fill:#1565c0;");
         lockBox.getChildren().add(lockLbl);
 
         HBox left = new HBox(10);
@@ -1057,24 +900,17 @@ public class UsuarioApp {
         VBox leftText = new VBox(2);
         leftText.getChildren().addAll(
                 label("Tu información está protegida", 16, BLUE, true),
-                label("Todas tus alertas son anónimas y confidenciales.", 13, GRAY_TEXT, false)
-        );
+                label("Todas tus alertas son anónimas y confidenciales.", 13, GRAY_TEXT, false));
         left.getChildren().addAll(lockBox, leftText);
         HBox.setHgrow(left, Priority.ALWAYS);
 
-        // Círculo azul claro con 🛡
         StackPane shieldBox = new StackPane();
         shieldBox.setPrefSize(50, 50);
         shieldBox.setMinSize(50, 50);
         shieldBox.setMaxSize(50, 50);
-        shieldBox.setStyle(
-                "-fx-background-color:#dbeafe;"
-                + "-fx-background-radius:50%;");
-        Label shieldLbl = new Label("\uf132");  // shield FA
-        shieldLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:25px;"
-                + "-fx-text-fill:#1565c0;");
+        shieldBox.setStyle("-fx-background-color:#dbeafe;-fx-background-radius:50%;");
+        Label shieldLbl = new Label("\uf132");
+        shieldLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:25px;-fx-text-fill:#1565c0;");
         shieldBox.getChildren().add(shieldLbl);
 
         HBox right = new HBox(10);
@@ -1083,8 +919,7 @@ public class UsuarioApp {
         rightText.setAlignment(Pos.CENTER_RIGHT);
         rightText.getChildren().addAll(
                 label("100% Anónimo", 16, BLUE, true),
-                label("Tu identidad no será revelada.", 13, GRAY_TEXT, false)
-        );
+                label("Tu identidad no será revelada.", 13, GRAY_TEXT, false));
         right.getChildren().addAll(rightText, shieldBox);
 
         footer.getChildren().addAll(left, right);
@@ -1112,7 +947,7 @@ public class UsuarioApp {
     }
 
     // =========================================================================
-    // CONTADORES EN VIVO desde BD
+    // CONTADORES
     // =========================================================================
     private int contarAlertasActivas() {
         if (alertaService == null) {
@@ -1159,7 +994,8 @@ public class UsuarioApp {
         msg.setFont(Font.font(18));
         msg.setTextFill(Color.GRAY);
         Button volver = new Button("Volver al Dashboard");
-        volver.setStyle("-fx-background-color: " + BLUE + "; -fx-text-fill: white; -fx-font-size: 14px; -fx-background-radius: 10; -fx-padding: 10 20; -fx-cursor: hand;");
+        volver.setStyle("-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
+                + "-fx-font-size:14px;-fx-background-radius:10;-fx-padding:10 20;-fx-cursor:hand;");
         volver.setOnAction(e -> root.setCenter(buildMainContent()));
         box.getChildren().addAll(icon, title, msg, volver);
         ScrollPane scroll = new ScrollPane(box);
@@ -1171,15 +1007,6 @@ public class UsuarioApp {
     // =========================================================================
     // HELPERS UI
     // =========================================================================
-    private VBox tituloVista(String titulo, String subtitulo) {
-        VBox v = new VBox(4);
-        Label t = new Label(titulo);
-        t.setFont(Font.font("System", FontWeight.BOLD, 26));
-        t.setTextFill(Color.web("#111827"));
-        v.getChildren().addAll(t, label(subtitulo, 13, GRAY_TEXT, false));
-        return v;
-    }
-
     private Circle mapDot(double x, double y, String color) {
         Circle c = new Circle(7, Color.web(color));
         c.setCenterX(x);
@@ -1224,15 +1051,10 @@ public class UsuarioApp {
     }
 
     private void shadow(Region node) {
-
         DropShadow shadow = new DropShadow();
-
         shadow.setRadius(18);
-
         shadow.setOffsetY(4);
-
         shadow.setColor(Color.rgb(15, 23, 42, 0.10));
-
         node.setEffect(shadow);
     }
 
@@ -1244,7 +1066,6 @@ public class UsuarioApp {
         a.showAndWait();
     }
 
-    // ── Utilidad AWT ──────────────────────────────────────────────────────────
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight();
         int top = h, bottom = 0, left = w, right = 0;
@@ -1271,5 +1092,4 @@ public class UsuarioApp {
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
-
 }
