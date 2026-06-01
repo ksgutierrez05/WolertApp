@@ -110,7 +110,6 @@ sistemagestion\view\MapaUnidadesPoliciales$4.class
 sistemagestion\dao\NotificacionDAO.class
 sistemagestion\view\MapaAlarmas$6.class
 sistemagestion\model\EstadoPolicia.class
-sistemagestion\view\PruebaFX.class
 sistemagestion\dao\UsuarioDAO.class
 sistemagestion\view\VecinosView.class
 com\mycompany\wolertappsistemaalertas\WolertAppSistemaAlertas.class
