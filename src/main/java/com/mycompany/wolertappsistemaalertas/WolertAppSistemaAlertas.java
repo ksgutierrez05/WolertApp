@@ -27,7 +27,7 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import sistemagestion.service.EmailService;
-import sistemagestion.view.MapaView;
+//import sistemagestion.view.MapaView;
 
 /**
  *
@@ -91,7 +91,7 @@ public class WolertAppSistemaAlertas extends Application {
         //new MapaAlarmasRegistada().mostrar();
         //new MapaAlerta(null, null, null, null).mostrar();
         //new MapaUnidadesPoliciales().mostrar();
-  }
+  
 
         // Temporalmente abre el mapa directo, sin login ni dashboard
         //new MapaView().mostrar();

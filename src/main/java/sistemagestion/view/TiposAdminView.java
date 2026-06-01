@@ -26,22 +26,22 @@ import sistemagestion.service.TipoArmaService;
 public class TiposAdminView {
 
     // ── Colores — idénticos a ComunaAdminView/BarrioAdminView ────
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String BLUE      = "#1565c0";
-    private static final String GREEN     = "#43a047";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
+    private static final String GREEN = "#43a047";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String PURPLE    = "#7b1fa2";
-    private static final String TEAL      = "#00796b";
+    private static final String ORANGE = "#fb8c00";
+    private static final String PURPLE = "#7b1fa2";
+    private static final String TEAL = "#00796b";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
     // ── Services ─────────────────────────────────────────────────
-    private TipoAlertaService       tipoAlertaService;
-    private TipoArmaService         tipoArmaService;
-    private MedioTransporteService  medioTransporteService;
+    private TipoAlertaService tipoAlertaService;
+    private TipoArmaService tipoArmaService;
+    private MedioTransporteService medioTransporteService;
 
     // ── Contenedores recargables ──────────────────────────────────
     private VBox tablaContainerAlerta;
@@ -63,8 +63,8 @@ public class TiposAdminView {
         javafx.scene.text.Font.loadFont(
                 getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
-            tipoAlertaService      = new TipoAlertaService();
-            tipoArmaService        = new TipoArmaService();
+            tipoAlertaService = new TipoAlertaService();
+            tipoArmaService = new TipoArmaService();
             medioTransporteService = new MedioTransporteService();
         } catch (SQLException e) {
             mostrarAlerta("Error de conexión", e.getMessage());
@@ -120,12 +120,15 @@ public class TiposAdminView {
         Button btnNuevo = new Button("+ Nuevo tipo");
         btnNuevo.setStyle(btnPrimaryStyle());
         btnNuevo.setOnMouseEntered(e -> btnNuevo.setStyle(btnPrimaryHoverStyle()));
-        btnNuevo.setOnMouseExited(e  -> btnNuevo.setStyle(btnPrimaryStyle()));
+        btnNuevo.setOnMouseExited(e -> btnNuevo.setStyle(btnPrimaryStyle()));
         btnNuevo.setOnAction(e -> {
             switch (pestanaActiva) {
-                case 0 -> abrirFormularioAlerta(null);
-                case 1 -> abrirFormularioArma(null);
-                case 2 -> abrirFormularioMedio(null);
+                case 0 ->
+                    abrirFormularioAlerta(null);
+                case 1 ->
+                    abrirFormularioArma(null);
+                case 2 ->
+                    abrirFormularioMedio(null);
             }
         });
 
@@ -142,20 +145,20 @@ public class TiposAdminView {
         HBox.setHgrow(row, Priority.ALWAYS);
 
         int totalAlertas = cargarTiposAlerta().size();
-        int totalArmas   = cargarTiposArma().size();
-        int totalMedios  = cargarMedios().size();
+        int totalArmas = cargarTiposArma().size();
+        int totalMedios = cargarMedios().size();
         int totalCatalog = totalAlertas + totalArmas + totalMedios;
 
-        Label lblAlertasVal  = boldNum(String.valueOf(totalAlertas),  RED);
-        Label lblArmasVal    = boldNum(String.valueOf(totalArmas),    PURPLE);
-        Label lblMediosVal   = boldNum(String.valueOf(totalMedios),   TEAL);
-        Label lblCatalogVal  = boldNum(String.valueOf(totalCatalog),  GREEN);
+        Label lblAlertasVal = boldNum(String.valueOf(totalAlertas), RED);
+        Label lblArmasVal = boldNum(String.valueOf(totalArmas), PURPLE);
+        Label lblMediosVal = boldNum(String.valueOf(totalMedios), TEAL);
+        Label lblCatalogVal = boldNum(String.valueOf(totalCatalog), GREEN);
 
         row.getChildren().addAll(
-                statCard(RED_LIGHT,  RED,    "\uf0f3", "Tipos de alerta",       lblAlertasVal,  "Categorías activas"),
-                statCard("#f3e8ff",  PURPLE, "\uf6ff", "Tipos de arma",         lblArmasVal,    "Registradas en el sistema"),
-                statCard("#e0f2fe",  TEAL,   "\uf1b9", "Medios de transporte",  lblMediosVal,   "Disponibles"),
-                statCard("#e8f5e9",  GREEN,  "\uf466", "Total catálogos",       lblCatalogVal,  "Ítems en el sistema")
+                statCard(RED_LIGHT, RED, "\uf0f3", "Tipos de alerta", lblAlertasVal, "Categorías activas"),
+                statCard("#f3e8ff", PURPLE, "\uf6ff", "Tipos de arma", lblArmasVal, "Registradas en el sistema"),
+                statCard("#e0f2fe", TEAL, "\uf1b9", "Medios de transporte", lblMediosVal, "Disponibles"),
+                statCard("#e8f5e9", GREEN, "\uf466", "Total catálogos", lblCatalogVal, "Ítems en el sistema")
         );
         return row;
     }
@@ -170,7 +173,7 @@ public class TiposAdminView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -202,7 +205,7 @@ public class TiposAdminView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -218,9 +221,9 @@ public class TiposAdminView {
                 + "-fx-border-width: 0 0 1 0;");
 
         Button[] tabs = {
-            tabBtn("🔔   Tipos de alerta",      0),
-            tabBtn("🔫   Tipos de arma",         1),
-            tabBtn("🚗   Medios de transporte",  2)
+            tabBtn("🔔   Tipos de alerta", 0),
+            tabBtn("🔫   Tipos de arma", 1),
+            tabBtn("🚗   Medios de transporte", 2)
         };
 
         aplicarEstiloTab(tabs[0], true);
@@ -259,7 +262,9 @@ public class TiposAdminView {
     }
 
     private void actualizarTabs(Button[] tabs, int activo) {
-        for (int i = 0; i < tabs.length; i++) aplicarEstiloTab(tabs[i], i == activo);
+        for (int i = 0; i < tabs.length; i++) {
+            aplicarEstiloTab(tabs[i], i == activo);
+        }
     }
 
     private void aplicarEstiloTab(Button btn, boolean activo) {
@@ -283,7 +288,10 @@ public class TiposAdminView {
 
         panel.getChildren().addAll(
                 buildToolbarPanel("Buscar tipo de alerta...", campoBusquedaAlerta,
-                        tf -> { campoBusquedaAlerta = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
+                        tf -> {
+                            campoBusquedaAlerta = tf;
+                            tf.textProperty().addListener((o, ov, nv) -> filtrar(nv));
+                        }),
                 buildTablaAlerta()
         );
         return panel;
@@ -312,7 +320,9 @@ public class TiposAdminView {
     }
 
     private void renderTablaAlerta(List<TipoAlerta> lista) {
-        if (tablaContainerAlerta == null) return;
+        if (tablaContainerAlerta == null) {
+            return;
+        }
         tablaContainerAlerta.getChildren().clear();
         if (lista.isEmpty()) {
             Label v = label("No hay tipos de alerta registrados.", 14, GRAY_TEXT, false);
@@ -323,8 +333,9 @@ public class TiposAdminView {
                 tablaContainerAlerta.getChildren().add(buildFilaAlerta(lista.get(i), i % 2 == 0));
             }
         }
-        if (lblMostrandoAlerta != null)
+        if (lblMostrandoAlerta != null) {
             lblMostrandoAlerta.setText("Total: " + lista.size() + " tipos de alerta");
+        }
     }
 
     private HBox buildFilaAlerta(TipoAlerta t, boolean par) {
@@ -371,7 +382,10 @@ public class TiposAdminView {
 
         panel.getChildren().addAll(
                 buildToolbarPanel("Buscar tipo de arma...", campoBusquedaArma,
-                        tf -> { campoBusquedaArma = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
+                        tf -> {
+                            campoBusquedaArma = tf;
+                            tf.textProperty().addListener((o, ov, nv) -> filtrar(nv));
+                        }),
                 buildTablaArma()
         );
         return panel;
@@ -387,7 +401,7 @@ public class TiposAdminView {
         header.getChildren().addAll(
                 hNombreWrap,
                 colHeaderFixed("Descripción", 280),
-                colHeaderFixed("Acciones",    120));
+                colHeaderFixed("Acciones", 120));
         card.getChildren().add(header);
 
         tablaContainerArma = new VBox(0);
@@ -403,7 +417,9 @@ public class TiposAdminView {
     }
 
     private void renderTablaArma(List<TipoArma> lista) {
-        if (tablaContainerArma == null) return;
+        if (tablaContainerArma == null) {
+            return;
+        }
         tablaContainerArma.getChildren().clear();
         if (lista.isEmpty()) {
             Label v = label("No hay tipos de arma registrados.", 14, GRAY_TEXT, false);
@@ -414,8 +430,9 @@ public class TiposAdminView {
                 tablaContainerArma.getChildren().add(buildFilaArma(lista.get(i), i % 2 == 0));
             }
         }
-        if (lblMostrandoArma != null)
+        if (lblMostrandoArma != null) {
             lblMostrandoArma.setText("Total: " + lista.size() + " tipos de arma");
+        }
     }
 
     private HBox buildFilaArma(TipoArma t, boolean par) {
@@ -442,7 +459,7 @@ public class TiposAdminView {
         // Descripción — ancho fijo
         Label descLbl = label(
                 t.getDescripcion() != null && !t.getDescripcion().isBlank()
-                        ? t.getDescripcion() : "—",
+                ? t.getDescripcion() : "—",
                 12, GRAY_TEXT, false);
         descLbl.setPrefWidth(280);
         descLbl.setMinWidth(280);
@@ -468,7 +485,10 @@ public class TiposAdminView {
 
         panel.getChildren().addAll(
                 buildToolbarPanel("Buscar medio de transporte...", campoBusquedaMedio,
-                        tf -> { campoBusquedaMedio = tf; tf.textProperty().addListener((o, ov, nv) -> filtrar(nv)); }),
+                        tf -> {
+                            campoBusquedaMedio = tf;
+                            tf.textProperty().addListener((o, ov, nv) -> filtrar(nv));
+                        }),
                 buildTablaMedio()
         );
         return panel;
@@ -497,7 +517,9 @@ public class TiposAdminView {
     }
 
     private void renderTablaMedio(List<MedioTransporte> lista) {
-        if (tablaContainerMedio == null) return;
+        if (tablaContainerMedio == null) {
+            return;
+        }
         tablaContainerMedio.getChildren().clear();
         if (lista.isEmpty()) {
             Label v = label("No hay medios de transporte registrados.", 14, GRAY_TEXT, false);
@@ -508,8 +530,9 @@ public class TiposAdminView {
                 tablaContainerMedio.getChildren().add(buildFilaMedio(lista.get(i), i % 2 == 0));
             }
         }
-        if (lblMostrandoMedio != null)
+        if (lblMostrandoMedio != null) {
             lblMostrandoMedio.setText("Total: " + lista.size() + " medios de transporte");
+        }
     }
 
     private HBox buildFilaMedio(MedioTransporte m, boolean par) {
@@ -571,12 +594,25 @@ public class TiposAdminView {
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
             lblError.setText("");
             String nombre = txtNombre.getText().trim();
-            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            if (nombre.isEmpty()) {
+                lblError.setText("El nombre no puede estar vacío.");
+                ev.consume();
+                return;
+            }
             try {
-                if (esEdicion) { existente.setNombre(nombre); tipoAlertaService.actualizar(existente); }
-                else { TipoAlerta n = new TipoAlerta(); n.setNombre(nombre); tipoAlertaService.insertar(n); }
+                if (esEdicion) {
+                    existente.setNombre(nombre);
+                    tipoAlertaService.actualizar(existente);
+                } else {
+                    TipoAlerta n = new TipoAlerta();
+                    n.setNombre(nombre);
+                    tipoAlertaService.insertar(n);
+                }
                 renderTablaAlerta(cargarTiposAlerta());
-            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+            } catch (Exception ex) {
+                lblError.setText("Error: " + ex.getMessage());
+                ev.consume();
+            }
         });
         dlg.showAndWait();
     }
@@ -594,13 +630,13 @@ public class TiposAdminView {
 
         TextField txtNombre = dlgField("Ej: Arma de fuego, Arma blanca...",
                 esEdicion ? existente.getNombre() : "");
-        TextField txtDesc   = dlgField("Descripción opcional...",
+        TextField txtDesc = dlgField("Descripción opcional...",
                 esEdicion && existente.getDescripcion() != null ? existente.getDescripcion() : "");
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
 
         form.getChildren().addAll(
-                label("Nombre *",               12, GRAY_TEXT, false), txtNombre,
+                label("Nombre *", 12, GRAY_TEXT, false), txtNombre,
                 label("Descripción (opcional)", 12, GRAY_TEXT, false), txtDesc,
                 lblError);
 
@@ -612,7 +648,11 @@ public class TiposAdminView {
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
             lblError.setText("");
             String nombre = txtNombre.getText().trim();
-            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            if (nombre.isEmpty()) {
+                lblError.setText("El nombre no puede estar vacío.");
+                ev.consume();
+                return;
+            }
             try {
                 if (esEdicion) {
                     existente.setNombre(nombre);
@@ -625,7 +665,10 @@ public class TiposAdminView {
                     tipoArmaService.insertar(n);
                 }
                 renderTablaArma(cargarTiposArma());
-            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+            } catch (Exception ex) {
+                lblError.setText("Error: " + ex.getMessage());
+                ev.consume();
+            }
         });
         dlg.showAndWait();
     }
@@ -658,12 +701,25 @@ public class TiposAdminView {
         btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
             lblError.setText("");
             String nombre = txtNombre.getText().trim();
-            if (nombre.isEmpty()) { lblError.setText("El nombre no puede estar vacío."); ev.consume(); return; }
+            if (nombre.isEmpty()) {
+                lblError.setText("El nombre no puede estar vacío.");
+                ev.consume();
+                return;
+            }
             try {
-                if (esEdicion) { existente.setNombre(nombre); medioTransporteService.actualizar(existente); }
-                else { MedioTransporte n = new MedioTransporte(); n.setNombre(nombre); medioTransporteService.insertar(n); }
+                if (esEdicion) {
+                    existente.setNombre(nombre);
+                    medioTransporteService.actualizar(existente);
+                } else {
+                    MedioTransporte n = new MedioTransporte();
+                    n.setNombre(nombre);
+                    medioTransporteService.insertar(n);
+                }
                 renderTablaMedio(cargarMedios());
-            } catch (Exception ex) { lblError.setText("Error: " + ex.getMessage()); ev.consume(); }
+            } catch (Exception ex) {
+                lblError.setText("Error: " + ex.getMessage());
+                ev.consume();
+            }
         });
         dlg.showAndWait();
     }
@@ -673,23 +729,41 @@ public class TiposAdminView {
     // ═══════════════════════════════════════════════════════════════
     private void confirmarEliminarAlerta(TipoAlerta t) {
         if (!confirmar("¿Eliminar tipo de alerta \"" + t.getNombre() + "\"?",
-                "Las alertas de este tipo quedarán sin categoría.")) return;
-        try { tipoAlertaService.eliminar(t.getNombre()); renderTablaAlerta(cargarTiposAlerta()); }
-        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
+                "Las alertas de este tipo quedarán sin categoría.")) {
+            return;
+        }
+        try {
+            tipoAlertaService.eliminar(t.getNombre());
+            renderTablaAlerta(cargarTiposAlerta());
+        } catch (Exception e) {
+            mostrarAlerta("Error al eliminar", e.getMessage());
+        }
     }
 
     private void confirmarEliminarArma(TipoArma t) {
         if (!confirmar("¿Eliminar tipo de arma \"" + t.getNombre() + "\"?",
-                "Esta acción no se puede deshacer.")) return;
-        try { tipoArmaService.eliminar(t.getNombre()); renderTablaArma(cargarTiposArma()); }
-        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
+                "Esta acción no se puede deshacer.")) {
+            return;
+        }
+        try {
+            tipoArmaService.eliminar(t.getNombre());
+            renderTablaArma(cargarTiposArma());
+        } catch (Exception e) {
+            mostrarAlerta("Error al eliminar", e.getMessage());
+        }
     }
 
     private void confirmarEliminarMedio(MedioTransporte m) {
         if (!confirmar("¿Eliminar medio \"" + m.getNombre() + "\"?",
-                "Esta acción no se puede deshacer.")) return;
-        try { medioTransporteService.eliminar(m.getNombre()); renderTablaMedio(cargarMedios()); }
-        catch (Exception e) { mostrarAlerta("Error al eliminar", e.getMessage()); }
+                "Esta acción no se puede deshacer.")) {
+            return;
+        }
+        try {
+            medioTransporteService.eliminar(m.getNombre());
+            renderTablaMedio(cargarMedios());
+        } catch (Exception e) {
+            mostrarAlerta("Error al eliminar", e.getMessage());
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -698,15 +772,18 @@ public class TiposAdminView {
     private void filtrar(String texto) {
         String t = texto == null ? "" : texto.toLowerCase().trim();
         switch (pestanaActiva) {
-            case 0 -> renderTablaAlerta(cargarTiposAlerta().stream()
-                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
-                    .toList());
-            case 1 -> renderTablaArma(cargarTiposArma().stream()
-                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
-                    .toList());
-            case 2 -> renderTablaMedio(cargarMedios().stream()
-                    .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
-                    .toList());
+            case 0 ->
+                renderTablaAlerta(cargarTiposAlerta().stream()
+                        .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                        .toList());
+            case 1 ->
+                renderTablaArma(cargarTiposArma().stream()
+                        .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                        .toList());
+            case 2 ->
+                renderTablaMedio(cargarMedios().stream()
+                        .filter(x -> x.getNombre() != null && x.getNombre().toLowerCase().contains(t))
+                        .toList());
         }
     }
 
@@ -714,27 +791,46 @@ public class TiposAdminView {
     // HELPERS DE DATOS
     // ═══════════════════════════════════════════════════════════════
     private List<TipoAlerta> cargarTiposAlerta() {
-        if (tipoAlertaService == null) return List.of();
-        try { return tipoAlertaService.listar(); } catch (Exception e) { return List.of(); }
+        if (tipoAlertaService == null) {
+            return List.of();
+        }
+        try {
+            return tipoAlertaService.listar();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private List<TipoArma> cargarTiposArma() {
-        if (tipoArmaService == null) return List.of();
-        try { return tipoArmaService.listar(); } catch (Exception e) { return List.of(); }
+        if (tipoArmaService == null) {
+            return List.of();
+        }
+        try {
+            return tipoArmaService.listar();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private List<MedioTransporte> cargarMedios() {
-        if (medioTransporteService == null) return List.of();
-        try { return medioTransporteService.listar(); } catch (Exception e) { return List.of(); }
+        if (medioTransporteService == null) {
+            return List.of();
+        }
+        try {
+            return medioTransporteService.listar();
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
     // HELPERS UI — mismos patrones que ComunaAdminView
     // ═══════════════════════════════════════════════════════════════
-
-    /** Toolbar con ícono FA lupa + campo de búsqueda */
+    /**
+     * Toolbar con ícono FA lupa + campo de búsqueda
+     */
     private HBox buildToolbarPanel(String prompt, TextField existing,
-                                   java.util.function.Consumer<TextField> registro) {
+            java.util.function.Consumer<TextField> registro) {
         HBox bar = new HBox(12);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(16, 20, 16, 20));
@@ -791,13 +887,19 @@ public class TiposAdminView {
         Label l = new Label(text.toUpperCase());
         l.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;"
                 + "-fx-text-fill: #9ca3af; -fx-letter-spacing: 0.5px;");
-        if (width > 0) { l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width); }
+        if (width > 0) {
+            l.setPrefWidth(width);
+            l.setMinWidth(width);
+            l.setMaxWidth(width);
+        }
         return l;
     }
 
     private Label colHeaderFixed(String text, double width) {
         Label l = colHeader(text, 0);
-        l.setPrefWidth(width); l.setMinWidth(width); l.setMaxWidth(width);
+        l.setPrefWidth(width);
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
         return l;
     }
 
@@ -824,14 +926,14 @@ public class TiposAdminView {
         box.setMinWidth(120);
         box.setMaxWidth(120);
         box.getChildren().addAll(
-                btnAccion("\uf044", ORANGE,  "#fff8e1", "Editar",   onEditar),
-                btnAccion("\uf2ed", RED,     RED_LIGHT, "Eliminar", onEliminar)
+                btnAccion("\uf044", ORANGE, "#fff8e1", "Editar", onEditar),
+                btnAccion("\uf2ed", RED, RED_LIGHT, "Eliminar", onEliminar)
         );
         return box;
     }
 
     private Button btnAccion(String iconFA, String iconColor,
-                              String bgColor, String tooltip, Runnable accion) {
+            String bgColor, String tooltip, Runnable accion) {
         Button b = new Button(iconFA);
         String base = "-fx-background-color: " + bgColor + ";"
                 + "-fx-text-fill: " + iconColor + ";"
@@ -845,7 +947,7 @@ public class TiposAdminView {
                 + "-fx-padding: 7 10; -fx-cursor: hand;";
         b.setStyle(base);
         b.setOnMouseEntered(e -> b.setStyle(hover));
-        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         Tooltip.install(b, new Tooltip(tooltip));
         return b;
@@ -885,18 +987,36 @@ public class TiposAdminView {
                 + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
     }
 
-    /** Badge de color + ícono + categoría para TipoAlerta.
-     *  Retorna: [0]=emoji, [1]=etiqueta, [2]=bgColor, [3]=accentColor */
+    /**
+     * Badge de color + ícono + categoría para TipoAlerta. Retorna: [0]=emoji,
+     * [1]=etiqueta, [2]=bgColor, [3]=accentColor
+     */
     private String[] badgeAlerta(String nombre) {
-        if (nombre == null) return new String[]{"?", "General",    "#f3f4f6", GRAY_TEXT};
+        if (nombre == null) {
+            return new String[]{"?", "General", "#f3f4f6", GRAY_TEXT};
+        }
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT"))   return new String[]{"!", "Delito",    RED_LIGHT, RED};
-        if (n.contains("SOSPECH"))                       return new String[]{"?", "Vigilancia","#fef9c3", "#92400e"};
-        if (n.contains("ANIMAL"))                        return new String[]{"A", "Fauna",     "#ecfdf5", "#065f46"};
-        if (n.contains("INCEND"))                        return new String[]{"F", "Incendio",  "#fff7ed", "#c2410c"};
-        if (n.contains("RUIDO") || n.contains("ALTER"))  return new String[]{"R", "Alteración","#fffbeb", "#b45309"};
-        if (n.contains("MÉDI") || n.contains("MEDIC"))   return new String[]{"M", "Médica",   "#f0fdf4", "#15803d"};
-        if (n.contains("ACCID"))                         return new String[]{"!", "Accidente", "#eff6ff", "#1d4ed8"};
+        if (n.contains("ROB") || n.contains("ASALT")) {
+            return new String[]{"!", "Delito", RED_LIGHT, RED};
+        }
+        if (n.contains("SOSPECH")) {
+            return new String[]{"?", "Vigilancia", "#fef9c3", "#92400e"};
+        }
+        if (n.contains("ANIMAL")) {
+            return new String[]{"A", "Fauna", "#ecfdf5", "#065f46"};
+        }
+        if (n.contains("INCEND")) {
+            return new String[]{"F", "Incendio", "#fff7ed", "#c2410c"};
+        }
+        if (n.contains("RUIDO") || n.contains("ALTER")) {
+            return new String[]{"R", "Alteración", "#fffbeb", "#b45309"};
+        }
+        if (n.contains("MÉDI") || n.contains("MEDIC")) {
+            return new String[]{"M", "Médica", "#f0fdf4", "#15803d"};
+        }
+        if (n.contains("ACCID")) {
+            return new String[]{"!", "Accidente", "#eff6ff", "#1d4ed8"};
+        }
         return new String[]{"·", "General", "#f3f4f6", GRAY_TEXT};
     }
 
@@ -913,25 +1033,32 @@ public class TiposAdminView {
 
     private boolean confirmar(String header, String content) {
         Alert a = new Alert(Alert.AlertType.CONFIRMATION);
-        a.setTitle("Confirmar"); a.setHeaderText(header); a.setContentText(content);
+        a.setTitle("Confirmar");
+        a.setHeaderText(header);
+        a.setContentText(content);
         return a.showAndWait().filter(r -> r == ButtonType.OK).isPresent();
     }
 
     private void mostrarAlerta(String titulo, String msg) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg);
+        a.setTitle(titulo);
+        a.setHeaderText(null);
+        a.setContentText(msg);
         a.showAndWait();
     }
 
     private String btnPrimaryStyle() {
-        return "-fx-background-color: #1565c0; -fx-text-fill: white;"
+        return "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white;"
                 + "-fx-font-size: 13px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
     }
 
     private String btnPrimaryHoverStyle() {
-        return "-fx-background-color: #0d47a1; -fx-text-fill: white;"
+        return "-fx-background-color: linear-gradient(to right, #0f1e30, #16283d);"
+                + "-fx-text-fill: white;"
                 + "-fx-font-size: 13px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
     }
+
 }

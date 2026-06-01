@@ -4,8 +4,8 @@ sistemagestion\view\UsuarioApp.class
 sistemagestion\view\ReportesAdminPoliciaView.class
 sistemagestion\dao\RolUsuarioDAO.class
 sistemagestion\view\VecinosView$DatosVecino.class
-sistemagestion\view\EstadisticasAdminView$1PolInfo.class
 sistemagestion\service\ComunaService.class
+sistemagestion\view\ConfiguracionAdminView.class
 sistemagestion\view\MisAlertasPoliciaView.class
 sistemagestion\view\MapaAlerta$4.class
 sistemagestion\view\ComunaAdminView.class
@@ -98,6 +98,7 @@ sistemagestion\view\AlertasAdminView$1.class
 sistemagestion\view\MapaAlarmas$3.class
 sistemagestion\service\BarrioService.class
 sistemagestion\model\Administrador.class
+sistemagestion\view\NotificacionesView.class
 sistemagestion\view\AdministradorApp$1.class
 sistemagestion\model\Barrio.class
 sistemagestion\view\MapaUnidadesPoliciales$7.class
@@ -135,6 +136,7 @@ sistemagestion\model\EstadoUnidadPolicial.class
 sistemagestion\view\MapaAlarmasRegistradas$3.class
 sistemagestion\view\MapaUnidadesPoliciales.class
 sistemagestion\dao\TipoAlertaDAO.class
+sistemagestion\view\MiCuentaView.class
 sistemagestion\view\UnidadesAdminPoliciaView.class
 sistemagestion\view\PoliciaApp.class
 sistemagestion\view\AlarmasAdminPoliciaView$1.class

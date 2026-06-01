@@ -115,7 +115,17 @@ public class UsuariosAdminView {
         right.setAlignment(Pos.CENTER_RIGHT);
         HBox.setHgrow(right, Priority.ALWAYS);
 
-        Button btnNuevo = styledBtn("+ Nuevo usuario", BLUE, "#0d47a1");
+        // ── Botón con gradiente del sidebar ───────────────────────────
+        Button btnNuevo = new Button("+ Nuevo usuario");
+        String baseStyle = "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
+        String hoverStyle = "-fx-background-color: linear-gradient(to right, #0f1e30, #16283d);"
+                + "-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;"
+                + "-fx-background-radius: 8; -fx-padding: 10 18; -fx-cursor: hand;";
+        btnNuevo.setStyle(baseStyle);
+        btnNuevo.setOnMouseEntered(e -> btnNuevo.setStyle(hoverStyle));
+        btnNuevo.setOnMouseExited(e -> btnNuevo.setStyle(baseStyle));
         btnNuevo.setOnAction(e -> abrirDialogoCrear());
         right.getChildren().add(btnNuevo);
 
@@ -635,7 +645,7 @@ public class UsuariosAdminView {
     // =========================================================================
     private void abrirDialogoCrear() {
         Dialog<ButtonType> dlg = new Dialog<>();
-        dlg.setTitle("Nuevo Usuario");
+        dlg.setTitle("Nuevo Administrador");
         dlg.setHeaderText(null);
 
         ScrollPane scroll = new ScrollPane();
@@ -671,8 +681,10 @@ public class UsuariosAdminView {
             try {
                 for (RolUsuario r : rolService.listar()) {
                     if (r != null && r.getNombre() != null) {
-                        // Excluye POLICIA — ese se crea desde PoliciasAdminPoliciaView
-                        if (!r.getNombre().toUpperCase().equals("POLICIA")) {
+                        String nombre = r.getNombre().toUpperCase();
+                        // Solo se pueden crear ADMIN y ADMINISTRADOR_POLICIA
+                        // Los ciudadanos/residentes se registran solos; el admin solo cambia su estado
+                        if (nombre.equals("ADMIN") || nombre.equals("ADMIN_POLICIA")) {
                             cmbRol.getItems().add(r.getNombre());
                         }
                     }
@@ -1031,7 +1043,7 @@ public class UsuariosAdminView {
                 BLUE;
             case "ADMINISTRADOR_POLICIA" ->
                 "#7b1fa2";
-            case "RESIDENTE" ->
+            case "CIUDADANO" ->
                 GREEN;
             default ->
                 GRAY_TEXT;
@@ -1047,7 +1059,7 @@ public class UsuariosAdminView {
                 "#e8f0fe";
             case "ADMINISTRADOR_POLICIA" ->
                 "#f3e5f5";
-            case "RESIDENTE" ->
+            case "CIUDADANO" ->
                 "#e8f5e9";
             default ->
                 "#f3f4f6";

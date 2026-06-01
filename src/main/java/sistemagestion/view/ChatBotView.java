@@ -15,35 +15,44 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+
 import java.net.URI;
-import java.net.http.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-import org.json.*;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import sistemagestion.model.Usuario;
 
 public class ChatBotView {
 
- private static final String  API_KEY= "";
-
+    // ── Paleta — mismos colores que el sidebar ─────────────────────
     private static final String WHITE = "#ffffff";
     private static final String BG = "#f4f6fb";
+    private static final String SIDEBAR_BG = "#16283d";       // fondo oscuro sidebar
+    private static final String SIDEBAR_MID = "#1f3a56";       // gradiente sidebar
     private static final String BLUE = "#1565c0";
     private static final String BLUE_DARK = "#0d47a1";
     private static final String GRAY_TEXT = "#6b7280";
     private static final String BORDER = "#e5e7eb";
     private static final String BOT_BG = "#f0f4ff";
-    private static final String USER_BG = "#1565c0";
+    private static final String USER_BG = "#1f3a56";        // mismo que sidebar_mid
+    private static final String ACCENT = "#8899bb";        // color subtítulos sidebar
 
     private final Usuario usuarioActual;
     private VBox messagesBox;
     private ScrollPane messagesScroll;
     private final List<JSONObject> historial = new ArrayList<>();
+
+    private static final String API_KEY = ""; // reemplaza con tu clave real
 
     public ChatBotView(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
@@ -86,18 +95,18 @@ public class ChatBotView {
         return popup;
     }
 
-    // ── Header ───────────────────────────────────────────────────
+    // ── Header — gradiente del sidebar ───────────────────────────
     private HBox buildHeader(Popup popup) {
         HBox header = new HBox(10);
         header.setPadding(new Insets(16, 16, 14, 16));
         header.setAlignment(Pos.CENTER_LEFT);
         header.setStyle(
-                "-fx-background-color: " + BLUE + ";"
+                "-fx-background-color: linear-gradient(to right, " + SIDEBAR_BG + ", " + SIDEBAR_MID + ");"
                 + "-fx-background-radius: 20 20 0 0;");
 
         // Avatar bot
         Circle av = new Circle(18, Color.web("#ffffff22"));
-        Label avIco = faIcon("\uf544", 14, WHITE); // robot FA
+        Label avIco = faIcon("\uf544", 14, WHITE);
         StackPane avBox = new StackPane(av, avIco);
 
         VBox info = new VBox(1);
@@ -106,29 +115,29 @@ public class ChatBotView {
         HBox statusRow = new HBox(5);
         statusRow.setAlignment(Pos.CENTER_LEFT);
         Circle dot = new Circle(4, Color.web("#69f0ae"));
-        Label statusLbl = label("En línea", 10, "#c8e6c9", false);
+        Label statusLbl = label("En línea", 10, ACCENT, false);
         statusRow.getChildren().addAll(dot, statusLbl);
         info.getChildren().addAll(name, statusRow);
 
         // Botón cerrar
         Button closeBtn = new Button("✕");
         closeBtn.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.15);"
-                + "-fx-text-fill: white;"
+                "-fx-background-color: rgba(255,255,255,0.12);"
+                + "-fx-text-fill: " + ACCENT + ";"
                 + "-fx-font-size: 12px;"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 4 8;"
                 + "-fx-cursor: hand;");
         closeBtn.setOnMouseEntered(e -> closeBtn.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.25);"
+                "-fx-background-color: rgba(255,255,255,0.22);"
                 + "-fx-text-fill: white;"
                 + "-fx-font-size: 12px;"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 4 8;"
                 + "-fx-cursor: hand;"));
         closeBtn.setOnMouseExited(e -> closeBtn.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.15);"
-                + "-fx-text-fill: white;"
+                "-fx-background-color: rgba(255,255,255,0.12);"
+                + "-fx-text-fill: " + ACCENT + ";"
                 + "-fx-font-size: 12px;"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 4 8;"
@@ -179,20 +188,20 @@ public class ChatBotView {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         Button sendBtn = new Button();
-        Label sendIco = faIcon("\uf1d8", 13, WHITE);
+        Label sendIco = faIcon("\uf1d8", 13, "#F5F7FA");
         sendBtn.setGraphic(sendIco);
         sendBtn.setStyle(
-                "-fx-background-color: " + BLUE + ";"
+                "-fx-background-color: " + SIDEBAR_MID + ";"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 8 14;"
                 + "-fx-cursor: hand;");
         sendBtn.setOnMouseEntered(e -> sendBtn.setStyle(
-                "-fx-background-color: " + BLUE_DARK + ";"
+                "-fx-background-color: " + SIDEBAR_BG + ";"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 8 14;"
                 + "-fx-cursor: hand;"));
         sendBtn.setOnMouseExited(e -> sendBtn.setStyle(
-                "-fx-background-color: " + BLUE + ";"
+                "-fx-background-color: " + SIDEBAR_MID + ";"
                 + "-fx-background-radius: 20;"
                 + "-fx-padding: 8 14;"
                 + "-fx-cursor: hand;"));
@@ -220,7 +229,7 @@ public class ChatBotView {
         HBox row = new HBox(8);
         row.setAlignment(Pos.TOP_LEFT);
 
-        Circle av = new Circle(14, Color.web(BLUE));
+        Circle av = new Circle(14, Color.web(SIDEBAR_MID));
         Label avIco = faIcon("\uf544", 10, WHITE);
         StackPane avBox = new StackPane(av, avIco);
         avBox.setMinSize(28, 28);
@@ -244,7 +253,7 @@ public class ChatBotView {
         scrollAbajo();
     }
 
-    // ── Burbuja usuario ───────────────────────────────────────────
+    // ── Burbuja usuario — fondo sidebar ──────────────────────────
     private void addUserMessage(String texto) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_RIGHT);
@@ -256,7 +265,8 @@ public class ChatBotView {
         msg.setTextFill(Color.WHITE);
         msg.setPadding(new Insets(10, 14, 10, 14));
         msg.setStyle(
-                "-fx-background-color: " + USER_BG + ";"
+                "-fx-background-color: #1f3a56;"
+                + "-fx-text-fill: white;"
                 + "-fx-background-radius: 16 4 16 16;");
 
         row.getChildren().add(msg);
@@ -271,7 +281,7 @@ public class ChatBotView {
         typingRow = new HBox(8);
         typingRow.setAlignment(Pos.TOP_LEFT);
 
-        Circle av = new Circle(14, Color.web(BLUE));
+        Circle av = new Circle(14, Color.web(SIDEBAR_MID));
         Label avIco = faIcon("\uf544", 10, WHITE);
         StackPane avBox = new StackPane(av, avIco);
 
@@ -298,35 +308,43 @@ public class ChatBotView {
         }
     }
 
-    // ── Llamada a  API ──────────────────────────────────────
+    // ── Llamada a API ─────────────────────────────────────────────
     private void enviarMensaje(String userText) {
 
         String systemPrompt = """
-        Eres Mayita de WolertApp, una app colombiana de alertas comunitarias.
-        Ayudas a ciudadanos con:
-        - Cómo reportar alertas (robos, peleas, animales, infraestructura)
-        - Información sobre barrios, comunas y zonas de Valledupar
-        - Cómo usar las funciones de la app (mis alertas, suscripciones, notificaciones)
-        - Consejos de seguridad comunitaria
-        Responde siempre en español, de forma amable, concisa y clara.
-        Máximo 3 párrafos cortos por respuesta.
-        """;
+    Eres Mayita, la asistente virtual de WolertApp, una aplicación colombiana de alertas comunitarias para la ciudad de Valledupar, Cesar.
+    Tu personalidad es amable, cercana, clara y profesional. Usas un tono colombiano natural, sin ser informal en exceso.
+    Responde siempre en español. Máximo 3 párrafos cortos por respuesta. Si no sabes algo, dilo honestamente.
+
+    === SOBRE WOLERTAPP ===
+    WolertApp es un sistema de alertas comunitarias que permite a los ciudadanos de Valledupar reportar incidentes de seguridad,
+    recibir notificaciones de su barrio y mantenerse conectados con su comunidad.
+
+    === CÓMO REPORTAR UNA ALERTA ===
+    1. En el Dashboard principal usa el BOTÓN DE PÁNICO (rojo).
+    2. Se abre un mapa interactivo — selecciona la ubicación del incidente.
+    3. Completa tipo de alerta, arma (si aplica), transporte (si aplica), descripción y barrio.
+    4. Al enviar, la alerta queda PENDIENTE → EN ATENCIÓN → RESUELTA.
+
+    === OTRAS FUNCIONES ===
+    - MIS ALERTAS: historial de tus alertas y su estado.
+    - NOTIFICACIONES: alertas enviadas a tu correo.
+    - MI CUENTA: datos personales, barrio y suscripciones.
+    - MAPA: alertas activas y zonas peligrosas.
+    - VECINOS: actividad de tu barrio.
+
+    === EMERGENCIAS EN VALLEDUPAR ===
+    Policía 123 · Bomberos 119 · Cruz Roja 132 · Línea Mujer 155
+    """;
 
         new Thread(() -> {
             try {
-
                 JSONObject body = new JSONObject()
                         .put("contents", new JSONArray()
                                 .put(new JSONObject()
                                         .put("parts", new JSONArray()
                                                 .put(new JSONObject()
-                                                        .put("text",
-                                                                systemPrompt
-                                                                + "\n\nUsuario: " + userText)
-                                                )
-                                        )
-                                )
-                        );
+                                                        .put("text", systemPrompt + "\n\nUsuario: " + userText)))));
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(
@@ -337,14 +355,9 @@ public class ChatBotView {
                         .build();
 
                 HttpResponse<String> response
-                        = HttpClient.newHttpClient()
-                                .send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("Código: " + response.statusCode());
-                System.out.println(response.body());
+                        = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
                 JSONObject json = new JSONObject(response.body());
-
                 String reply = json
                         .getJSONArray("candidates")
                         .getJSONObject(0)
@@ -360,20 +373,16 @@ public class ChatBotView {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-
                 javafx.application.Platform.runLater(() -> {
                     removeTypingIndicator();
-                    addBotMessage(
-                            "Lo siento, hubo un error al conectarme. Por favor intenta de nuevo."
-                    );
+                    addBotMessage("Lo siento, hubo un error al conectarme. Por favor intenta de nuevo.");
                 });
             }
         }).start();
     }
 
     private void scrollAbajo() {
-        javafx.application.Platform.runLater(()
-                -> messagesScroll.setVvalue(1.0));
+        javafx.application.Platform.runLater(() -> messagesScroll.setVvalue(1.0));
     }
 
     // ── Helpers ───────────────────────────────────────────────────
@@ -388,8 +397,7 @@ public class ChatBotView {
 
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
-        lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size)
-                : Font.font("System", size));
+        lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size) : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }

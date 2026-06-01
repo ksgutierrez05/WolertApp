@@ -10,6 +10,7 @@ package sistemagestion.view;
  */
 
 
+
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.geometry.Insets;
@@ -27,25 +28,25 @@ import sistemagestion.service.NotificacionService;
 
 public class NotificacionesView {
 
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String RED       = "#e53935";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String GREEN     = "#43a047";
-    private static final String BLUE      = "#1565c0";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
+    private static final String ORANGE = "#fb8c00";
+    private static final String GREEN = "#43a047";
+    private static final String BLUE = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
-    private final Usuario             usuarioActual;
+    private final Usuario usuarioActual;
     private final NotificacionService notificacionService;
-    private final BorderPane          root;  // para el botón "volver"
+    private final BorderPane root;
 
     public NotificacionesView(Usuario usuarioActual,
-                              NotificacionService notificacionService,
-                              BorderPane root) {
-        this.usuarioActual       = usuarioActual;
+            NotificacionService notificacionService,
+            BorderPane root) {
+        this.usuarioActual = usuarioActual;
         this.notificacionService = notificacionService;
-        this.root                = root;
+        this.root = root;
     }
 
     // =========================================================================
@@ -58,33 +59,8 @@ public class NotificacionesView {
 
         content.getChildren().addAll(
                 buildHeader(),
-                buildStatsRow(),
                 buildPanel()
         );
-
-        // Botón volver
-        Button volver = new Button("← Volver al Dashboard");
-        volver.setStyle(
-                "-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
-                + "-fx-font-size:13px;-fx-background-radius:8;"
-                + "-fx-padding:9 18;-fx-cursor:hand;");
-        volver.setOnMouseEntered(e -> volver.setStyle(
-                "-fx-background-color:#0d47a1;-fx-text-fill:white;"
-                + "-fx-font-size:13px;-fx-background-radius:8;"
-                + "-fx-padding:9 18;-fx-cursor:hand;"));
-        volver.setOnMouseExited(e -> volver.setStyle(
-                "-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
-                + "-fx-font-size:13px;-fx-background-radius:8;"
-                + "-fx-padding:9 18;-fx-cursor:hand;"));
-        volver.setOnAction(e -> {
-            if (root != null) {
-                // Vuelve al dashboard del usuario
-                UsuarioApp app = new UsuarioApp(usuarioActual);
-                // Solo recarga el centro — no abre nueva ventana
-                root.setCenter(buildPlaceholderVolver());
-            }
-        });
-        content.getChildren().add(volver);
 
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
@@ -109,55 +85,6 @@ public class NotificacionesView {
 
         header.getChildren().add(titles);
         return header;
-    }
-
-    // =========================================================================
-    // STATS
-    // =========================================================================
-    private HBox buildStatsRow() {
-        HBox row = new HBox(14);
-
-        long total    = 0, leidas = 0, pendientes = 0, errores = 0;
-        try {
-            List<Notificacion> lista = cargarNotificaciones();
-            total      = lista.size();
-            leidas     = lista.stream().filter(n -> n.getEstado() != null
-                            && n.getEstado().name().equals("LEIDA")).count();
-            pendientes = lista.stream().filter(n -> n.getEstado() != null
-                            && n.getEstado().name().equals("PENDIENTE")).count();
-            errores    = lista.stream().filter(n -> n.getEstado() != null
-                            && n.getEstado().name().equals("ERROR")).count();
-        } catch (Exception ignored) {}
-
-        row.getChildren().addAll(
-                statCard("#e8f0fe", BLUE,   "🔔", "Total",      total,      "Recibidas"),
-                statCard("#e8f5e9", GREEN,  "✅", "Leídas",     leidas,     "Ya revisadas"),
-                statCard("#fff3e0", ORANGE, "🕐", "Pendientes", pendientes, "Sin leer"),
-                statCard("#fff0f0", RED,    "❌", "Errores",    errores,    "No entregadas")
-        );
-        return row;
-    }
-
-    private VBox statCard(String bg, String color, String icon,
-                          String title, long value, String sub) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(16, 18, 14, 18));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 14;");
-        HBox.setHgrow(card, Priority.ALWAYS);
-        shadow(card);
-
-        Label iconLbl  = label(icon, 22, color, false);
-        Label titleLbl = label(title, 12, GRAY_TEXT, false);
-
-        Label valLbl = new Label(String.valueOf(value));
-        valLbl.setFont(Font.font("System", FontWeight.BOLD, 32));
-        valLbl.setTextFill(Color.web("#111827"));
-
-        Label subLbl = label(sub, 10, GRAY_TEXT, false);
-        card.getChildren().addAll(iconLbl, titleLbl, valLbl, subLbl);
-        card.setOnMouseEntered(e -> card.setTranslateY(-2));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
-        return card;
     }
 
     // =========================================================================
@@ -249,7 +176,7 @@ public class NotificacionesView {
         msgLbl.setWrapText(true);
 
         // Destinatario + fecha
-        String dest  = n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "—";
+        String dest = n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "—";
         String fecha = n.getFechahora() != null
                 ? n.getFechahora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
                 : "—";
@@ -264,12 +191,16 @@ public class NotificacionesView {
         }
 
         // Badge de estado
-        String estadoStr  = n.getEstado() != null ? n.getEstado().name() : "—";
+        String estadoStr = n.getEstado() != null ? n.getEstado().name() : "—";
         String badgeColor = switch (estadoStr) {
-            case "LEIDA"     -> GREEN;
-            case "ENVIADA"   -> BLUE;
-            case "ERROR"     -> RED;
-            default          -> ORANGE;
+            case "LEIDA" ->
+                GREEN;
+            case "ENVIADA" ->
+                BLUE;
+            case "ERROR" ->
+                RED;
+            default ->
+                ORANGE;
         };
         Label badge = new Label(estadoStr);
         badge.setStyle(
@@ -286,17 +217,21 @@ public class NotificacionesView {
     }
 
     // =========================================================================
-    // CARGAR NOTIFICACIONES — filtradas por el correo del usuario actual
+    // CARGAR NOTIFICACIONES
     // =========================================================================
     private List<Notificacion> cargarNotificaciones() {
-        if (notificacionService == null || usuarioActual == null) return List.of();
+        if (notificacionService == null || usuarioActual == null) {
+            return List.of();
+        }
         try {
             return notificacionService.listar().stream()
                     .filter(n -> usuarioActual.getCorreo() != null
-                            && usuarioActual.getCorreo()
-                                   .equalsIgnoreCase(n.getCorreodestinatario()))
+                    && usuarioActual.getCorreo()
+                            .equalsIgnoreCase(n.getCorreodestinatario()))
                     .sorted((a, b) -> {
-                        if (a.getFechahora() == null || b.getFechahora() == null) return 0;
+                        if (a.getFechahora() == null || b.getFechahora() == null) {
+                            return 0;
+                        }
                         return b.getFechahora().compareTo(a.getFechahora());
                     })
                     .toList();
@@ -308,18 +243,6 @@ public class NotificacionesView {
     // =========================================================================
     // HELPERS
     // =========================================================================
-    private ScrollPane buildPlaceholderVolver() {
-        VBox box = new VBox(10);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(40));
-        box.setStyle("-fx-background-color: " + BG + ";");
-        box.getChildren().add(label("Volviendo...", 16, GRAY_TEXT, false));
-        ScrollPane s = new ScrollPane(box);
-        s.setFitToWidth(true);
-        s.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
-        return s;
-    }
-
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
         lbl.setFont(bold
