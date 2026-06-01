@@ -28,14 +28,24 @@ public class ConexionDB {
     private ConexionDB() throws SQLException {
         try {
             Class.forName("oracle.jdbc.driver.OracleDriver");
-            this.conexion = DriverManager.getConnection(URL, USER, PASS);
-            this.conexion.setAutoCommit(true); 
-            
+
+            java.util.Properties props = new java.util.Properties();
+            props.setProperty("user", USER);
+            props.setProperty("password", PASS);
+            props.setProperty("oracle.jdbc.defaultNCharBinding", "true");
+            props.setProperty("oracle.net.disableOob", "true");
+            this.conexion = DriverManager.getConnection(URL, props);
+            this.conexion.setAutoCommit(true);
+
             try (java.sql.Statement st = this.conexion.createStatement()) {
-            st.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '.,'");
-            System.out.println("NLS_NUMERIC_CHARACTERS configurado: punto decimal");
-        }
-            
+                st.execute("ALTER SESSION SET NLS_NUMERIC_CHARACTERS = '.,'");
+                st.execute("ALTER SESSION SET NLS_LANGUAGE = 'SPANISH'");
+                st.execute("ALTER SESSION SET NLS_TERRITORY = 'SPAIN'");
+
+                System.out.println("NLS_NUMERIC_CHARACTERS configurado: punto decimal");
+            }
+
+
         } catch (ClassNotFoundException e) {
             throw new SQLException("Driver Oracle no encontrado. "
                     + "Agrega ojdbc11.jar a las librerías del proyecto.", e);

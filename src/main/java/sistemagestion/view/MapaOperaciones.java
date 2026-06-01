@@ -96,11 +96,24 @@ public class MapaOperaciones {
     private java.awt.image.BufferedImage imgPolicia;
 
     // ── UI componentes clave ──────────────────────────────────────
-    private StackPane rootStack;          
+    private StackPane rootStack;
     private Label lblContador;
     private Label lblCoordFooter;
-    private VBox detalleBox;
-    private Label lblDetalleNombre, lblDetalleTipo, lblDetalleInfo;
+
+    private static class Flotante {
+
+        VBox card;
+        GeoPosition geo;
+
+        Flotante(VBox card, GeoPosition geo) {
+            this.card = card;
+            this.geo = geo;
+        }
+    }
+    private final List<Flotante> flotantes = new ArrayList<>();
+
+// ── Font Awesome ──────────────────────────────────────────────
+    private String FA_FAMILY = "Font Awesome 6 Free Solid";
 
     // Acordeones
     private VBox acordeonAlarmasRef;
@@ -154,19 +167,56 @@ public class MapaOperaciones {
 
     // ── PNG ───────────────────────────────────────────────────────
     private void cargarImagenes() {
+        // DEBUG — imprime qué encuentra
+        var urlSirena = getClass().getResource("/SirenaPin.png");
+        var urlPolicia = getClass().getResource("/PinPolicia.png");
+        System.out.println("SirenaPin URL: " + urlSirena);
+        System.out.println("PinPolicia URL: " + urlPolicia);
+
         imgSirena = loadPng("/SirenaPin.png");
         imgPolicia = loadPng("/PinPolicia.png");
+
+        System.out.println("imgSirena cargada: " + (imgSirena != null
+                ? imgSirena.getWidth() + "x" + imgSirena.getHeight() : "NULL"));
+        System.out.println("imgPolicia cargada: " + (imgPolicia != null
+                ? imgPolicia.getWidth() + "x" + imgPolicia.getHeight() : "NULL"));
     }
 
     private java.awt.image.BufferedImage loadPng(String res) {
         try {
             var is = getClass().getResourceAsStream(res);
-            if (is != null) {
-                return recortarTransparencia(javax.imageio.ImageIO.read(is));
+            if (is == null) {
+                System.err.println("Recurso no encontrado: " + res);
+                return null;
             }
-        } catch (Exception ignored) {
+            java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(is);
+            if (raw == null) {
+                System.err.println("ImageIO no pudo leer: " + res);
+                return null;
+            }
+            System.out.println("Raw cargado " + res + ": "
+                    + raw.getWidth() + "x" + raw.getHeight()
+                    + " type=" + raw.getType()
+                    + " hasAlpha=" + raw.getColorModel().hasAlpha());
+
+            java.awt.image.BufferedImage argb = new java.awt.image.BufferedImage(
+                    raw.getWidth(), raw.getHeight(),
+                    java.awt.image.BufferedImage.TYPE_INT_ARGB);
+            java.awt.Graphics2D g2 = argb.createGraphics();
+            g2.drawImage(raw, 0, 0, null);
+            g2.dispose();
+
+            java.awt.image.BufferedImage recortada = recortarTransparencia(argb);
+
+            if (recortada == argb || (recortada.getWidth() > 0 && recortada.getHeight() > 0)) {
+                return recortada;
+            }
+            return argb;  // fallback: imagen completa convertida a ARGB
+        } catch (Exception e) {
+            System.err.println("Error cargando " + res + ": " + e.getMessage());
+            e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     // ── Datos ─────────────────────────────────────────────────────
@@ -190,6 +240,11 @@ public class MapaOperaciones {
         } catch (Exception ignored) {
         }
         aplicarFiltros();
+        System.out.println("Alertas cargadas: " + todasAlertas.size());
+        for (Alerta al : todasAlertas) {
+            System.out.println("  → " + al.getEstado() + " lat=" + al.getLatitud()
+                    + " lng=" + al.getLongitud());
+        }
 
     }
 
@@ -225,7 +280,12 @@ public class MapaOperaciones {
         // Centro = mapa + overlays flotantes
         rootStack = new StackPane();
         SwingNode swingNode = new SwingNode();
-        SwingUtilities.invokeLater(() -> inicializarMapa(swingNode));
+
+        Platform.runLater(()
+                -> SwingUtilities.invokeLater(()
+                        -> inicializarMapa(swingNode)
+                )
+        );
 
         // Coord footer
         lblCoordFooter = new Label("📍  —,  —");
@@ -234,15 +294,13 @@ public class MapaOperaciones {
         lblCoordFooter.setStyle(glassStyle() + "-fx-padding:6 18;");
 
         // Detalle flotante (esquina inf-derecha)
-        detalleBox = buildDetalleFlotante();
         VBox leyendaFlotante = buildLeyendaFlotante();
-        rootStack.getChildren().addAll(swingNode, leyendaFlotante, lblCoordFooter, detalleBox);
-        StackPane.setAlignment(leyendaFlotante, Pos.TOP_LEFT);
-        StackPane.setMargin(leyendaFlotante, new Insets(12, 0, 0, 12));
+        rootStack.getChildren().addAll(swingNode, leyendaFlotante, lblCoordFooter);
+        leyendaFlotante.setMaxHeight(Region.USE_PREF_SIZE);  // ← antes de añadirlo al StackPane
+        StackPane.setAlignment(leyendaFlotante, Pos.BOTTOM_LEFT);
+        StackPane.setMargin(leyendaFlotante, new Insets(0, 0, 50, 12));
         StackPane.setAlignment(lblCoordFooter, Pos.BOTTOM_CENTER);
         StackPane.setMargin(lblCoordFooter, new Insets(0, 0, 18, 0));
-        StackPane.setAlignment(detalleBox, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(detalleBox, new Insets(0, 14, 60, 0));
 
         // Panel lateral con toggle
         panelDerecho = buildPanelDerecho();
@@ -250,7 +308,10 @@ public class MapaOperaciones {
         HBox centro = new HBox(rootStack, panelDerecho);
         HBox.setHgrow(rootStack, Priority.ALWAYS);
         root.setCenter(centro);
+
+
         return root;
+
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -281,7 +342,7 @@ public class MapaOperaciones {
         sep.setStyle("-fx-background-color:" + BORDER + ";");
         sep.setPrefSize(1, 20);
 
-        Label instruccion = new Label("Mapa de Operaciones");
+        Label instruccion = new Label("Haz clic en un elemento para ver detalles");
         instruccion.setFont(Font.font("Arial", 13));
         instruccion.setTextFill(Color.web(GRAY_TEXT));
 
@@ -303,7 +364,7 @@ public class MapaOperaciones {
                 + ";-fx-background-radius:20;-fx-padding:4 14 4 14;");
 
         HBox bar = new HBox(10, logoBox, logoText, sep,
-                new Label("🗺️"), instruccion, spacer, leyendaCapas);
+                instruccion, spacer, leyendaCapas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;"
@@ -333,7 +394,11 @@ public class MapaOperaciones {
 
         // Header
         Label icoLbl = new Label(ico);
-        icoLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:13px;");
+        icoLbl.setStyle("-fx-font-family:'" + FA_FAMILY + "';"
+                + "-fx-font-size:13px;"
+                + "-fx-font-weight:900;");
+// El color del ícono del acordeón sigue el color del texto del panel
+        icoLbl.setTextFill(Color.web(GRAY_TEXT));
 
         Label ttlLbl = new Label(titulo + " (" + total + ")");
         ttlLbl.setFont(Font.font("Arial", FontWeight.BOLD, 13));
@@ -444,10 +509,15 @@ public class MapaOperaciones {
         for (Alerta al : alertas) {
             String tipo = al.getTipoalerta() != null ? al.getTipoalerta().getNombre() : "—";
             Color c = fxColorAlerta(al.getEstado());
+
+            // ← CAMBIO: leer coords desde Direccion
+            double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
+            double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+
             HBox row = acordeonItem(tipo,
                     al.getEstado() != null ? al.getEstado().name() : "—",
                     c,
-                    () -> centrarEn(al.getLatitud(), al.getLongitud()));
+                    () -> centrarEn(alLat, alLng));
             v.getChildren().add(row);
         }
         if (v.getChildren().isEmpty()) {
@@ -512,94 +582,125 @@ public class MapaOperaciones {
             {"#757575", "CANCELADA"}
         };
 
-        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
-        grid.setHgap(10);
-        grid.setVgap(4);
-        for (int i = 0; i < items.length; i++) {
+        VBox lista = new VBox(4);
+
+        for (String[] item : items) {
             javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4);
-            dot.setFill(Color.web(items[i][0]));
-            Label lbl = new Label(items[i][1]);
-            lbl.setFont(Font.font("Arial", 9));
+            dot.setFill(Color.web(item[0]));
+
+            Label lbl = new Label(item[1]);
+            lbl.setFont(Font.font("Arial", 10));
             lbl.setTextFill(Color.web(GRAY_TEXT));
-            HBox cell = new HBox(4, dot, lbl);
+
+            HBox cell = new HBox(6, dot, lbl);
             cell.setAlignment(Pos.CENTER_LEFT);
-            grid.add(cell, i % 2, i / 2);
+            lista.getChildren().add(cell);
         }
 
         Label tit = new Label("ESTADOS ALERTA");
         tit.setFont(Font.font("Arial", FontWeight.BOLD, 9));
         tit.setTextFill(Color.web(GRAY_TEXT));
 
-        VBox box = new VBox(5, tit, grid);
-        box.setPadding(new Insets(10, 12, 10, 12));
-        box.setStyle(glassStyle() + "-fx-background-radius:12;"
-                + "-fx-border-radius:12;-fx-border-color:#e53935"
-                + "44;-fx-border-width:1;");
-        box.setMaxWidth(200);
+        VBox box = new VBox(5, tit, lista);
+        box.setPadding(new Insets(8, 10, 8, 10));
+        box.setMinWidth(130);
+        box.setMaxWidth(Region.USE_PREF_SIZE);
+        box.setStyle(
+                "-fx-background-color:rgba(255,255,255,0.88);"
+                + "-fx-background-radius:10;"
+                + "-fx-border-radius:10;"
+                + "-fx-border-color:rgba(229,57,53,0.25);"
+                + "-fx-border-width:1;"
+                + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.10),10,0,0,2);"
+        );
         return box;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // DETALLE FLOTANTE (inf-derecha)
     // ═══════════════════════════════════════════════════════════════
-    private VBox buildDetalleFlotante() {
-        lblDetalleNombre = new Label("—");
-        lblDetalleNombre.setFont(Font.font("Arial", FontWeight.BOLD, 13));
-        lblDetalleNombre.setTextFill(Color.web(TEXT_MAIN));
-        lblDetalleNombre.setWrapText(true);
+    private void mostrarDetalleEn(String nombre, String tipo, String info,
+            String accentColor, double screenX, double screenY,
+            double geoLat, double geoLng) {
 
-        lblDetalleTipo = new Label("—");
-        lblDetalleTipo.setFont(Font.font("Arial", 10));
-        lblDetalleTipo.setTextFill(Color.web(GRAY_TEXT));
+        Label lblNombre = new Label(nombre);
+        lblNombre.setFont(Font.font("Arial", FontWeight.BOLD, 11));
+        lblNombre.setTextFill(Color.web(TEXT_MAIN));
 
-        Region sep = new Region();
-        sep.setPrefHeight(1);
-        sep.setStyle("-fx-background-color:" + BORDER + ";");
+        Label lblTipo = new Label(tipo);
+        lblTipo.setFont(Font.font("Arial", 10));
+        lblTipo.setTextFill(Color.web(accentColor));
 
-        lblDetalleInfo = new Label("—");
-        lblDetalleInfo.setFont(Font.font("Arial", 11));
-        lblDetalleInfo.setTextFill(Color.web("#374151"));
-        lblDetalleInfo.setWrapText(true);
-        lblDetalleInfo.setMaxWidth(240);
+        Region sepLine = new Region();
+        sepLine.setPrefHeight(1);
+        sepLine.setPrefWidth(200);
+        sepLine.setStyle("-fx-background-color:" + BORDER + ";");
+
+        VBox filas = new VBox(2);
+        for (String linea : info.split("\n")) {
+            if (linea.isBlank()) {
+                continue;
+            }
+            String[] p = linea.split(":", 2);
+            HBox fila = new HBox(4);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            Label clave = new Label((p.length == 2 ? p[0].trim() + ":" : linea.trim()));
+            clave.setFont(Font.font("Arial", FontWeight.BOLD, 10));
+            clave.setTextFill(Color.web(GRAY_TEXT));
+            fila.getChildren().add(clave);
+            if (p.length == 2) {
+                Label val = new Label(p[1].trim());
+                val.setFont(Font.font("Arial", 10));
+                val.setTextFill(Color.web(TEXT_MAIN));
+                fila.getChildren().add(val);
+            }
+            filas.getChildren().add(fila);
+        }
 
         Button btnCerrar = new Button("✕");
         btnCerrar.setStyle("-fx-background-color:transparent;-fx-text-fill:#9ca3af;"
-                + "-fx-cursor:hand;-fx-font-size:12px;-fx-padding:0;");
-        btnCerrar.setOnAction(e -> ocultarDetalle());
+                + "-fx-cursor:hand;-fx-font-size:10px;-fx-padding:0;");
 
-        HBox headRow = new HBox();
+        Region esp = new Region();
+        HBox.setHgrow(esp, Priority.ALWAYS);
+        HBox headRow = new HBox(4, lblNombre, esp, btnCerrar);
         headRow.setAlignment(Pos.CENTER_LEFT);
-        Label espacio = new Label();
-        HBox.setHgrow(espacio, Priority.ALWAYS);
-        headRow.getChildren().addAll(lblDetalleNombre, espacio, btnCerrar);
 
-        VBox box = new VBox(5, headRow, lblDetalleTipo, sep, lblDetalleInfo);
-        box.setPadding(new Insets(14, 16, 14, 16));
-        box.setMaxWidth(260);
-        box.setStyle(glassStyle()
-                + "-fx-background-radius:14;-fx-border-radius:14;"
-                + "-fx-border-color:#d1d5db;-fx-border-width:1;"
-                + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.15),14,0,0,4);");
-        box.setVisible(false);
-        box.setManaged(false);
-        return box;
-    }
-
-    private void mostrarDetalle(String nombre, String tipo, String info,
-            String accentColor) {
-        lblDetalleNombre.setText(nombre);
-        lblDetalleTipo.setText(tipo);
-        lblDetalleInfo.setText(info);
-        detalleBox.setStyle(glassStyle()
-                + "-fx-background-radius:14;-fx-border-radius:14;"
+        VBox card = new VBox(4, headRow, lblTipo, sepLine, filas);
+        card.setPadding(new Insets(8, 12, 8, 12));
+        card.setStyle("-fx-background-color:rgba(255,255,255,0.60);"
+                + "-fx-background-radius:10;-fx-border-radius:10;"
                 + "-fx-border-color:" + accentColor + ";-fx-border-width:2;"
-                + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.18),14,0,0,4);");
-        detalleBox.setVisible(true);
-        detalleBox.setManaged(true);
-        FadeTransition ft = new FadeTransition(Duration.millis(200), detalleBox);
+                + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.15),8,0,0,2);");
+
+        // ── CLAVE: forzar tamaño al contenido real ──────────────
+        card.setMinWidth(Region.USE_PREF_SIZE);
+        card.setMaxWidth(Region.USE_PREF_SIZE);
+        card.setMinHeight(Region.USE_PREF_SIZE);
+        card.setMaxHeight(Region.USE_PREF_SIZE);
+
+        double marTop = Math.max(4, screenY - 40);
+        double marLeft = Math.max(4, screenX + 16);
+
+        StackPane.setAlignment(card, Pos.TOP_LEFT);
+        StackPane.setMargin(card, new Insets(marTop, 0, 0, marLeft));
+        rootStack.getChildren().add(card);
+        flotantes.add(new Flotante(card, new GeoPosition(geoLat, geoLng)));
+
+        btnCerrar.setOnAction(ev -> {
+            rootStack.getChildren().remove(card);
+            flotantes.removeIf(f -> f.card == card);
+        });
+        FadeTransition ft = new FadeTransition(Duration.millis(150), card);
         ft.setFromValue(0);
         ft.setToValue(1);
         ft.play();
+    }
+
+    private void cerrarTodosFlotantes() {
+        new ArrayList<>(flotantes).forEach(f
+                -> rootStack.getChildren().remove(f.card));
+        flotantes.clear();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -614,8 +715,19 @@ public class MapaOperaciones {
         sub.setFont(Font.font("Arial", 11));
         sub.setTextFill(Color.web(GRAY_TEXT));
 
-        Label icono = new Label("🗺️");
-        icono.setFont(Font.font(18));
+        javafx.scene.image.ImageView iconoImg = new javafx.scene.image.ImageView();
+        try {
+            java.awt.image.BufferedImage raw = javax.imageio.ImageIO.read(
+                    getClass().getResourceAsStream("/PinOperaciones3.png"));
+            iconoImg.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(
+                    recortarTransparencia(raw), null));
+        } catch (Exception ignored) {
+        }
+        iconoImg.setFitHeight(22);
+        iconoImg.setFitWidth(22);
+        iconoImg.setPreserveRatio(true);
+
+        StackPane icono = new StackPane(iconoImg);
         icono.setStyle("-fx-background-color:" + DARK_GRAD
                 + ";-fx-background-radius:8;-fx-padding:6 10 6 10;");
 
@@ -637,15 +749,15 @@ public class MapaOperaciones {
 
         // Reemplazar la sección de acordeones en buildPanelDerecho()
         VBox acordeonAlarmas = buildPillColapsable(
-                "\uf0f3", "Alarmas", alarmas.size(),
+                null, "Alarmas", alarmas.size(),
                 FX_ALARMA, toHexLight(FX_ALARMA), this::buildListaAlarmas);
 
         VBox acordeonUnidades = buildPillColapsable(
-                "\uf3ed", "Unidades", unidades.size(),
+                null, "Unidades", unidades.size(),
                 FX_UNIDAD, toHexLight(FX_UNIDAD), this::buildListaUnidades);
 
         VBox acordeonAlertas = buildPillColapsable(
-                "\uf071", "Alertas", alertas.size(),
+                null, "Alertas", alertas.size(),
                 FX_ALERTA, toHexLight(FX_ALERTA), this::buildListaAlertas);
 
         acordeonAlarmasRef = acordeonAlarmas;
@@ -746,34 +858,41 @@ public class MapaOperaciones {
         ComboBox<String> cb = new ComboBox<>(FXCollections.observableArrayList(items));
         cb.setValue("Todos");
         cb.setMaxWidth(Double.MAX_VALUE);
-        cb.setPrefHeight(44);
-        cb.setStyle("-fx-background-color:#f7f7f7;"
+        cb.setPrefHeight(48);
+        cb.setStyle(
+                "-fx-background-color:#f7f7f7;"
+                + "-fx-text-fill:#4b5563;"
+                + "-fx-prompt-text-fill:#9ca3af;"
                 + "-fx-border-color:transparent;"
                 + "-fx-border-radius:30;-fx-background-radius:30;"
-                + "-fx-font-size:13px;");
+                + "-fx-font-size:14px;");
+
         cb.setCellFactory(lv -> new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item);
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;");
-                setOnMouseEntered(e -> setStyle("-fx-background-color:" + DARK_GRAD
-                        + ";-fx-background-radius:6;-fx-text-fill:white;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;"));
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;");
+                setOnMouseEntered(e -> setStyle(
+                        "-fx-background-color:" + DARK_GRAD + ";"
+                        + "-fx-background-radius:6;-fx-text-fill:white;"
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
                 setOnMouseExited(e -> setStyle(
                         "-fx-background-color:transparent;-fx-text-fill:#4b5563;"
-                        + "-fx-font-size:13px;-fx-padding:8 14 8 14;"));
+                        + "-fx-font-size:14px;-fx-padding:8 14 8 14;"));
             }
         });
+
         cb.setButtonCell(new ListCell<String>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? cb.getPromptText() : item);
                 setStyle(item != null
-                        ? "-fx-background-color:#f7f7f7;-fx-text-fill:black;-fx-font-size:13px;"
-                        : "-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:13px;");
+                        ? "-fx-background-color:#f7f7f7;-fx-text-fill:black;"
+                        + "-fx-background-radius:30;-fx-font-size:14px;-fx-padding:4 14 4 14;"
+                        : "-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:14px;");
             }
         });
         return cb;
@@ -782,29 +901,41 @@ public class MapaOperaciones {
     private HBox buildToggleChipSmall(String ico, String txt, Color color, Runnable onToggle) {
         final boolean[] on = {true};
         String hex = toHex(color);
-        String bgOn = toHexLight(color);
-        String stOn = "-fx-background-color:" + bgOn + ";-fx-border-color:" + hex
-                + ";-fx-border-width:1.5;-fx-border-radius:20;-fx-background-radius:20;-fx-cursor:hand;";
-        String stOff = "-fx-background-color:#f3f4f6;-fx-border-color:#d1d5db"
-                + ";-fx-border-width:1.5;-fx-border-radius:20;-fx-background-radius:20;-fx-cursor:hand;";
-        Label lbl = new Label(ico + " " + txt);
-        lbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:11px;"
-                + "-fx-font-weight:bold;");;
-        lbl.setTextFill(Color.web(TEXT_MAIN));
+
+        // ON: fondo sólido del color, borde mismo color → ícono blanco
+        String stOn = "-fx-background-color:" + hex + ";"
+                + "-fx-border-color:" + hex + ";"
+                + "-fx-border-width:1.5;-fx-border-radius:20;-fx-background-radius:20;"
+                + "-fx-cursor:hand;";
+        // OFF: gris apagado
+        String stOff = "-fx-background-color:#e5e7eb;-fx-border-color:#d1d5db"
+                + ";-fx-border-width:1.5;-fx-border-radius:20;-fx-background-radius:20;"
+                + "-fx-cursor:hand;";
+
+        // Quitar el espacio delante del unicode — rompe el glyph FA
+        String icoClean = ico.trim();
+
+        Label lbl = new Label(icoClean);
+        // CRÍTICO: font-weight:900 activa el variant Solid de FA6
+        lbl.setStyle("-fx-font-family:'" + FA_FAMILY + "';"
+                + "-fx-font-size:13px;"
+                + "-fx-font-weight:900;");
+        lbl.setTextFill(Color.WHITE);                // blanco siempre en ON
+
         HBox chip = new HBox(lbl);
         chip.setAlignment(Pos.CENTER);
-        chip.setPadding(new Insets(4, 10, 4, 10));
+        chip.setPadding(new Insets(6, 14, 6, 14));
         chip.setStyle(stOn);
+
         chip.setOnMouseClicked(e -> {
             on[0] = !on[0];
             chip.setStyle(on[0] ? stOn : stOff);
-            lbl.setTextFill(on[0] ? Color.web(TEXT_MAIN) : Color.web(GRAY_TEXT));
+            // OFF → ícono gris oscuro visible sobre fondo gris claro
+            lbl.setTextFill(on[0] ? Color.WHITE : Color.web("#9ca3af"));
             onToggle.run();
         });
         return chip;
     }
-
-
 
     // ═══════════════════════════════════════════════════════════════
     // MAPA E INICIALIZACIÓN
@@ -840,8 +971,28 @@ public class MapaOperaciones {
                 Platform.runLater(() -> lblCoordFooter.setText("📍  " + c));
             }
         });
+
+        mapa.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                Platform.runLater(MapaOperaciones.this::cerrarTodosFlotantes);
+            }
+        });
         mapa.setOverlayPainter(this::pintarOverlay);
         sn.setContent(mapa);
+
+        mapa.addMouseWheelListener(ev
+                -> Platform.runLater(MapaOperaciones.this::cerrarTodosFlotantes));
+        sn.setContent(mapa);
+        SwingUtilities.invokeLater(() -> {
+            mapa.recenterToAddressLocation();
+            mapa.repaint();
+        });
+        
+                System.out.println("Mapa size = "
+        + mapa.getWidth() + " x "
+        + mapa.getHeight());
+
     }
 
     // ── Click ─────────────────────────────────────────────────────
@@ -854,10 +1005,12 @@ public class MapaOperaciones {
                     seleccionado = new GeoPosition(a.getLatitud(), a.getLongitud());
                     String bar = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
                     String est = a.getEstado() != null ? a.getEstado().name() : "—";
-                    Platform.runLater(() -> mostrarDetalle(
-                            "🔔  " + a.getNombre(), "Alarma",
-                            "Estado: " + est + "\nBarrio: " + bar
-                            + "\nRadio: " + (int) a.getRadio_cobertura() + " m", "#ffc107"));
+                    double _lat = a.getLatitud(), _lng = a.getLongitud();
+                    double _px = e.getX(), _py = e.getY();
+                    Platform.runLater(() -> mostrarDetalleEn(
+                            a.getNombre(), "Alarma",
+                            "Estado: " + est + "\nBarrio: " + bar + "\nRadio: " + (int) a.getRadio_cobertura() + " m",
+                            "#ffc107", _px, _py, _lat, _lng));
                     repintarMapa();
                     return;
                 }
@@ -870,10 +1023,12 @@ public class MapaOperaciones {
                     seleccionado = new GeoPosition(u.getLatitud(), u.getLongitud());
                     String bar = u.getBarrio() != null ? u.getBarrio().getNombre() : "—";
                     String est = u.getEstado() != null ? u.getEstado().name() : "—";
-                    Platform.runLater(() -> mostrarDetalle(
-                            "🛡️  " + u.getNombre(), "Unidad Policial",
+                    double _lat2 = u.getLatitud(), _lng2 = u.getLongitud();
+                    double _px2 = e.getX(), _py2 = e.getY();
+                    Platform.runLater(() -> mostrarDetalleEn(
+                            u.getNombre(), "Unidad Policial",
                             "Estado: " + est + "\nBarrio: " + bar,
-                            toHex(fxColorUnidad(u.getEstado()))));
+                            toHex(fxColorUnidad(u.getEstado())), _px2, _py2, _lat2, _lng2));
                     repintarMapa();
                     return;
                 }
@@ -881,17 +1036,26 @@ public class MapaOperaciones {
         }
         if (mostrarAlertas) {
             for (Alerta al : alertas) {
-                Point2D pt = toScreen(mapa, al.getLatitud(), al.getLongitud());
+                // ← CAMBIO: leer coords desde Direccion
+                double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
+                double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+
+                if (alLat == 0 && alLng == 0) {
+                    continue;
+                }
+
+                Point2D pt = toScreen(mapa, alLat, alLng);
                 if (Math.hypot(e.getX() - pt.getX(), e.getY() - (pt.getY() - 16)) < TOL) {
-                    seleccionado = new GeoPosition(al.getLatitud(), al.getLongitud());
+                    seleccionado = new GeoPosition(alLat, alLng);
                     String tipo = al.getTipoalerta() != null ? al.getTipoalerta().getNombre() : "—";
                     String bar = al.getBarrio() != null ? al.getBarrio().getNombre() : "—";
                     String est = al.getEstado() != null ? al.getEstado().name() : "—";
                     String desc = al.getDescripcion() != null ? al.getDescripcion() : "";
-                    Platform.runLater(() -> mostrarDetalle(
-                            "⚠️  " + tipo, "Alerta — " + est,
-                            "Barrio: " + bar + "\n" + desc,
-                            toHex(fxColorAlerta(al.getEstado()))));
+                    double _px3 = e.getX(), _py3 = e.getY();
+                    Platform.runLater(() -> mostrarDetalleEn(
+                            tipo, "Alerta — " + est,
+                            "Barrio: " + bar + (desc.isBlank() ? "" : "\nDescripción: " + desc),
+                            toHex(fxColorAlerta(al.getEstado())), _px3, _py3, alLat, alLng));
                     repintarMapa();
                     return;
                 }
@@ -900,6 +1064,19 @@ public class MapaOperaciones {
         seleccionado = null;
         Platform.runLater(this::ocultarDetalle);
         repintarMapa();
+    }
+
+    private void reposicionarFlotantes() {
+        if (mapa == null || flotantes.isEmpty()) {
+            return;
+        }
+        for (Flotante f : flotantes) {
+            Point2D pt = toScreen(mapa, f.geo.getLatitude(), f.geo.getLongitude());
+            double marTop = Math.max(4, pt.getY() - 40);
+            double marLeft = Math.max(4, pt.getX() + 16);
+            Platform.runLater(()
+                    -> StackPane.setMargin(f.card, new Insets(marTop, 0, 0, marLeft)));
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -972,38 +1149,55 @@ public class MapaOperaciones {
         // ── ALERTAS  ────────────────────────
         if (mostrarAlertas) {
             for (Alerta al : alertas) {
-                if (al.getLatitud() == 0 && al.getLongitud() == 0) {
+                double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
+                double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+
+                if (alLat == 0 && alLng == 0) {
                     continue;
                 }
-                Point2D pt = toScreen(map, al.getLatitud(), al.getLongitud());
+
+                Point2D pt = toScreen(map, alLat, alLng);
                 int cx = (int) pt.getX(), cy = (int) pt.getY();
-                boolean sel = esSel(al.getLatitud(), al.getLongitud());
-                java.awt.Color c = awtColorAlerta(al.getEstado());
-                pintarPinAlerta(g, cx, cy, c, sel);
-                if (al.getEstado() != null) {
-                    pintarBadge(g, cx, cy, al.getEstado().name(), c);
-                }
+                boolean sel = esSel(alLat, alLng);
+
+                // Pin rojo fijo (igual que unidades usa su color fijo)
+                pintarPinAlerta(g, cx, cy, AWT_ALERTA, sel);
+
+                // Dot de estado encima (igual que unidades)
+                java.awt.Color estadoColor = awtColorAlerta(al.getEstado());
+                int r = sel ? 15 : 11;
+                int dotR = sel ? 6 : 4;
+                int dotX = cx + r - dotR;
+                int dotY = cy - r * 2 + dotR;
+                g.setColor(java.awt.Color.WHITE);
+                g.fillOval(dotX - 2, dotY - 2, dotR * 2 + 4, dotR * 2 + 4);
+                g.setColor(estadoColor);
+                g.fillOval(dotX, dotY, dotR * 2, dotR * 2);
+
+                // Badge arriba con tipo de alerta (no el estado)
+                String tipo = al.getTipoalerta() != null
+                        ? al.getTipoalerta().getNombre() : "ALERTA";
+                pintarBadge(g, cx, cy, tipo, AWT_ALERTA);
             }
         }
     }
 
-    
     private void pintarPng(Graphics2D g, java.awt.image.BufferedImage img,
             int cx, int cy, boolean sel,
             java.awt.Color haloColor) {
         int iw = sel ? 38 : 30;
         if (img == null) {
-            
+
             pintarPinGenerico(g, cx, cy, haloColor, sel);
             return;
         }
         int ih = (int) (img.getHeight() * (iw / (double) img.getWidth()));
-       
+
         g.setColor(new java.awt.Color(0, 0, 0, 40));
         g.fillOval(cx - iw / 2 + 2, cy - 5, iw - 4, 10);
-       
+
         g.drawImage(img, cx - iw / 2, cy - ih, iw, ih, null);
-      
+
         if (sel) {
             g.setColor(new java.awt.Color(haloColor.getRed(), haloColor.getGreen(),
                     haloColor.getBlue(), 100));
@@ -1026,31 +1220,73 @@ public class MapaOperaciones {
         g.drawOval(cx - r, cy - r * 2, r * 2, r * 2);
     }
 
-    
     private void pintarPinAlerta(Graphics2D g, int cx, int cy,
             java.awt.Color color, boolean sel) {
         int r = sel ? 15 : 11;
-        // Pulso
-        g.setColor(new java.awt.Color(color.getRed(), color.getGreen(), color.getBlue(), 40));
-        int pr = r + 9;
+
+        // ── Pulso exterior ────────────────────────────────────────
+        g.setColor(new java.awt.Color(color.getRed(), color.getGreen(),
+                color.getBlue(), 35));
+        int pr = r + 10;
         g.fill(new Ellipse2D.Double(cx - pr, cy - pr * 2, pr * 2, pr * 2));
-        // Sombra
-        g.setColor(new java.awt.Color(0, 0, 0, 55));
-        g.fillOval(cx - r + 2, cy - r * 2 + 2, r * 2, r * 2);
-        // Cuerpo
+
+        // ── Sombra ────────────────────────────────────────────────
+        g.setColor(new java.awt.Color(0, 0, 0, 45));
+        g.translate(2, 3);
+        pintarTeardrop(g, cx, cy, r);
+        g.translate(-2, -3);
+
+        // ── Cuerpo teardrop ───────────────────────────────────────
         g.setColor(color);
-        g.fillOval(cx - r, cy - r * 2, r * 2, r * 2);
-        int[] xs = {cx - r / 2, cx + r / 2, cx}, ys = {cy - r, cy - r, cy + 5};
-        g.fillPolygon(xs, ys, 3);
-        // Borde blanco
+        pintarTeardrop(g, cx, cy, r);
+
+        // ── Borde blanco ──────────────────────────────────────────
         g.setColor(java.awt.Color.WHITE);
-        g.setStroke(new BasicStroke(sel ? 2.2f : 1.6f));
-        g.drawOval(cx - r, cy - r * 2, r * 2, r * 2);
-        // Símbolo "!"
-        g.setStroke(new BasicStroke(sel ? 2.4f : 1.9f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        int top = cy - r * 2 + r / 2;
-        g.drawLine(cx, top, cx, cy - r * 2 + r - 3);
-        g.fillOval(cx - 2, cy - r * 2 + r, 4, 4);
+        g.setStroke(new BasicStroke(sel ? 2f : 1.5f,
+                BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        pintarTeardropBorde(g, cx, cy, r);
+
+        // ── Círculo blanco interior ───────────────────────────────
+        int ir = r - 4;
+        g.setColor(new java.awt.Color(255, 255, 255, 220));
+        g.fillOval(cx - ir, cy - r * 2 + (r - ir), ir * 2, ir * 2);
+
+        // ── Símbolo "!" interior ──────────────────────────────────
+        g.setColor(color);
+        g.setStroke(new BasicStroke(sel ? 2.2f : 1.8f,
+                BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        int centroY = cy - r * 2 + (r - ir) + ir; // centro del círculo interior
+        int mitad = cy - r * 2 + (r - ir);       // tope del círculo interior
+        g.drawLine(cx, mitad + 2, cx, centroY - 3);
+        g.fillOval(cx - 2, centroY, 4, 4);
+    }
+
+// ── Helpers de forma teardrop ─────────────────────────────────
+    private void pintarTeardrop(Graphics2D g, int cx, int cy, int r) {
+        GeneralPath p = buildTeardrop(cx, cy, r);
+        g.fill(p);
+    }
+
+    private void pintarTeardropBorde(Graphics2D g, int cx, int cy, int r) {
+        GeneralPath p = buildTeardrop(cx, cy, r);
+        g.draw(p);
+    }
+
+    private GeneralPath buildTeardrop(int cx, int cy, int r) {
+        GeneralPath p = new GeneralPath();
+        // Círculo superior
+        p.append(new Arc2D.Double(cx - r, cy - r * 2, r * 2, r * 2,
+                0, 180, Arc2D.OPEN), true);
+        // Lado derecho → punta
+        p.curveTo(cx + r, cy - r / 2.0,
+                cx + r / 3.0, cy - 1,
+                cx, cy + 5);
+        // Punta → lado izquierdo
+        p.curveTo(cx - r / 3.0, cy - 1,
+                cx - r, cy - r / 2.0,
+                cx - r, cy - r);
+        p.closePath();
+        return p;
     }
 
     private void pintarBadge(Graphics2D g, int cx, int cy,
@@ -1089,9 +1325,8 @@ public class MapaOperaciones {
     }
 
     private void ocultarDetalle() {
-        detalleBox.setVisible(false);
-        detalleBox.setManaged(false);
         seleccionado = null;
+        Platform.runLater(this::cerrarTodosFlotantes);
         repintarMapa();
 
     }
@@ -1115,7 +1350,7 @@ public class MapaOperaciones {
         int t = (mostrarAlarmas ? alarmas.size() : 0)
                 + (mostrarUnidades ? unidades.size() : 0)
                 + (mostrarAlertas ? alertas.size() : 0);
-        lblContador.setText("Mostrando " + t + " elemento" + (t != 1 ? "s" : ""));
+        lblContador.setText(" Mostrando " + t + " elemento" + (t != 1 ? "s" : ""));
     }
 
     private void centrarEn(double lat, double lng) {
@@ -1220,8 +1455,16 @@ public class MapaOperaciones {
     }
 
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
+        if (img == null) {
+            return null;
+        }
+
+        if (!img.getColorModel().hasAlpha()) {
+            return img;
+        }
+
         int w = img.getWidth(), h = img.getHeight();
-        int top = h, bottom = 0, left = w, right = 0;
+        int top = h, bottom = -1, left = w, right = -1;
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
@@ -1240,7 +1483,9 @@ public class MapaOperaciones {
                 }
             }
         }
-        if (top >= bottom || left >= right) {
+
+        if (bottom < 0 || right < 0 || top > bottom || left > right) {
+            System.out.println("Recorte: sin píxeles opacos, devolviendo imagen completa");
             return img;
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);

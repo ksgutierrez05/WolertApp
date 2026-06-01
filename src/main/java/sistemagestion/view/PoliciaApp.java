@@ -9,7 +9,6 @@ package sistemagestion.view;
  * @author Maria Cristina
  */
 
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -237,11 +236,11 @@ public class PoliciaApp {
                             usuarioActual, policiaActual,
                             atencionService, root).build());
                 case "Alarmas" ->
-                    root.setCenter(pantallaEnConstruccion("\uf0f3", "Alarmas"));
+                    root.setCenter(new AlarmasPoliciaView(alarmaService,policiaActual).build());
                 case "Historial" ->
                     root.setCenter(new HistorialPoliciaView(
                             usuarioActual, policiaActual,
-                            atencionService, root).build());
+                            policiaService, root).build());
                 case "Mapas" ->
                     root.setCenter(pantallaEnConstruccion("\uf279", "Mapas"));
                 case "Notificaciones" ->

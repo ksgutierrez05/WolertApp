@@ -29,6 +29,8 @@ public class SuscripcionService {
         Validador.validarObjeto(s.getTipoalerta());
         Validador.validarEnum(s.getEstado());
 
+
+
         return dao.insertar(
                 s.getUsuario().getIdentificacion(),
                 s.getTipoalerta().getNombre(),
@@ -92,5 +94,6 @@ public class SuscripcionService {
                         && s.getComuna() == null)
                 .collect(java.util.stream.Collectors.toList());
     }
- 
+
 }
+
