@@ -12,7 +12,6 @@ sistemagestion\view\ComunaAdminView.class
 sistemagestion\view\UsuariosAdminView$1.class
 sistemagestion\model\UnidadPolicial.class
 sistemagestion\service\UnidadPolicialService.class
-sistemagestion\view\EmergencyDialog$OpcionCard.class
 sistemagestion\view\AlertasView$1.class
 sistemagestion\view\MapaAlarmasRegistradas.class
 sistemagestion\dao\SuscripcionDAO.class
@@ -26,7 +25,6 @@ sistemagestion\view\MapaAlarmas.class
 sistemagestion\view\TiposAdminView.class
 sistemagestion\view\MapaAlarmasRegistada$4.class
 sistemagestion\model\TipoAlerta.class
-sistemagestion\view\EmergencyDialog$2.class
 sistemagestion\util\Validador.class
 sistemagestion\view\AdministradorApp.class
 sistemagestion\view\HistorialAdminPoliciaView.class
@@ -34,7 +32,6 @@ sistemagestion\view\MapaOperaciones$3.class
 sistemagestion\view\MapaAlarmasRegistada$1.class
 sistemagestion\service\AlertaService.class
 sistemagestion\view\MapaAlerta$Opc.class
-sistemagestion\view\EmergencyDialog.class
 sistemagestion\service\RolUsuarioService.class
 sistemagestion\view\PoliciasAdminPoliciaView$1.class
 sistemagestion\view\ConfiguracionAdminPoliciaView.class
@@ -85,7 +82,6 @@ sistemagestion\dao\ComunaDAO.class
 sistemagestion\model\MedioTransporte.class
 sistemagestion\dao\AsignacionUnidadDAO.class
 sistemagestion\view\MapaAlarmasRegistradas$1.class
-sistemagestion\view\EmergencyDialog$3.class
 sistemagestion\view\UsuariosAdminView.class
 sistemagestion\view\MapaAlerta.class
 sistemagestion\view\MisAtencionesPoliciaView$1.class
@@ -121,7 +117,6 @@ com\mycompany\wolertappsistemaalertas\WolertAppSistemaAlertas.class
 sistemagestion\model\AtencionAlerta.class
 sistemagestion\dao\TipoArmaDAO.class
 sistemagestion\model\RolUsuario.class
-sistemagestion\view\EmergencyDialog$1.class
 sistemagestion\view\NotificacionesPoliciaView.class
 sistemagestion\view\MapaAlarmasRegistada$2.class
 sistemagestion\view\MapaUnidadesPoliciales$1.class
@@ -141,6 +136,7 @@ sistemagestion\view\UnidadesAdminPoliciaView.class
 sistemagestion\view\PoliciaApp.class
 sistemagestion\view\AlarmasAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmas$5.class
+sistemagestion\view\MiCuentaView$1.class
 sistemagestion\view\PerfilPoliciaView.class
 sistemagestion\model\Alarma.class
 sistemagestion\model\Direccion.class
@@ -165,5 +161,6 @@ sistemagestion\service\UsuarioService.class
 sistemagestion\view\MapaAlarmasRegistradas$2.class
 sistemagestion\service\AsignacionUnidadService.class
 sistemagestion\service\SuscripcionService.class
+sistemagestion\view\MiCuentaView$2.class
 sistemagestion\service\PoliciaService.class
 sistemagestion\view\MapaAdminPoliciaView$1.class

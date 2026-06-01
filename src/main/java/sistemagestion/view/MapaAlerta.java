@@ -41,6 +41,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.embed.swing.SwingNode;
+import sistemagestion.service.NotificacionService;
+import sistemagestion.service.SuscripcionService;
 
 public class MapaAlerta {
 
@@ -692,6 +694,7 @@ public class MapaAlerta {
             // ──────────────────────────────────────────────────────────────
 
             boolean ok = alertaService.insertar(alerta);
+            
             if (ok) {
                 panicBtn.setStyle(
                         "-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;"
@@ -700,6 +703,72 @@ public class MapaAlerta {
                 lblFeedback.setText("✅ Alerta enviada. Las autoridades han sido notificadas.");
                 panicBtn.setDisable(true);
 
+                // ── Notificar suscriptores en hilo separado ──────────────
+                final Alerta alertaFinal = alerta;
+                final String tipoFinal = tipoAlertaSel;
+                new Thread(() -> {
+                    try {
+                        SuscripcionService suscSvc = new SuscripcionService();
+                        NotificacionService notiSvc = new NotificacionService();
+
+                        String barrioNom = alertaFinal.getBarrio().getNombre();
+                        String comunaNom = alertaFinal.getBarrio().getComuna() != null
+                                ? alertaFinal.getBarrio().getComuna().getNombre() : null;
+
+                        // Recolectar sin duplicados
+                        java.util.List<Suscripcion> aNotificar = new java.util.ArrayList<>();
+                        aNotificar.addAll(suscSvc.listarPorBarrio(barrioNom));
+
+                        if (comunaNom != null) {
+                            for (Suscripcion s : suscSvc.listarPorComuna(comunaNom)) {
+                                if (aNotificar.stream().noneMatch(x
+                                        -> x.getUsuario().getIdentificacion()
+                                                .equals(s.getUsuario().getIdentificacion()))) {
+                                    aNotificar.add(s);
+                                }
+                            }
+                        }
+
+                        for (Suscripcion s : suscSvc.listarGenerales()) {
+                            if (aNotificar.stream().noneMatch(x
+                                    -> x.getUsuario().getIdentificacion()
+                                            .equals(s.getUsuario().getIdentificacion()))) {
+                                aNotificar.add(s);
+                            }
+                        }
+
+                        // Notificar a cada suscriptor
+                        for (Suscripcion s : aNotificar) {
+                            try {
+                                String alcance = s.getBarrio() != null
+                                        ? "en el barrio " + s.getBarrio().getNombre()
+                                        : s.getComuna() != null
+                                        ? "en la comuna " + s.getComuna().getNombre()
+                                        : "en tu ciudad";
+
+                                String tipo = tipoFinal != null
+                                        ? tipoFinal.replace("_", " ") : "Alerta";
+
+                                Notificacion n = new Notificacion();
+                                n.setUsuario(s.getUsuario());
+                                n.setAlerta(alertaFinal);
+                                n.setMensaje("🚨 Nueva alerta de " + tipo
+                                        + " reportada " + alcance + ".\n"
+                                        + alertaFinal.getDescripcion());
+                                n.setCorreodestinatario(s.getUsuario().getCorreo());
+                                notiSvc.insertar(n);
+
+                            } catch (Exception ex) {
+                                System.err.println("Error notificando a "
+                                        + s.getUsuario().getIdentificacion()
+                                        + ": " + ex.getMessage());
+                            }
+                        }
+
+                    } catch (Exception ex) {
+                        System.err.println("Error en notificaciones: " + ex.getMessage());
+                    }
+                }, "hilo-notificaciones").start();
                 new Timeline(new KeyFrame(Duration.seconds(2.5), ev -> {
                     Stage s = (Stage) panicBtn.getScene().getWindow();
                     if (owner != null && owner.getScene() != null) {
@@ -719,12 +788,13 @@ public class MapaAlerta {
             panicBtn.setStyle(estiloBotonPanico(false));
         }
     }
-        // ════════════════════════════════════════════════════════════════════════
-        // BUILDERS DE COMPONENTES
-        // ════════════════════════════════════════════════════════════════════════
-        /**
-         * Tarjeta principal de categoría.
-         */
+    // ════════════════════════════════════════════════════════════════════════
+    // BUILDERS DE COMPONENTES
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Tarjeta principal de categoría.
+     */
     private HBox categoryCard(String unicodeFA, String bg, String texto) {
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(44, 44);

@@ -28,6 +28,16 @@ public class SuscripcionService {
         Validador.validarObjeto(s.getUsuario());
         Validador.validarObjeto(s.getTipoalerta());
         Validador.validarEnum(s.getEstado());
+            // ↓↓↓ AGREGA ESTO AQUÍ ↓↓↓
+    System.out.println("=== DEBUG SUSCRIPCION ===");
+    System.out.println("Cedula: " + s.getUsuario().getIdentificacion());
+    System.out.println("TipoAlerta: " + s.getTipoalerta().getNombre());
+    System.out.println("Barrio: " + (s.getBarrio() != null ? s.getBarrio().getNombre() : "NULL"));
+    System.out.println("Comuna: " + (s.getComuna() != null ? s.getComuna().getNombre() : "NULL"));
+    System.out.println("Estado: " + s.getEstado().name());
+    System.out.println("========================");
+    // ↑↑↑ HASTA AQUÍ ↑↑↑
+
 
         return dao.insertar(
                 s.getUsuario().getIdentificacion(),
