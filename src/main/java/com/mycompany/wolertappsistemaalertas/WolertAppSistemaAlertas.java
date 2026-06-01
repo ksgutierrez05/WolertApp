@@ -29,7 +29,7 @@ public class WolertAppSistemaAlertas extends Application {
     @Override
     public void start(Stage stage) {
 
-      /*LoginApp login = new LoginApp();
+      LoginApp login = new LoginApp();
 
         Scene scene = new Scene(login.getView(), 1000, 650);
 
@@ -51,7 +51,7 @@ public class WolertAppSistemaAlertas extends Application {
 
         // ── Dashboard administrador ──────────────────
         
-      Usuario usuario = new Usuario();
+      /*Usuario usuario = new Usuario();
         usuario.setPrimer_nombre("Katherine");
         usuario.setPrimer_apellido("Gutierrez");
         usuario.setUsername("admin");
@@ -77,6 +77,7 @@ public class WolertAppSistemaAlertas extends Application {
         //new MapaAlarmasRegistada().mostrar();
         //new MapaAlerta(null, null, null, null).mostrar();
         //new MapaUnidadesPoliciales().mostrar();
+        //new MApaOperaciones().
         //new MApaOperaciones().
   }
 

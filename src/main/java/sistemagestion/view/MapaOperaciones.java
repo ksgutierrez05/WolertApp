@@ -280,7 +280,12 @@ public class MapaOperaciones {
         // Centro = mapa + overlays flotantes
         rootStack = new StackPane();
         SwingNode swingNode = new SwingNode();
-        SwingUtilities.invokeLater(() -> inicializarMapa(swingNode));
+
+        Platform.runLater(()
+                -> SwingUtilities.invokeLater(()
+                        -> inicializarMapa(swingNode)
+                )
+        );
 
         // Coord footer
         lblCoordFooter = new Label("📍  —,  —");
@@ -303,7 +308,10 @@ public class MapaOperaciones {
         HBox centro = new HBox(rootStack, panelDerecho);
         HBox.setHgrow(rootStack, Priority.ALWAYS);
         root.setCenter(centro);
+
+
         return root;
+
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -975,6 +983,16 @@ public class MapaOperaciones {
 
         mapa.addMouseWheelListener(ev
                 -> Platform.runLater(MapaOperaciones.this::cerrarTodosFlotantes));
+        sn.setContent(mapa);
+        SwingUtilities.invokeLater(() -> {
+            mapa.recenterToAddressLocation();
+            mapa.repaint();
+        });
+        
+                System.out.println("Mapa size = "
+        + mapa.getWidth() + " x "
+        + mapa.getHeight());
+
     }
 
     // ── Click ─────────────────────────────────────────────────────

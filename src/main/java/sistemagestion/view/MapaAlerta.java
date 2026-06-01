@@ -41,6 +41,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javafx.embed.swing.SwingNode;
+import sistemagestion.model.Notificacion;
+import sistemagestion.model.Suscripcion;
+import sistemagestion.service.NotificacionService;
+import sistemagestion.service.SuscripcionService;
 
 public class MapaAlerta {
 
@@ -166,13 +170,12 @@ public class MapaAlerta {
         );
 
         stage.setScene(scene);
-
         stage.show();
     }
+
     // ════════════════════════════════════════════════════════════════════════
     // BARRA SUPERIOR
     // ════════════════════════════════════════════════════════════════════════
-
     private HBox buildTopBar() {
         ImageView logoImg = new ImageView();
         try {
@@ -304,16 +307,13 @@ public class MapaAlerta {
 
         java.awt.Color color = getColorAlerta();
 
-        // Círculo superior
         g.setColor(color);
         g.fillOval(x - 12, y - 30, 24, 24);
 
-        // Punta
         int[] xs = {x - 8, x + 8, x};
         int[] ys = {y - 12, y - 12, y + 5};
         g.fillPolygon(xs, ys, 3);
 
-        // Círculo blanco interno
         g.setColor(java.awt.Color.WHITE);
         g.fillOval(x - 5, y - 23, 10, 10);
     }
@@ -380,15 +380,16 @@ public class MapaAlerta {
         panicBlock.setPadding(new Insets(4, 0, 6, 0));
 
         // ── 2. GRID DE CATEGORÍAS ────────────────────────────────────────────
-        HBox c_robo = categoryCard("\uf6de", "#E67E22", "Robo / Asalto");      // naranja
-        HBox c_homicidio = categoryCard("\uf714", "#1A2332", "Homicidio");           // negro
-        HBox c_sospechoso = categoryCard("\uf21b", "#0EA5E9", "Sospechoso");          // azul claro
-        HBox c_incendio = categoryCard("\uf06d", "#E53935", "Incendio");            // rojo ← cambiado
-        HBox c_medica = categoryCard("\uf0f9", "#1D4ED8", "Emergencia médica");   // azul
-        HBox c_accidente = categoryCard("\uf071", "#7C3AED", "Accidente");           // morado
-        HBox c_ruido = categoryCard("\uf028", "#16A34A", "Ruido / Alteración");  // verde ← cambiado
+        HBox c_robo = categoryCard("\uf6de", "#E67E22", "Robo / Asalto");
+        HBox c_homicidio = categoryCard("\uf714", "#1A2332", "Homicidio");
+        HBox c_sospechoso = categoryCard("\uf21b", "#0EA5E9", "Sospechoso");
+        HBox c_incendio = categoryCard("\uf06d", "#E53935", "Incendio");
+        HBox c_medica = categoryCard("\uf0f9", "#1D4ED8", "Emergencia médica");
+        HBox c_accidente = categoryCard("\uf071", "#7C3AED", "Accidente");
+        HBox c_ruido = categoryCard("\uf028", "#16A34A", "Ruido / Alteración");
+
         // ── 3. SUBPANELES ────────────────────────────────────────────────────
-        // ROBO: arma + transporte separados
+        // ROBO
         VBox secArma = buildSeccion("Tipo de arma", List.of(
                 new Opc("\uf05b", "#E53935", "Arma de fuego", "ARMA"),
                 new Opc("\ue08f", "#F97316", "Arma blanca", "ARMA"),
@@ -410,6 +411,7 @@ public class MapaAlerta {
                 new Opc("\uf255", "#7C3AED", "Agresión física", "ARMA"),
                 new Opc("\uf128", "#475569", "Desconocido", "ARMA")
         ));
+
         // SOSPECHOSO
         TextArea descSosp = styledTextArea("Ej: camiseta negra, gorra roja, aprox. 1.80m...", 3);
         descSosp.textProperty().addListener((obs, o, n) -> {
@@ -536,7 +538,6 @@ public class MapaAlerta {
     // BOTÓN PÁNICO — es el botón de envío
     // ════════════════════════════════════════════════════════════════════════
     private StackPane buildPanicStack() {
-        // Ondas
         StackPane stack = new StackPane();
         stack.setPrefSize(180, 180);
         stack.setMaxSize(180, 180);
@@ -567,14 +568,12 @@ public class MapaAlerta {
             fadeAnims.add(ft);
         }
 
-        // Botón circular rojo
         Button panicBtn = new Button();
         panicBtn.setPrefSize(120, 120);
         panicBtn.setMinSize(120, 120);
         panicBtn.setMaxSize(120, 120);
         panicBtn.setStyle(estiloBotonPanico(false));
 
-        // Ícono escudo
         try {
             ImageView shield = new ImageView(
                     new Image(getClass().getResource("/shield-Photoroom.png").toExternalForm()));
@@ -588,7 +587,6 @@ public class MapaAlerta {
             panicBtn.setGraphic(lbl);
         }
 
-        // Hover
         panicBtn.setOnMouseEntered(e -> panicBtn.setStyle(estiloBotonPanico(true)));
         panicBtn.setOnMouseExited(e -> {
             if (!panicActive) {
@@ -596,7 +594,6 @@ public class MapaAlerta {
             }
         });
 
-        // Clic → enviar alerta
         panicBtn.setOnAction(e -> {
             panicActive = true;
             panicBtn.setStyle(estiloBotonPanico(true));
@@ -615,8 +612,31 @@ public class MapaAlerta {
     }
 
     // ════════════════════════════════════════════════════════════════════════
+    // NORMALIZAR NOMBRES PARA LA BD
+    // ════════════════════════════════════════════════════════════════════════
+    /**
+     * Convierte los nombres mostrados en la UI al formato exacto que existe en
+     * la base de datos (sin tildes ni caracteres especiales donde la BD no los
+     * tiene).
+     */
+    private String normalizarNombre(String nombre) {
+        if (nombre == null) {
+            return null;
+        }
+        return switch (nombre) {
+            case "Agresión física" ->
+                "Agresion fisica";
+            case "Automóvil" ->
+                "Automovil";
+            default ->
+                nombre;
+        };
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
     // LÓGICA DE NEGOCIO
     // ════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════
     private void enviarAlerta(Button panicBtn) {
         lblFeedback.setText("");
 
@@ -626,29 +646,27 @@ public class MapaAlerta {
             panicBtn.setStyle(estiloBotonPanico(false));
             return;
         }
-        if (txtDescripcion.getText().isBlank()) {
-            error("Escribe una descripción del incidente.");
-            panicActive = false;
-            panicBtn.setStyle(estiloBotonPanico(false));
-            return;
-        }
+
         if (cmbBarrio.getValue() == null) {
             error("Selecciona el barrio del incidente.");
             panicActive = false;
             panicBtn.setStyle(estiloBotonPanico(false));
             return;
         }
+
         if (posicionSeleccionada == null) {
             error("Marca la ubicación en el mapa.");
             panicActive = false;
             panicBtn.setStyle(estiloBotonPanico(false));
             return;
         }
+
         if (usuario == null || usuario.getUsername() == null) {
             error("Usuario no identificado.");
             panicActive = false;
             return;
         }
+
         if (alertaService == null) {
             error("Sin conexión al servicio de alertas.");
             panicActive = false;
@@ -657,74 +675,178 @@ public class MapaAlerta {
 
         try {
             Alerta alerta = new Alerta();
-            alerta.setDescripcion(txtDescripcion.getText().trim());
+
+            alerta.setDescripcion(
+                    txtDescripcion.getText().isBlank()
+                    ? null
+                    : txtDescripcion.getText().trim()
+            );
+
             alerta.setUsuario(usuario);
 
             TipoAlerta ta = new TipoAlerta();
             ta.setNombre(tipoAlertaSel);
             alerta.setTipoalerta(ta);
+
             alerta.setBarrio(cmbBarrio.getValue());
 
             if (tipoArmaSel != null) {
                 TipoArma arma = new TipoArma();
-                arma.setNombre(tipoArmaSel);
+                arma.setNombre(normalizarNombre(tipoArmaSel));
                 alerta.setTipoarma(arma);
             }
+
             if (medioTranspSel != null) {
                 MedioTransporte medio = new MedioTransporte();
-                medio.setNombre(medioTranspSel);
+                medio.setNombre(normalizarNombre(medioTranspSel));
                 alerta.setMediotransporte(medio);
             }
 
-            // ── COORDENADAS ────────────────────────────────────────────────
-            // Se guardan tanto en Alerta (campos directos) como en Direccion,
-            // para que AlertaService los encuentre de cualquier forma.
             alerta.setLatitud(posicionSeleccionada.getLatitude());
             alerta.setLongitud(posicionSeleccionada.getLongitude());
 
-            // Reutilizar la dirección del usuario si existe, o crear una nueva
             Direccion dir = usuario.getDireccion() != null
                     ? usuario.getDireccion()
                     : new Direccion();
+
             dir.setLatitud(posicionSeleccionada.getLatitude());
             dir.setLongitud(posicionSeleccionada.getLongitude());
-            alerta.setDireccion(dir);
-            // ──────────────────────────────────────────────────────────────
 
-            boolean ok = alertaService.insertar(alerta);
-            if (ok) {
+            alerta.setDireccion(dir);
+
+            // INSERTAR ALERTA Y OBTENER ID GENERADO
+            int idGenerado = alertaService.insertar(alerta);
+
+            if (idGenerado > 0) {
+
+                alerta.setId_alerta(idGenerado);
+
                 panicBtn.setStyle(
-                        "-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;"
-                        + "-fx-effect:dropshadow(gaussian,rgba(22,163,74,0.45),20,0,0,6);");
+                        "-fx-background-color:#16a34a;"
+                        + "-fx-background-radius:100;"
+                        + "-fx-cursor:hand;"
+                        + "-fx-effect:dropshadow(gaussian,rgba(22,163,74,0.45),20,0,0,6);"
+                );
+
                 lblFeedback.setStyle("-fx-text-fill:#16a34a;");
                 lblFeedback.setText("✅ Alerta enviada. Las autoridades han sido notificadas.");
                 panicBtn.setDisable(true);
 
+                final Alerta alertaFinal = alerta;
+                final String tipoFinal = tipoAlertaSel;
+
+                new Thread(() -> {
+                    try {
+                        SuscripcionService suscSvc = new SuscripcionService();
+                        NotificacionService notiSvc = new NotificacionService();
+
+                        String barrioNom = alertaFinal.getBarrio().getNombre();
+
+                        String comunaNom
+                                = alertaFinal.getBarrio().getComuna() != null
+                                ? alertaFinal.getBarrio().getComuna().getNombre()
+                                : null;
+
+                        List<Suscripcion> aNotificar = new ArrayList<>();
+
+                        aNotificar.addAll(suscSvc.listarPorBarrio(barrioNom));
+
+                        if (comunaNom != null) {
+                            for (Suscripcion s : suscSvc.listarPorComuna(comunaNom)) {
+                                if (aNotificar.stream().noneMatch(x
+                                        -> x.getUsuario().getIdentificacion()
+                                                .equals(s.getUsuario().getIdentificacion()))) {
+                                    aNotificar.add(s);
+                                }
+                            }
+                        }
+
+                        for (Suscripcion s : suscSvc.listarGenerales()) {
+                            if (aNotificar.stream().noneMatch(x
+                                    -> x.getUsuario().getIdentificacion()
+                                            .equals(s.getUsuario().getIdentificacion()))) {
+                                aNotificar.add(s);
+                            }
+                        }
+
+                        for (Suscripcion s : aNotificar) {
+                            try {
+
+                                String alcance
+                                        = s.getBarrio() != null
+                                        ? "en el barrio " + s.getBarrio().getNombre()
+                                        : s.getComuna() != null
+                                        ? "en la comuna " + s.getComuna().getNombre()
+                                        : "en tu ciudad";
+
+                                Notificacion n = new Notificacion();
+                                n.setUsuario(s.getUsuario());
+
+                                // IMPORTANTE: YA TIENE EL ID DE ALERTA
+                                n.setAlerta(alertaFinal);
+
+                                String desc
+                                        = alertaFinal.getDescripcion() != null
+                                        ? "\n" + alertaFinal.getDescripcion()
+                                        : "";
+
+                                n.setMensaje(
+                                        "🚨 Nueva alerta de "
+                                        + tipoFinal.replace("_", " ")
+                                        + " reportada "
+                                        + alcance
+                                        + "."
+                                        + desc
+                                );
+
+                                n.setCorreodestinatario(
+                                        s.getUsuario().getCorreo()
+                                );
+
+                                notiSvc.insertar(n);
+
+                            } catch (Exception ex) {
+                                System.err.println(
+                                        "Error notificando a "
+                                        + s.getUsuario().getIdentificacion()
+                                        + ": "
+                                        + ex.getMessage()
+                                );
+                            }
+                        }
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }, "hilo-notificaciones").start();
+
                 new Timeline(new KeyFrame(Duration.seconds(2.5), ev -> {
                     Stage s = (Stage) panicBtn.getScene().getWindow();
+
                     if (owner != null && owner.getScene() != null) {
                         owner.getScene().getRoot().setEffect(null);
                     }
+
                     s.close();
                 })).play();
+
             } else {
                 error("Error al enviar la alerta. Intenta nuevamente.");
                 panicActive = false;
                 panicBtn.setStyle(estiloBotonPanico(false));
             }
+
         } catch (Exception ex) {
             error("Error inesperado: " + ex.getMessage());
-            ex.printStackTrace();   // <-- útil para depurar en consola
+            ex.printStackTrace();
             panicActive = false;
             panicBtn.setStyle(estiloBotonPanico(false));
         }
     }
-        // ════════════════════════════════════════════════════════════════════════
-        // BUILDERS DE COMPONENTES
-        // ════════════════════════════════════════════════════════════════════════
-        /**
-         * Tarjeta principal de categoría.
-         */
+    // ════════════════════════════════════════════════════════════════════════
+    // BUILDERS DE COMPONENTES
+    // ════════════════════════════════════════════════════════════════════════
+
     private HBox categoryCard(String unicodeFA, String bg, String texto) {
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(44, 44);
@@ -778,9 +900,6 @@ public class MapaAlerta {
                 + "-fx-border-color:" + color + ";-fx-border-width:2.5;-fx-cursor:hand;";
     }
 
-    /**
-     * Subpanel contenedor que envuelve varias secciones.
-     */
     private VBox containerSubpanel(javafx.scene.Node... nodos) {
         VBox panel = new VBox(12);
         panel.setVisible(false);
@@ -792,9 +911,6 @@ public class MapaAlerta {
         return panel;
     }
 
-    /**
-     * Sección interna con título y grid de mini-tarjetas.
-     */
     private VBox buildSeccion(String titulo, List<Opc> opciones) {
         Label tit = new Label(titulo);
         tit.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -802,9 +918,6 @@ public class MapaAlerta {
         return new VBox(8, tit, buildMiniGrid(opciones));
     }
 
-    /**
-     * Subpanel simple de una sola sección.
-     */
     private VBox buildSubpanelSimple(String titulo, List<Opc> opciones) {
         VBox panel = new VBox(10);
         panel.setVisible(false);
@@ -819,9 +932,6 @@ public class MapaAlerta {
         return panel;
     }
 
-    /**
-     * Subpanel con nodo extra (TextArea, CheckBox, etc.).
-     */
     private VBox buildSubpanelConNodo(String titulo, javafx.scene.Node extra) {
         VBox panel = new VBox(10);
         panel.setVisible(false);
@@ -836,9 +946,6 @@ public class MapaAlerta {
         return panel;
     }
 
-    /**
-     * Grid 2 columnas de mini-tarjetas.
-     */
     private GridPane buildMiniGrid(List<Opc> opciones) {
         GridPane g = new GridPane();
         g.setHgap(7);
@@ -907,9 +1014,6 @@ public class MapaAlerta {
         return card;
     }
 
-    /**
-     * Línea divisora entre secciones del subpanel de robo.
-     */
     private Region dividerLine() {
         Region r = new Region();
         r.setPrefHeight(1);
@@ -917,9 +1021,6 @@ public class MapaAlerta {
         return r;
     }
 
-    /**
-     * Combo de barrio estilizado.
-     */
     private ComboBox<Barrio> buildComboBarrio() {
         ComboBox<Barrio> cb = new ComboBox<>();
         cb.setPromptText("Selecciona el barrio del incidente");
@@ -979,9 +1080,6 @@ public class MapaAlerta {
         return cb;
     }
 
-    /**
-     * Chip azul con las coordenadas seleccionadas.
-     */
     private VBox buildCoordChip() {
         Label chipTitulo = new Label("Coordenadas del incidente");
         chipTitulo.setFont(Font.font("Arial", FontWeight.BOLD, 12));
@@ -1087,11 +1185,9 @@ public class MapaAlerta {
                 + "-fx-padding:12 14 12 14;";
 
         ta.setStyle(base);
-
         ta.focusedProperty().addListener((obs, o, isFocused)
                 -> ta.setStyle(isFocused ? focused : base));
 
-        // Accede al ScrollPane interno cuando el skin esté listo
         ta.skinProperty().addListener((obs, oldSkin, newSkin) -> {
             if (newSkin != null) {
                 javafx.scene.Node sp = ta.lookup(".scroll-pane");
@@ -1123,32 +1219,30 @@ public class MapaAlerta {
         }
         return switch (tipoAlertaSel) {
             case "ROBO" ->
-                new java.awt.Color(230, 126, 34);   // naranja
+                new java.awt.Color(230, 126, 34);
             case "HOMICIDIO" ->
-                new java.awt.Color(26, 35, 50);     // negro
+                new java.awt.Color(26, 35, 50);
             case "PERSONA_SOSPECHOSA" ->
-                new java.awt.Color(14, 165, 233);   // azul claro
+                new java.awt.Color(14, 165, 233);
             case "INCENDIO" ->
-                new java.awt.Color(229, 57, 53);    // rojo
+                new java.awt.Color(229, 57, 53);
             case "EMERGENCIA_MEDICA" ->
-                new java.awt.Color(29, 78, 216);    // azul
+                new java.awt.Color(29, 78, 216);
             case "ACCIDENTE" ->
-                new java.awt.Color(124, 58, 237);   // morado
+                new java.awt.Color(124, 58, 237);
             case "RUIDO" ->
-                new java.awt.Color(22, 163, 74);    // verde;
+                new java.awt.Color(22, 163, 74);
             default ->
                 new java.awt.Color(229, 57, 53);
         };
     }
 
     private HBox styledToggle(String texto, java.util.function.Consumer<Boolean> onChange) {
-        // Track del toggle
         StackPane track = new StackPane();
         track.setPrefSize(42, 24);
         track.setMinSize(42, 24);
         track.setStyle("-fx-background-radius:20;-fx-background-color:#e2e8f0;-fx-cursor:hand;");
 
-        // Thumb (bolita)
         javafx.scene.shape.Circle thumb = new javafx.scene.shape.Circle(9);
         thumb.setFill(Color.WHITE);
         thumb.setEffect(new DropShadow(4, 0, 1, Color.rgb(0, 0, 0, 0.2)));
@@ -1164,9 +1258,7 @@ public class MapaAlerta {
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(8, 0, 4, 0));
 
-        // Estado
         final boolean[] activo = {false};
-
         track.setOnMouseClicked(e -> {
             activo[0] = !activo[0];
             if (activo[0]) {
@@ -1195,10 +1287,10 @@ public class MapaAlerta {
         HBox header = new HBox(6, icoFA, lblTit);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        txtDescripcion = styledTextArea("Describe brevemente la emergencia...", 4);
+        TextArea taFuncional = styledTextArea("Describe brevemente la emergencia...", 4);
+        txtDescripcion = taFuncional; // ← la referencia apunta al funcional
 
-        VBox box = new VBox(8, header, txtDescripcion);
-        return box;
+        return new VBox(8, header, taFuncional);
     }
 
     // ── Utilidad AWT ──────────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ public class AlertasAdminPoliciaView {
         content.setPadding(new Insets(22));
         content.setStyle("-fx-background-color: " + BG + ";");
 
-        Label title = new Label("🚨 Todas las alertas");
+        Label title = new Label("Todas las alertas");
         title.setFont(Font.font("System", FontWeight.BOLD, 22));
         title.setTextFill(Color.web("#111827"));
         content.getChildren().add(title);
@@ -72,7 +72,7 @@ public class AlertasAdminPoliciaView {
                     String estado  = a.getEstado()     != null ? a.getEstado().name().replace("_", " ") : "—";
                     String fecha   = formatFecha(a.getFechaHora());
                     panel.getChildren().addAll(
-                            alertItem("🔔", tipo + " — " + barrio, fecha + " · " + estado, dotColor),
+                            alertItem("🔔",tipo + " — " + barrio, fecha + " · " + estado, dotColor),
                             separator());
                 }
             }

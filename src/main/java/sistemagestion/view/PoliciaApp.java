@@ -9,7 +9,6 @@ package sistemagestion.view;
  * @author Maria Cristina
  */
 
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;

@@ -69,6 +69,7 @@ public class AdministradorPoliciaApp {
     private AlarmaService alarmaService;
     private NotificacionService notificacionService;
     private AtencionAlertaService atencionService;
+    private AsignacionesAdminPoliciaView asignacionesView;
 
     // ── Usuario logueado ──────────────────────────────────────────
     private final Usuario usuarioActual;
@@ -240,9 +241,8 @@ public class AdministradorPoliciaApp {
             case "Alarmas" ->
                 new AlarmasAdminPoliciaView(alarmaService).build();
             case "Asignaciones" ->
-                new AsignacionesAdminPoliciaView(asignacionService,
-                unidadService,
-                alarmaService).build();
+                new AsignacionesAdminPoliciaView(
+                asignacionService, unidadService, alarmaService).build();
             case "Historial" ->
                 new HistorialAdminPoliciaView(atencionService).build();
             case "Policías" ->
@@ -294,7 +294,7 @@ public class AdministradorPoliciaApp {
             mapaSubMenu.getChildren().addAll(
                     subNavItem("🗺", "Mapa de alertas"),
                     subNavItem("🔥", "Zonas peligrosas"),
-                    subNavItem("👥", "Alertas comunitarias"));
+                    subNavItem("👥", "Mapa Operaciones"));
             nav.getChildren().add(idx + 1, mapaSubMenu);
             arrowLbl.setText("▼");
             mapaExpandido = true;
@@ -316,7 +316,16 @@ public class AdministradorPoliciaApp {
         item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 7;"));
         item.getChildren().addAll(label(icon, 11, "#e2e8f0", false), label(text, 11, WHITE, true));
         // Delega en MapaAdminPoliciaView
-        item.setOnMouseClicked(e -> root.setCenter(new MapaAdminPoliciaView(alertaService, text).build()));
+        item.setOnMouseClicked(e -> root.setCenter(switch (text) {
+            case "Zonas peligrosas" ->
+                new MapaZonasPeligrosas(alertaService).build();
+            case "Mapa de alertas" ->
+                new MapaAlertas(alertaService).build(); // o el que tengas
+            case "Mapa Operaciones" ->
+                new MapaOperaciones(asignacionService, unidadService).build();
+            default ->
+                new MapaAdminPoliciaView(alertaService, text).build();
+        }));
         return item;
     }
 
@@ -981,4 +990,5 @@ public class AdministradorPoliciaApp {
         a.setContentText(msg);
         a.showAndWait();
     }
+
 }

@@ -7,6 +7,9 @@ package sistemagestion.view;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -18,6 +21,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import sistemagestion.model.*;
 import sistemagestion.service.AlarmaService;
 import sistemagestion.service.AlertaService;
@@ -93,6 +97,26 @@ public class AsignacionesAdminPoliciaView {
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle("-fx-background-color:" + BG + "; -fx-background:" + BG + ";");
+        Timeline autoRefresh = new Timeline(
+                new KeyFrame(Duration.seconds(30), e -> {
+                    try {
+                        todasLasAsignaciones = asignacionService.listar();
+                        renderizarLista(todasLasAsignaciones);
+                    } catch (Exception ex) {
+                        System.err.println("Error al refrescar: " + ex.getMessage());
+                    }
+                })
+        );
+        autoRefresh.setCycleCount(Timeline.INDEFINITE);
+        autoRefresh.play();
+
+        // Detener el timeline cuando el ScrollPane salga de escena
+        scroll.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                autoRefresh.stop();
+            }
+        });
+
         return scroll;
     }
 
@@ -199,8 +223,26 @@ public class AsignacionesAdminPoliciaView {
         cmbUnidad.setStyle("-fx-background-color:#f5f7fb;-fx-background-radius:8;"
                 + "-fx-border-color:#e5e7eb;-fx-font-size:13px;");
         try {
-            cmbUnidad.getItems().setAll(unidadService.listar());
+            List<UnidadPolicial> todasUnidades = unidadService.listar();
+            List<AsignacionUnidad> asignacionesActivas = asignacionService.listar()
+                    .stream()
+                    .filter(a -> a.getAlerta() != null
+                    && a.getAlerta().getEstado() == sistemagestion.model.EstadoAlerta.UNIDAD_ASIGNADA)
+                    .toList();
+
+            Set<Integer> unidadesOcupadas = asignacionesActivas.stream()
+                    .filter(a -> a.getUnidadpolicial() != null)
+                    .map(a -> a.getUnidadpolicial().getId_unidad())
+                    .collect(java.util.stream.Collectors.toSet());
+
+            List<UnidadPolicial> unidadesLibres = todasUnidades.stream()
+                    .filter(u -> u.getEstado().equals("OPERATIVA"))
+                    .filter(u -> !unidadesOcupadas.contains(u.getId_unidad()))
+                    .toList();
+
+            cmbUnidad.getItems().setAll(unidadesLibres);
         } catch (Exception ignored) {
+
         }
         cmbUnidad.setCellFactory(lv -> new javafx.scene.control.ListCell<UnidadPolicial>() {
             @Override
@@ -300,9 +342,17 @@ public class AsignacionesAdminPoliciaView {
     private List<Alerta> cargarAlertasPendientes() {
         try {
             AlertaService alertaService = new AlertaService();
+
+            Set<Integer> alertasConAsignacion = asignacionService.listar()
+                    .stream()
+                    .filter(a -> a.getAlerta() != null)
+                    .map(a -> a.getAlerta().getId_alerta())
+                    .collect(java.util.stream.Collectors.toSet());
+
             return alertaService.listar().stream()
                     .filter(a -> a.getEstado() == sistemagestion.model.EstadoAlerta.PENDIENTE
                     || a.getEstado() == sistemagestion.model.EstadoAlerta.RECIBIDA)
+                    .filter(a -> !alertasConAsignacion.contains(a.getId_alerta()))
                     .toList();
         } catch (Exception e) {
             return List.of();
@@ -464,6 +514,20 @@ public class AsignacionesAdminPoliciaView {
                 case "Sin unidad" ->
                     todasLasAsignaciones.stream()
                     .filter(a -> a.getUnidadpolicial() == null).toList();
+                case "Unidades libres" -> {
+                    Set<Integer> ocupadas = todasLasAsignaciones.stream()
+                            .filter(a -> a.getAlerta() != null
+                            && "UNIDAD_ASIGNADA".equals(
+                                    a.getAlerta().getEstado() != null
+                                    ? a.getAlerta().getEstado().toString() : ""))
+                            .filter(a -> a.getUnidadpolicial() != null)
+                            .map(a -> a.getUnidadpolicial().getId_unidad())
+                            .collect(java.util.stream.Collectors.toSet());
+                    yield todasLasAsignaciones.stream()
+                    .filter(a -> a.getUnidadpolicial() != null
+                    && !ocupadas.contains(a.getUnidadpolicial().getId_unidad()))
+                    .toList();
+                }
                 default ->
                     todasLasAsignaciones;
             };
@@ -781,4 +845,5 @@ public class AsignacionesAdminPoliciaView {
             statsContainer = nuevo;
         }
     }
+
 }
