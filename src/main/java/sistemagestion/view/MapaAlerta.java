@@ -33,6 +33,10 @@ import java.awt.geom.*;
 import java.sql.SQLException;
 import java.util.*;
 import javafx.embed.swing.SwingNode;
+import sistemagestion.model.Notificacion;
+import sistemagestion.model.Suscripcion;
+import sistemagestion.service.NotificacionService;
+import sistemagestion.service.SuscripcionService;
 
 public class MapaAlerta {
 
@@ -199,7 +203,7 @@ public class MapaAlerta {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // TOP BAR
+    // BARRA SUPERIOR
     // ════════════════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
         javafx.scene.image.ImageView logoImg = new javafx.scene.image.ImageView();
@@ -315,11 +319,15 @@ public class MapaAlerta {
         int x = (int) pt.getX() - map.getViewportBounds().x;
         int y = (int) pt.getY() - map.getViewportBounds().y;
         java.awt.Color color = getColorAlerta();
+
         g.setColor(color);
         g.fillOval(x - 12, y - 30, 24, 24);
+
         int[] xs = {x - 8, x + 8, x};
         int[] ys = {y - 12, y - 12, y + 5};
         g.fillPolygon(xs, ys, 3);
+
+
         g.setColor(java.awt.Color.WHITE);
         g.fillOval(x - 5, y - 23, 10, 10);
     }
@@ -428,12 +436,14 @@ public class MapaAlerta {
                 new Opc("\uf255", "#7C3AED", "Agresión física","ARMA"),
                 new Opc("\uf128", "#475569", "Desconocido",    "ARMA")
         ));
+
         if (!armasExtra.isEmpty()) {
             subHomicidio.getChildren().add(dividerLine());
             subHomicidio.getChildren().add(buildSeccion("Otros tipos de arma", armasExtra));
         }
 
         TextArea descSosp = styledTextArea("Ej: camiseta negra, gorra roja...", 3);
+
         descSosp.textProperty().addListener((obs, o, n) -> {
             if (!n.isBlank() && txtDescripcion != null)
                 txtDescripcion.setText("Persona sospechosa: " + n);
@@ -649,6 +659,7 @@ public class MapaAlerta {
         Button panicBtn = new Button();
         panicBtn.setPrefSize(120, 120); panicBtn.setMinSize(120, 120); panicBtn.setMaxSize(120, 120);
         panicBtn.setStyle(estiloBotonPanico(false));
+
         try {
             javafx.scene.image.ImageView shield = new javafx.scene.image.ImageView(
                     new javafx.scene.image.Image(
@@ -659,9 +670,11 @@ public class MapaAlerta {
             Label lbl = new Label("🛡"); lbl.setFont(Font.font(36));
             panicBtn.setGraphic(lbl);
         }
+
         panicBtn.setOnMouseEntered(e -> panicBtn.setStyle(estiloBotonPanico(true)));
         panicBtn.setOnMouseExited(e -> { if (!panicActive) panicBtn.setStyle(estiloBotonPanico(false)); });
         panicBtn.setOnAction(e -> { panicActive = true; panicBtn.setStyle(estiloBotonPanico(true)); enviarAlerta(panicBtn); });
+
         stack.getChildren().add(panicBtn);
         return stack;
     }
@@ -682,14 +695,17 @@ public class MapaAlerta {
             case "Agresión física" -> "Agresion fisica";
             case "Automóvil"      -> "Automovil";
             default               -> nombre;
+
         };
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // ENVIAR ALERTA
+    // LÓGICA DE NEGOCIO
     // ════════════════════════════════════════════════════════════════════════
+
     private void enviarAlerta(Button panicBtn) {
         lblFeedback.setText("");
+
         if (tipoAlertaSel == null) { error("Selecciona el tipo de emergencia antes de enviar."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
         if (cmbBarrio.getValue() == null) { error("Selecciona el barrio del incidente."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
         if (posicionSeleccionada == null) { error("Marca la ubicación en el mapa."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
@@ -715,16 +731,20 @@ public class MapaAlerta {
             if (idGenerado > 0) {
                 alerta.setId_alerta(idGenerado);
                 panicBtn.setStyle("-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(22,163,74,0.45),20,0,0,6);");
+
                 lblFeedback.setStyle("-fx-text-fill:#16a34a;");
                 lblFeedback.setText("✅ Alerta enviada. Las autoridades han sido notificadas.");
                 panicBtn.setDisable(true);
 
                 final Alerta alertaFinal = alerta;
+
                 final String tipoFinal   = tipoAlertaSel;
+
                 new Thread(() -> {
                     try {
                         SuscripcionService suscSvc = new SuscripcionService();
                         NotificacionService notiSvc = new NotificacionService();
+
                         String barrioNom = alertaFinal.getBarrio().getNombre();
                         String comunaNom = alertaFinal.getBarrio().getComuna() != null ? alertaFinal.getBarrio().getComuna().getNombre() : null;
                         List<Suscripcion> aNotificar = new ArrayList<>(suscSvc.listarPorBarrio(barrioNom));
@@ -749,26 +769,29 @@ public class MapaAlerta {
                             } catch (Exception ex) { System.err.println("Error notificando: " + ex.getMessage()); }
                         }
                     } catch (Exception ex) { ex.printStackTrace(); }
+
                 }, "hilo-notificaciones").start();
 
                 new Timeline(new KeyFrame(Duration.seconds(2.5), ev -> {
                     Stage s = (Stage) panicBtn.getScene().getWindow();
+
                     if (owner != null && owner.getScene() != null) owner.getScene().getRoot().setEffect(null);
+
                     s.close();
                 })).play();
+
             } else {
                 error("Error al enviar la alerta. Intenta nuevamente.");
                 panicActive = false; panicBtn.setStyle(estiloBotonPanico(false));
             }
+
         } catch (Exception ex) {
             error("Error inesperado: " + ex.getMessage());
+
             ex.printStackTrace(); panicActive = false; panicBtn.setStyle(estiloBotonPanico(false));
         }
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // BUILDERS DE COMPONENTES
-    // ════════════════════════════════════════════════════════════════════════
     private HBox categoryCard(String unicodeFA, String bg, String texto) {
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(44, 44); iconBox.setMinSize(44, 44);
@@ -971,7 +994,9 @@ public class MapaAlerta {
         String base = "-fx-background-color:white;-fx-background-insets:0;-fx-background-radius:12;-fx-border-radius:12;-fx-border-color:#CBD5E1;-fx-border-width:1.5;-fx-font-size:13px;-fx-font-family:'Arial';-fx-text-fill:#1E293B;-fx-prompt-text-fill:#94A3B8;-fx-padding:12 14 12 14;";
         String focused = "-fx-background-color:white;-fx-background-insets:0;-fx-background-radius:12;-fx-border-radius:12;-fx-border-color:#3B82F6;-fx-border-width:2;-fx-font-size:13px;-fx-font-family:'Arial';-fx-text-fill:#1E293B;-fx-prompt-text-fill:#94A3B8;-fx-padding:12 14 12 14;";
         ta.setStyle(base);
+
         ta.focusedProperty().addListener((obs, o, isFocused) -> ta.setStyle(isFocused ? focused : base));
+
         ta.skinProperty().addListener((obs, oldSkin, newSkin) -> {
             if (newSkin != null) {
                 javafx.scene.Node sp = ta.lookup(".scroll-pane"); if (sp != null) sp.setStyle("-fx-background-color:white;-fx-background-insets:0;");
@@ -981,6 +1006,7 @@ public class MapaAlerta {
         });
         return ta;
     }
+
 
     private HBox styledToggle(String texto, java.util.function.Consumer<Boolean> onChange) {
         StackPane track = new StackPane();
@@ -998,6 +1024,7 @@ public class MapaAlerta {
         HBox box = new HBox(10, track, lbl);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(8, 0, 4, 0));
+
         final boolean[] activo = {false};
         track.setOnMouseClicked(e -> {
             activo[0] = !activo[0];
@@ -1016,6 +1043,7 @@ public class MapaAlerta {
         lblTit.setTextFill(Color.web("#374151"));
         HBox header = new HBox(6, icoFA, lblTit);
         header.setAlignment(Pos.CENTER_LEFT);
+
         TextArea taFuncional = styledTextArea("Describe brevemente la emergencia...", 4);
         txtDescripcion = taFuncional;
         return new VBox(8, header, taFuncional);
@@ -1038,6 +1066,7 @@ public class MapaAlerta {
             case "RUIDO"             -> new java.awt.Color( 22, 163,  74);
             default                  -> new java.awt.Color(100, 116, 139); // gris para extras
         };
+
     }
 
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {

@@ -111,7 +111,7 @@ public class LoginApp {
         String rol = u.getRol() != null ? u.getRol().getNombre().toUpperCase().trim() : "";
         switch (rol) {
             case "ADMIN":
-                AdministradorApp admin = new AdministradorApp();
+                AdministradorApp admin = new AdministradorApp(u); // ← BIEN
                 admin.show(stage);
                 break;
             case "CIUDADANO":
@@ -253,15 +253,16 @@ public class LoginApp {
     // ════════════════════════════════════════════════════════════════════════
     private VBox createRegisterForm() {
 
-        regPrimerNombre = modernField("Primer Nombre *");
+        regPrimerNombre = modernField("Primer Nombre");
         regSegundoNombre = modernField("Segundo Nombre");
-        regPrimerApellido = modernField("Primer Apellido *");
+        regPrimerApellido = modernField("Primer Apellido");
         regSegundoApellido = modernField("Segundo Apellido");
-        regCedula = modernField("Cédula *");
-        regTelefono = modernField("Teléfono * (10 dígitos)");
-        regEmail = modernField("Correo Electrónico *");
-        regUsername = modernField("Username * (mín. 4 caracteres)");
-        regPassword = modernPassword("Contraseña * (mín. 8, 1 mayúscula, 1 número)");
+        regCedula = modernField("Cédula");
+        regTelefono = modernField("Teléfono");
+        regEmail = modernField("Correo Electrónico");
+        regUsername = modernField("Username");
+        regPassword = modernPassword("Contraseña");
+
 
         regComuna = new ComboBox<>();
         regComuna.setPromptText("Seleccione una comuna");
@@ -271,11 +272,13 @@ public class LoginApp {
                 + "-fx-border-radius:25;-fx-border-color:transparent;-fx-font-size:13px;");
         try {
             List<Comuna> comunas = comunaService.listar();
-            ObservableList<String> nombres = FXCollections.observableArrayList();
+
+            ObservableList<String> nombresComunas = FXCollections.observableArrayList();
             for (Comuna c : comunas) {
-                nombres.add(c.getNombre());
+                nombresComunas.add(c.getNombre());
             }
-            regComuna.setItems(nombres);
+            regComuna.setItems(nombresComunas);
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -318,9 +321,8 @@ public class LoginApp {
         regManzana = modernField("Manzana");
         regCasa = modernField("Casa");
         regMsg = new Label();
-        regMsg.setStyle("-fx-font-size:12px;");
-        regMsg.setWrapText(true);
-        regMsg.setMaxWidth(390);
+
+        regMsg.setStyle("-fx-font-size: 13px;");
 
         ScrollPane scroll = buildScroll();
 
@@ -549,7 +551,7 @@ public class LoginApp {
         }) {
             tf.clear();
         }
-        regPassword.clear();
+
         regComuna.setValue(null);
         regBarrio.getItems().clear();
         regBarrio.setValue(null);

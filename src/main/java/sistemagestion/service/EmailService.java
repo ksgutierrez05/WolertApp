@@ -43,6 +43,7 @@ public class EmailService {
             Transport.send(mensaje);
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Error enviando correo: " + e.getMessage());
             return false;
         }

@@ -19,8 +19,13 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import static oracle.sql.NUMBER.e;
 import sistemagestion.model.Barrio;
+import sistemagestion.model.Comuna;
+import sistemagestion.model.Direccion;
+import sistemagestion.model.EstadoSuscripcion;
 import sistemagestion.model.Suscripcion;
+import sistemagestion.model.TipoAlerta;
 import sistemagestion.model.Usuario;
 import sistemagestion.service.BarrioService;
 import sistemagestion.service.SuscripcionService;
@@ -117,7 +122,6 @@ public class MiCuentaView {
                 + "-fx-border-width: 1;");
         shadow(card);
 
-        // Avatar
         StackPane avatarBox = new StackPane();
         Circle avatarCircle = new Circle(38, Color.web(BLUE));
         Label inicialesLbl = new Label(iniciales());
@@ -125,7 +129,6 @@ public class MiCuentaView {
         inicialesLbl.setTextFill(Color.WHITE);
         avatarBox.getChildren().addAll(avatarCircle, inicialesLbl);
 
-        // Info
         VBox info = new VBox(6);
         HBox.setHgrow(info, Priority.ALWAYS);
 
@@ -156,21 +159,15 @@ public class MiCuentaView {
 
         HBox statusRow = new HBox(6);
         statusRow.setAlignment(Pos.CENTER_LEFT);
-        Circle dot = new Circle(4, Color.web(GREEN));
-        Label statusLbl = label("En línea", 11, GREEN, false);
-        statusRow.getChildren().addAll(dot, statusLbl);
+        statusRow.getChildren().addAll(new Circle(4, Color.web(GREEN)), label("En línea", 11, GREEN, false));
 
         info.getChildren().addAll(nombreLbl, rolLbl, correoLbl, userLbl, statusRow);
 
-        // Botón editar
         Button editBtn = new Button("Editar perfil");
-        // ── DESPUÉS ──
-        String editBase = "-fx-background-color: #1f3a56;"
-                + "-fx-text-fill: white;"
+        String editBase = "-fx-background-color: #1f3a56; -fx-text-fill: white;"
                 + "-fx-font-size: 12px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 9 18; -fx-cursor: hand;";
-        String editHover = "-fx-background-color: #16283d;"
-                + "-fx-text-fill: white;"
+        String editHover = "-fx-background-color: #16283d; -fx-text-fill: white;"
                 + "-fx-font-size: 12px; -fx-font-weight: bold;"
                 + "-fx-background-radius: 8; -fx-padding: 9 18; -fx-cursor: hand;";
         editBtn.setStyle(editBase);
@@ -186,35 +183,47 @@ public class MiCuentaView {
     // PANEL: INFORMACIÓN PERSONAL
     // =========================================================================
     private VBox buildPerfilPanel() {
+        
         VBox panel = createPanel("Información personal");
-
         if (usuarioActual == null) {
             panel.getChildren().add(label("No hay información disponible.", 13, GRAY_TEXT, false));
             return panel;
         }
+        Direccion dir = usuarioActual.getDireccion();
 
-        String barrio = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getBarrio() != null
-                ? usuarioActual.getDireccion().getBarrio().getNombre() : "—";
-        String calle = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getCalle() != null
-                ? usuarioActual.getDireccion().getCalle() : "—";
-        String carrera = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getCarrera() != null
-                ? usuarioActual.getDireccion().getCarrera() : "—";
+        // Construir dirección legible
+        StringBuilder dirTexto = new StringBuilder();
+        if (dir != null) {
+            if (dir.getCalle() != null && !dir.getCalle().isBlank()) {
+                dirTexto.append("Calle ").append(dir.getCalle()).append("  ");
+            }
+            if (dir.getCarrera() != null && !dir.getCarrera().isBlank()) {
+                dirTexto.append("Cra ").append(dir.getCarrera()).append("  ");
+            }
+            if (dir.getEtapa() != null && !dir.getEtapa().isBlank()) {
+                dirTexto.append("Etapa ").append(dir.getEtapa()).append("  ");
+            }
+            if (dir.getManzana() != null && !dir.getManzana().isBlank()) {
+                dirTexto.append("Manzana ").append(dir.getManzana()).append("  ");
+            }
+            if (dir.getCasa() != null && !dir.getCasa().isBlank()) {
+                dirTexto.append("Casa ").append(dir.getCasa());
+            }
+        }
+        String dirFinal = dirTexto.toString().trim();
+        if (dirFinal.isEmpty()) {
+            dirFinal = "—";
+        }
+
+        String barrio = dir != null && dir.getBarrio() != null ? dir.getBarrio().getNombre() : "—";
 
         panel.getChildren().addAll(
-                infoRow("Identificación", val(usuarioActual.getIdentificacion()), BLUE),
-                sep(),
-                infoRow("Teléfono", val(usuarioActual.getTelefono()), GRAY_TEXT),
-                sep(),
-                infoRow("Correo", val(usuarioActual.getCorreo()), GRAY_TEXT),
-                sep(),
-                infoRow("Username", val(usuarioActual.getUsername()), GRAY_TEXT),
-                sep(),
-                infoRow("Barrio", barrio, GRAY_TEXT),
-                sep(),
-                infoRow("Dirección", "Calle " + calle + "  Cra " + carrera, GRAY_TEXT)
+                infoRow("Identificación", val(usuarioActual.getIdentificacion())), sep(),
+                infoRow("Teléfono", val(usuarioActual.getTelefono())), sep(),
+                infoRow("Correo", val(usuarioActual.getCorreo())), sep(),
+                infoRow("Username", val(usuarioActual.getUsername())), sep(),
+                infoRow("Barrio", barrio), sep(),
+                infoRow("Dirección", dirFinal)
         );
         return panel;
     }
@@ -241,17 +250,18 @@ public class MiCuentaView {
             if (lista.isEmpty()) {
                 VBox vacio = new VBox(8);
                 vacio.setAlignment(Pos.CENTER);
-                vacio.setPadding(new Insets(20));
+                vacio.setPadding(new Insets(12, 0, 12, 0));
                 vacio.getChildren().add(label("No tienes suscripciones activas.", 13, GRAY_TEXT, false));
                 panel.getChildren().add(vacio);
             } else {
                 for (Suscripcion s : lista) {
-                    String tipo = s.getTipoalerta() != null ? s.getTipoalerta().getNombre() : "—";
-                    String zona = s.getBarrio() != null ? s.getBarrio().getNombre()
-                            : s.getComuna() != null ? s.getComuna().getNombre() : "—";
-                    String estado = s.getEstado() != null
-                            ? s.getEstado().name().replace("_", " ") : "—";
-                    String badgeColor = switch (s.getEstado() != null ? s.getEstado().name() : "") {
+                    String zona = s.getBarrio() != null
+                            ? "🏘 Barrio: " + s.getBarrio().getNombre()
+                            : s.getComuna() != null
+                            ? "🏙 Comuna: " + s.getComuna().getNombre()
+                            : "🌐 General (toda la ciudad)";
+                    String estadoStr = s.getEstado() != null ? s.getEstado().name() : "—";
+                    String badgeColor = switch (estadoStr) {
                         case "ACTIVA" ->
                             GREEN;
                         case "PAUSADA" ->
@@ -261,9 +271,74 @@ public class MiCuentaView {
                         default ->
                             GRAY_TEXT;
                     };
-                    panel.getChildren().addAll(infoRowBadge(tipo, zona, estado, badgeColor), sep());
+
+                    // Botón eliminar
+                    Button btnEliminar = new Button("✕ Eliminar");
+                    btnEliminar.setStyle(
+                            "-fx-background-color: #fee2e2; -fx-text-fill: #e53935;"
+                            + "-fx-font-size: 11px; -fx-font-weight: bold;"
+                            + "-fx-background-radius: 6; -fx-padding: 4 10; -fx-cursor: hand;");
+                    btnEliminar.setOnMouseEntered(e -> btnEliminar.setStyle(
+                            "-fx-background-color: #e53935; -fx-text-fill: white;"
+                            + "-fx-font-size: 11px; -fx-font-weight: bold;"
+                            + "-fx-background-radius: 6; -fx-padding: 4 10; -fx-cursor: hand;"));
+                    btnEliminar.setOnMouseExited(e -> btnEliminar.setStyle(
+                            "-fx-background-color: #fee2e2; -fx-text-fill: #e53935;"
+                            + "-fx-font-size: 11px; -fx-font-weight: bold;"
+                            + "-fx-background-radius: 6; -fx-padding: 4 10; -fx-cursor: hand;"));
+
+                    final int idSusc = s.getId_suscripcion();
+                    btnEliminar.setOnAction(e -> {
+                        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                        confirm.setTitle("Eliminar suscripción");
+                        confirm.setHeaderText(null);
+                        confirm.setContentText("¿Seguro que quieres eliminar esta suscripción?\n" + zona);
+                        confirm.showAndWait().ifPresent(resp -> {
+                            if (resp == ButtonType.OK) {
+                                boolean ok = suscripcionService.eliminar(idSusc);
+                                if (ok) {
+                                    System.out.println("✅ Suscripción eliminada: " + idSusc);
+                                } else {
+                                    System.out.println("❌ No se pudo eliminar: " + idSusc);
+                                }
+                                // Refrescar la vista
+                                if (root != null) {
+                                    root.setCenter(getView());
+                                }
+                            }
+                        });
+                    });
+
+                    HBox fila = new HBox(10);
+                    fila.setAlignment(Pos.CENTER_LEFT);
+                    HBox infoSusc = infoRowBadge("Suscripción", zona, estadoStr, badgeColor);
+                    HBox.setHgrow(infoSusc, Priority.ALWAYS);
+                    fila.getChildren().addAll(infoSusc, btnEliminar);
+
+                    panel.getChildren().addAll(fila, sep());
                 }
             }
+
+            Button btnGestionar = new Button("+ Gestionar suscripción");
+            String btnBase = "-fx-background-color: " + BLUE_LIGHT + "; -fx-text-fill: " + BLUE + ";"
+                    + "-fx-font-size: 12px; -fx-font-weight: bold;"
+                    + "-fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;";
+            String btnHover = "-fx-background-color: " + BLUE + "; -fx-text-fill: white;"
+                    + "-fx-font-size: 12px; -fx-font-weight: bold;"
+                    + "-fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;";
+            btnGestionar.setStyle(btnBase);
+            btnGestionar.setOnMouseEntered(e -> btnGestionar.setStyle(btnHover));
+            btnGestionar.setOnMouseExited(e -> btnGestionar.setStyle(btnBase));
+            btnGestionar.setOnAction(e -> {
+                List<Suscripcion> listaFresca = suscripcionService.listar().stream()
+                        .filter(s -> s.getUsuario() != null
+                        && usuarioActual.getIdentificacion() != null
+                        && usuarioActual.getIdentificacion().equals(s.getUsuario().getIdentificacion()))
+                        .toList();
+                abrirDialogoSuscripcion(listaFresca);
+            });
+            panel.getChildren().add(btnGestionar);
+
         } catch (Exception e) {
             panel.getChildren().add(label("Error: " + e.getMessage(), 12, RED, false));
         }
@@ -276,24 +351,209 @@ public class MiCuentaView {
     private VBox buildInfoUtilPanel() {
         VBox panel = createPanel("Información útil");
         panel.getChildren().addAll(
-                infoRow("Línea de emergencias", "123", RED),
-                sep(),
-                infoRow("Policía Nacional", "112", BLUE),
-                sep(),
-                infoRow("Bomberos", "119", ORANGE),
-                sep(),
-                infoRow("Cruz Roja", "132", RED),
-                sep(),
-                infoRow("Línea de denuncia", "018000910600", GRAY_TEXT),
-                sep(),
-                infoRow("Soporte WolertApp", "wolertapp.notificaciones@gmail.com", BLUE)
+                infoRow("Línea de emergencias", "123"), sep(),
+                infoRow("Policía Nacional", "112"), sep(),
+                infoRow("Bomberos", "119"), sep(),
+                infoRow("Cruz Roja", "132"), sep(),
+                infoRow("Línea de denuncia", "018000910600"), sep(),
+                infoRow("Soporte WolertApp", "wolertapp.notificaciones@gmail.com")
         );
         return panel;
     }
 
     // =========================================================================
-    // DIÁLOGO EDITAR PERFIL
-    // — Solo: nombre, apellido, teléfono, correo, barrio
+    // DIÁLOGO: GESTIONAR SUSCRIPCIÓN
+    // =========================================================================
+    private void abrirDialogoSuscripcion(List<Suscripcion> actuales) {
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Gestionar suscripción");
+        dlg.setHeaderText(null);
+
+        VBox form = new VBox(14);
+        form.setPadding(new Insets(20));
+        form.setStyle("-fx-background-color: white;");
+        form.setPrefWidth(400);
+
+        Label lblZona = label("¿A qué zona quieres suscribirte?", 13, "#111827", true);
+        Label lblSub = label("Recibirás notificaciones de todas las alertas en la zona elegida.", 11, GRAY_TEXT, false);
+
+        ToggleGroup tgZona = new ToggleGroup();
+        RadioButton rbBarrio = new RadioButton("Por barrio");
+        RadioButton rbComuna = new RadioButton("Por comuna");
+        RadioButton rbGeneral = new RadioButton("General (toda la ciudad)");
+        rbBarrio.setToggleGroup(tgZona);
+        rbComuna.setToggleGroup(tgZona);
+        rbGeneral.setToggleGroup(tgZona);
+        rbBarrio.setSelected(true);
+        rbBarrio.setStyle("-fx-font-size: 13px;");
+        rbComuna.setStyle("-fx-font-size: 13px;");
+        rbGeneral.setStyle("-fx-font-size: 13px;");
+        VBox zonaCol = new VBox(8, rbBarrio, rbComuna, rbGeneral);
+
+        ComboBox<Barrio> cmbBarrio = new ComboBox<>();
+        cmbBarrio.setPromptText("Selecciona el barrio");
+        cmbBarrio.setMaxWidth(Double.MAX_VALUE);
+        cmbBarrio.setPrefHeight(38);
+        cmbBarrio.setStyle("-fx-font-size: 13px; -fx-background-radius: 8;");
+        cmbBarrio.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(Barrio b, boolean empty) {
+                super.updateItem(b, empty);
+                setText(empty || b == null ? null : b.getNombre());
+            }
+        });
+        cmbBarrio.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Barrio b, boolean empty) {
+                super.updateItem(b, empty);
+                setText(empty || b == null ? null : b.getNombre());
+            }
+        });
+
+        ComboBox<String> cmbComuna = new ComboBox<>();
+        cmbComuna.setPromptText("Selecciona la comuna");
+        cmbComuna.setMaxWidth(Double.MAX_VALUE);
+        cmbComuna.setPrefHeight(38);
+        cmbComuna.setStyle("-fx-font-size: 13px; -fx-background-radius: 8;");
+        cmbComuna.setVisible(false);
+        cmbComuna.setManaged(false);
+
+        try {
+            if (barrioService != null) {
+                List<Barrio> barrios = barrioService.listar();
+                cmbBarrio.getItems().setAll(barrios);
+                if (usuarioActual.getDireccion() != null
+                        && usuarioActual.getDireccion().getBarrio() != null) {
+                    String miBarrio = usuarioActual.getDireccion().getBarrio().getNombre();
+                    barrios.stream()
+                            .filter(b -> b.getNombre().equalsIgnoreCase(miBarrio))
+                            .findFirst().ifPresent(cmbBarrio::setValue);
+                }
+                barrios.stream()
+                        .filter(b -> b.getComuna() != null && b.getComuna().getNombre() != null)
+                        .map(b -> b.getComuna().getNombre())
+                        .distinct().sorted()
+                        .forEach(cmbComuna.getItems()::add);
+            }
+        } catch (Exception ignored) {
+        }
+
+        tgZona.selectedToggleProperty().addListener((obs, o, n) -> {
+            cmbBarrio.setVisible(n == rbBarrio);
+            cmbBarrio.setManaged(n == rbBarrio);
+            cmbComuna.setVisible(n == rbComuna);
+            cmbComuna.setManaged(n == rbComuna);
+        });
+
+        Label lblRes = new Label("");
+        lblRes.setWrapText(true);
+        lblRes.setFont(Font.font("System", FontWeight.BOLD, 12));
+
+        form.getChildren().addAll(lblZona, lblSub, sep(), zonaCol, cmbBarrio, cmbComuna, lblRes);
+
+        ScrollPane sp = new ScrollPane(form);
+        sp.setFitToWidth(true);
+        sp.setPrefHeight(300);
+        sp.setStyle("-fx-background: white; -fx-background-color: white;");
+
+        // ── Botones ───────────────────────────────────────────────
+        ButtonType btnGuardarType = new ButtonType("Guardar suscripción", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnCancelarType = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dlg.getDialogPane().setContent(sp);
+        dlg.getDialogPane().getButtonTypes().addAll(btnGuardarType, btnCancelarType);
+
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(btnGuardarType);
+        btnOk.setStyle("-fx-background-color: " + BLUE + "; -fx-text-fill: white;"
+                + "-fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16;");
+
+        btnOk.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            try {
+                Barrio barrioSeleccionado = null;
+                String comunaNom = null;
+
+                if (rbBarrio.isSelected()) {
+                    if (cmbBarrio.getValue() == null) {
+                        lblRes.setText("⚠️ Selecciona un barrio.");
+                        lblRes.setTextFill(Color.web(ORANGE));
+                        ev.consume();
+                        return;
+                    }
+                    barrioSeleccionado = cmbBarrio.getValue(); // ← objeto completo con ID
+                } else if (rbComuna.isSelected()) {
+                    if (cmbComuna.getValue() == null) {
+                        lblRes.setText("⚠️ Selecciona una comuna.");
+                        lblRes.setTextFill(Color.web(ORANGE));
+                        ev.consume();
+                        return;
+                    }
+                    comunaNom = cmbComuna.getValue();
+                }
+
+                Barrio finalBarrio = barrioSeleccionado;
+                String finalComuna = comunaNom;
+
+                Suscripcion suscripcion = new Suscripcion();
+                suscripcion.setUsuario(usuarioActual);
+                TipoAlerta ta = new TipoAlerta();
+                ta.setNombre("GENERAL");
+                suscripcion.setTipoalerta(ta);
+
+// ✅ Asigna el objeto Barrio completo (con ID)
+                if (finalBarrio != null) {
+                    suscripcion.setBarrio(finalBarrio);
+                }
+                if (finalComuna != null) {
+                    // Busca el objeto Comuna con ID desde el barrio ya cargado
+                    try {
+                        List<Barrio> barrios = barrioService.listar();
+                        barrios.stream()
+                                .filter(b -> b.getComuna() != null
+                                && finalComuna.equals(b.getComuna().getNombre()))
+                                .map(Barrio::getComuna)
+                                .findFirst()
+                                .ifPresent(suscripcion::setComuna);
+                    } catch (Exception ignored) {
+                    }
+                }
+                suscripcion.setEstado(EstadoSuscripcion.ACTIVA);
+
+                java.util.Optional<Suscripcion> existente = actuales.stream().findFirst();
+                boolean ok;
+                if (existente.isPresent()) {
+                    suscripcion.setId_suscripcion(existente.get().getId_suscripcion());
+                    ok = suscripcionService.actualizar(suscripcion);
+                } else {
+                    ok = suscripcionService.insertar(suscripcion);
+                }
+
+                System.out.println("Resultado: " + ok);
+
+                if (ok) {
+                    dlg.setResult(ButtonType.OK);
+                    dlg.close();
+                    javafx.application.Platform.runLater(() -> {
+                        if (root != null) {
+                            root.setCenter(getView());
+                        }
+                    });
+                } else {
+                    lblRes.setText("✘ No se pudo guardar.");
+                    lblRes.setTextFill(Color.web(RED));
+                    ev.consume();
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                lblRes.setText("✘ Error: " + ex.getMessage());
+                lblRes.setTextFill(Color.web(RED));
+                ev.consume();
+            }
+        });
+
+        dlg.showAndWait();
+    }
+
+    // =========================================================================
+    // DIÁLOGO: EDITAR PERFIL
     // =========================================================================
     private void abrirDialogoEditar() {
         if (usuarioActual == null) {
@@ -304,11 +564,6 @@ public class MiCuentaView {
         dlg.setTitle("Editar perfil");
         dlg.setHeaderText(null);
 
-        ScrollPane scroll = new ScrollPane();
-        scroll.setFitToWidth(true);
-        scroll.setPrefSize(440, 420);
-        scroll.setStyle("-fx-background:white;-fx-background-color:white;");
-
         VBox form = new VBox(12);
         form.setPadding(new Insets(20));
         form.setStyle("-fx-background-color:white;");
@@ -318,13 +573,28 @@ public class MiCuentaView {
         TextField fTelefono = dlgField("Teléfono", val(usuarioActual.getTelefono()));
         TextField fCorreo = dlgField("Correo", val(usuarioActual.getCorreo()));
 
-        // Dirección
-        String calleActual = (usuarioActual.getDireccion() != null && usuarioActual.getDireccion().getCalle() != null) ? usuarioActual.getDireccion().getCalle() : "";
-        String carreraActual = (usuarioActual.getDireccion() != null && usuarioActual.getDireccion().getCarrera() != null) ? usuarioActual.getDireccion().getCarrera() : "";
+        String calleActual = usuarioActual.getDireccion() != null
+                && usuarioActual.getDireccion().getCalle() != null
+                ? usuarioActual.getDireccion().getCalle() : "";
+        String carreraActual = usuarioActual.getDireccion() != null
+                && usuarioActual.getDireccion().getCarrera() != null
+                ? usuarioActual.getDireccion().getCarrera() : "";
+        String etapaActual = usuarioActual.getDireccion() != null
+                && usuarioActual.getDireccion().getEtapa() != null
+                ? usuarioActual.getDireccion().getEtapa() : "";
+        String manzanaActual = usuarioActual.getDireccion() != null
+                && usuarioActual.getDireccion().getManzana() != null
+                ? usuarioActual.getDireccion().getManzana() : "";
+        String casaActual = usuarioActual.getDireccion() != null
+                && usuarioActual.getDireccion().getCasa() != null
+                ? usuarioActual.getDireccion().getCasa() : "";
+
+        TextField fEtapa = dlgField("Etapa", etapaActual);
+        TextField fManzana = dlgField("Manzana", manzanaActual);
+        TextField fCasa = dlgField("Casa", casaActual);
         TextField fCalle = dlgField("Calle", calleActual);
         TextField fCarrera = dlgField("Carrera", carreraActual);
 
-        // Selector de barrio
         ComboBox<String> cbBarrio = new ComboBox<>();
         cbBarrio.setPromptText("Selecciona tu barrio");
         cbBarrio.setMaxWidth(Double.MAX_VALUE);
@@ -337,44 +607,48 @@ public class MiCuentaView {
             if (barrioService != null) {
                 barrios = barrioService.listar();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.out.println("Error cargando barrios: " + e.getMessage());
+            e.printStackTrace();
         }
 
         for (Barrio b : barrios) {
             cbBarrio.getItems().add(b.getNombre());
         }
 
-        // Preseleccionar barrio actual — con null check
         try {
             if (usuarioActual.getDireccion() != null
                     && usuarioActual.getDireccion().getBarrio() != null
                     && usuarioActual.getDireccion().getBarrio().getNombre() != null) {
                 cbBarrio.setValue(usuarioActual.getDireccion().getBarrio().getNombre());
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.out.println("Error seteando barrio inicial: " + e.getMessage());
+            e.printStackTrace();
         }
 
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
 
         form.getChildren().addAll(
-                seccion("NOMBRE"),
-                fNombre, fApellido,
-                seccion("DATOS DE CONTACTO"),
-                fTelefono, fCorreo,
-                seccion("DIRECCIÓN"),
-                fCalle, fCarrera,
-                seccion("BARRIO"),
-                cbBarrio,
+                seccion("NOMBRE"), fNombre, fApellido,
+                seccion("CONTACTO"), fTelefono, fCorreo,
+                seccion("DIRECCIÓN"), fCalle, fCarrera, fEtapa, fManzana, fCasa,
+                seccion("BARRIO"), cbBarrio,
                 lblError
         );
 
-        scroll.setContent(form);
-        dlg.getDialogPane().setContent(scroll);
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        ScrollPane scroll = new ScrollPane(form);
+        scroll.setFitToWidth(true);
+        scroll.setPrefSize(440, 420);
+        scroll.setStyle("-fx-background:white;-fx-background-color:white;");
 
-        Button btnOk = (Button) dlg.getDialogPane().lookupButton(ButtonType.OK);
-        btnOk.setText("Guardar cambios");
+        ButtonType btnGuardarType = new ButtonType("Guardar cambios", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnCancelarType = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dlg.getDialogPane().setContent(scroll);
+        dlg.getDialogPane().getButtonTypes().addAll(btnGuardarType, btnCancelarType);
+
+        Button btnOk = (Button) dlg.getDialogPane().lookupButton(btnGuardarType);
         btnOk.setStyle("-fx-background-color:#1f3a56;-fx-text-fill:white;"
                 + "-fx-font-weight:bold;-fx-background-radius:8;-fx-padding:8 16;");
 
@@ -396,31 +670,53 @@ public class MiCuentaView {
                     usuarioActual.setCorreo(fCorreo.getText().trim());
                 }
 
-                // Actualizar dirección — con null check
-                if (usuarioActual.getDireccion() != null) {
-                    if (!fCalle.getText().isBlank()) {
-                        usuarioActual.getDireccion().setCalle(fCalle.getText().trim());
-                    }
-                    if (!fCarrera.getText().isBlank()) {
-                        usuarioActual.getDireccion().setCarrera(fCarrera.getText().trim());
-                    }
+                Direccion dir = usuarioActual.getDireccion() != null
+                        ? usuarioActual.getDireccion() : new Direccion();
 
-                    String barrioSel = cbBarrio.getValue();
-                    if (barrioSel != null) {
-                        barriosFinal.stream()
-                                .filter(b -> b.getNombre().equals(barrioSel))
-                                .findFirst()
-                                .ifPresent(b -> usuarioActual.getDireccion().setBarrio(b));
-                    }
+                if (!fCalle.getText().isBlank()) {
+                    dir.setCalle(fCalle.getText().trim());
+                }
+                if (!fCarrera.getText().isBlank()) {
+                    dir.setCarrera(fCarrera.getText().trim());
+                }
+                if (!fEtapa.getText().isBlank()) {
+                    dir.setEtapa(fEtapa.getText().trim());
+                }
+                if (!fManzana.getText().isBlank()) {
+                    dir.setManzana(fManzana.getText().trim());
+                }
+                if (!fCasa.getText().isBlank()) {
+                    dir.setCasa(fCasa.getText().trim());
                 }
 
+                String barrioSel = cbBarrio.getValue();
+                if (barrioSel != null) {
+                    barriosFinal.stream()
+                            .filter(b -> b.getNombre().equals(barrioSel))
+                            .findFirst()
+                            .ifPresent(dir::setBarrio);
+                }
+
+                // Validar que haya barrio antes de guardar
+                if (dir.getBarrio() == null) {
+                    lblError.setText("⚠️ Selecciona un barrio.");
+                    ev.consume();
+                    return;
+                }
+
+                usuarioActual.setDireccion(dir);
                 if (usuarioService != null) {
                     usuarioService.actualizar(usuarioActual);
+                    System.out.println("✅ Usuario actualizado correctamente.");
+
+                    
                     if (root != null) {
-                        root.setCenter(getView());
+                        
+                        javafx.application.Platform.runLater(() -> root.setCenter(getView()));
                     }
                 }
             } catch (Exception ex) {
+                ex.printStackTrace();
                 lblError.setText("Error: " + ex.getMessage());
                 ev.consume();
             }
@@ -437,7 +733,6 @@ public class MiCuentaView {
         panel.setPadding(new Insets(16));
         panel.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
         shadow(panel);
-
         HBox titleRow = new HBox(10);
         titleRow.setAlignment(Pos.CENTER_LEFT);
         Rectangle accentBar = new Rectangle(4, 20);
@@ -448,12 +743,11 @@ public class MiCuentaView {
         t.setFont(Font.font("System", FontWeight.BOLD, 14));
         t.setTextFill(Color.web("#111827"));
         titleRow.getChildren().addAll(accentBar, t);
-
         panel.getChildren().addAll(titleRow, sep());
         return panel;
     }
 
-    private HBox infoRow(String campo, String valor, String valorColor) {
+    private HBox infoRow(String campo, String valor) {
         HBox row = new HBox(0);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(9, 0, 9, 0));
@@ -461,9 +755,9 @@ public class MiCuentaView {
         key.setMinWidth(160);
         key.setMaxWidth(160);
         Label val = label(valor, 13, "#111827", false);
+        val.setWrapText(true);
         HBox.setHgrow(val, Priority.ALWAYS);
-        Circle dot = new Circle(4, Color.web(valorColor));
-        row.getChildren().addAll(key, val, dot);
+        row.getChildren().addAll(key, val);
         return row;
     }
 

@@ -16,7 +16,7 @@ import sistemagestion.util.Validador;
  */
 public class UsuarioService {
 
-    private UsuarioDAO dao;
+    public UsuarioDAO dao;
 
     public UsuarioService() throws SQLException {
         dao = new UsuarioDAO();
