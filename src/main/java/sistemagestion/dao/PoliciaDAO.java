@@ -67,7 +67,7 @@ public class PoliciaDAO {
         }
 
         String sqlPolicia = "{call pkg_usuarios.pr_insertar_policia(?,?,?,?,?)}";
-        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {
+        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {System.out.println("Insertando policia - cedula: [" + cedula + "] unidad: [" + nombreUnidad + "] placa: [" + placa + "] rango: [" + rango + "] estado: [" + estado + "]");
             cs.setString(1, cedula);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);

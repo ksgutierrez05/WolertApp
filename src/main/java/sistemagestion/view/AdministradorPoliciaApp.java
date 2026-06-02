@@ -30,6 +30,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
@@ -134,12 +136,17 @@ public class AdministradorPoliciaApp {
         logoBox.setAlignment(Pos.CENTER_LEFT);
         StackPane wolfIcon = new StackPane();
         Circle iconCircle = new Circle(22, Color.web("#2a3560"));
-        wolfIcon.getChildren().addAll(iconCircle, label("🐺", 18, WHITE, false));
+        ImageView logoImg = new ImageView(
+                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
+        logoImg.setFitWidth(65);
+        logoImg.setFitHeight(65);
+        logoImg.setPreserveRatio(true);
+        logoImg.setTranslateY(-2);
         VBox logoText = new VBox(2);
         logoText.getChildren().addAll(
                 label("WolertApp", 15, WHITE, true),
                 label("Administrador Policía", 9, "#8899bb", false));
-        logoBox.getChildren().addAll(wolfIcon, logoText);
+        logoBox.getChildren().addAll(logoImg, logoText);
 
         // Perfil
         HBox profileCard = buildProfileCard();
@@ -405,10 +412,10 @@ public class AdministradorPoliciaApp {
     private HBox buildStats() {
         HBox row = new HBox(16);
         row.getChildren().addAll(
-                statCard(RED_LIGHT, RED_LIGHT, "Alertas activas", contarAlertasActivas(), "PENDIENTE / EN ATENCIÓN", "\uf0f3", RED),
-                statCard(ORANGE_LIGHT, ORANGE_LIGHT, "Asignaciones", contarAsignaciones(), "Total registradas", "\uf14a", ORANGE),
-                statCard(GREEN_LIGHT, GREEN_LIGHT, "Unidades activas", contarUnidadesActivas(), "Estado OPERATIVA", "\uf1b9", GREEN),
-                statCard(BLUE_LIGHT, BLUE_LIGHT, "Policías activos", contarPoliciasActivos(), "Estado DISPONIBLE", "\uf505", BLUE));
+                statCard(RED_LIGHT, RED, "Alertas activas", contarAlertasActivas(), "PENDIENTE / EN ATENCIÓN", "\uf0f3", RED),
+                statCard(ORANGE_LIGHT, ORANGE, "Asignaciones", contarAsignaciones(), "Total registradas", "\uf14a", ORANGE),
+                statCard(GREEN_LIGHT, GREEN, "Unidades activas", contarUnidadesActivas(), "Estado OPERATIVA", "\uf1b9", GREEN),
+                statCard(BLUE_LIGHT, BLUE, "Policías activos", contarPoliciasActivos(), "Estado DISPONIBLE", "\uf505", BLUE));
         return row;
     }
 

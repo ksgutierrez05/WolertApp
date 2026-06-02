@@ -280,7 +280,6 @@ public class PoliciasAdminPoliciaView {
         return l;
     }
 
-
     // ── Renderizar ───────────────────────────────────────────────
     private void renderizarLista(List<Policia> lista) {
         tablaContainer.getChildren().clear();
@@ -515,6 +514,10 @@ public class PoliciasAdminPoliciaView {
                 fldPair(fldNombre1), fldPair(fldNombre2),
                 fldPair(fldApellido1), fldPair(fldApellido2),
                 fldPair(fldPlaca), fldPair(fldRango),
+                fldPair(fldUsername), 
+                fldPair(fldPassword),
+                fldPair(fldTelefono),
+                fldPair(fldEmail),
                 new VBox(4, lblUnidad, cbUnidad),
                 new VBox(4, lblEstado, cbEstado),
                 errLbl
@@ -564,6 +567,7 @@ public class PoliciasAdminPoliciaView {
 
             try {
                 Policia pol = esNuevo ? new Policia() : policiaExistente;
+                
                 pol.setIdentificacion(cedula);
                 pol.setPrimer_nombre(nombre1);
                 pol.setSegundo_nombre(fldNombre2.getText().trim());
@@ -574,10 +578,12 @@ public class PoliciasAdminPoliciaView {
                 pol.setPlaca(placa);
                 pol.setRango(rango);
                 pol.setEstadopolicial(EstadoPolicia.valueOf(estadoNom));
-
+                System.out.println("Unidad seleccionada: [" + cbUnidad.getValue() + "]");
                 if (unidadNom != null && !unidadNom.isBlank()) {
                     UnidadPolicial u = new UnidadPolicial();
+                    
                     u.setNombre(unidadNom);
+                    System.out.println("Unidad seleccionada: [" + cbUnidad.getValue() + "]");
                     pol.setUnidadpolicial(u);
                 }
 

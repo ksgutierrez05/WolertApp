@@ -309,7 +309,6 @@ public class MapaOperaciones {
         HBox.setHgrow(rootStack, Priority.ALWAYS);
         root.setCenter(centro);
 
-
         return root;
 
     }
@@ -511,8 +510,8 @@ public class MapaOperaciones {
             Color c = fxColorAlerta(al.getEstado());
 
             // ← CAMBIO: leer coords desde Direccion
-            double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
-            double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+            double alLat = al.getLatitud();
+            double alLng = al.getLongitud();
 
             HBox row = acordeonItem(tipo,
                     al.getEstado() != null ? al.getEstado().name() : "—",
@@ -988,10 +987,10 @@ public class MapaOperaciones {
             mapa.recenterToAddressLocation();
             mapa.repaint();
         });
-        
-                System.out.println("Mapa size = "
-        + mapa.getWidth() + " x "
-        + mapa.getHeight());
+
+        System.out.println("Mapa size = "
+                + mapa.getWidth() + " x "
+                + mapa.getHeight());
 
     }
 
@@ -1037,8 +1036,8 @@ public class MapaOperaciones {
         if (mostrarAlertas) {
             for (Alerta al : alertas) {
                 // ← CAMBIO: leer coords desde Direccion
-                double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
-                double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+                double alLat = al.getLatitud();
+                double alLng = al.getLongitud();
 
                 if (alLat == 0 && alLng == 0) {
                     continue;
@@ -1149,8 +1148,8 @@ public class MapaOperaciones {
         // ── ALERTAS  ────────────────────────
         if (mostrarAlertas) {
             for (Alerta al : alertas) {
-                double alLat = al.getDireccion() != null ? al.getDireccion().getLatitud() : 0.0;
-                double alLng = al.getDireccion() != null ? al.getDireccion().getLongitud() : 0.0;
+                double alLat = al.getLatitud();
+                double alLng = al.getLongitud();
 
                 if (alLat == 0 && alLng == 0) {
                     continue;

@@ -1,6 +1,6 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+     * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+     * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package sistemagestion.view;
 
@@ -123,7 +123,12 @@ public class LoginApp {
                 PoliciaApp policia = new PoliciaApp(u);
                 policia.show(stage);
                 break;
-                
+
+            case "ADMIN_POLICIA":
+                AdministradorPoliciaApp adminview = new AdministradorPoliciaApp(u);
+                adminview.show(stage);
+                break;
+
             default:
                 setMsg(loginMsg,
                         "Tu cuenta no tiene acceso configurado. Contacta al administrador.",
@@ -131,6 +136,7 @@ public class LoginApp {
                 loginPassword.clear();
                 loginUsername.requestFocus();
                 break;
+
         }
     }
 
@@ -168,11 +174,11 @@ public class LoginApp {
 
         Button switchBtn = new Button("REGISTRARSE");
         switchBtn.setStyle("""
-                -fx-background-color: white; -fx-border-color: white; -fx-border-width: 2;
-                -fx-text-fill: #16283d; -fx-font-size: 14px; -fx-font-weight: bold;
-                -fx-background-radius: 30; -fx-border-radius: 30;
-                -fx-padding: 10 35; -fx-cursor: hand;
-                """);
+                    -fx-background-color: white; -fx-border-color: white; -fx-border-width: 2;
+                    -fx-text-fill: #16283d; -fx-font-size: 14px; -fx-font-weight: bold;
+                    -fx-background-radius: 30; -fx-border-radius: 30;
+                    -fx-padding: 10 35; -fx-cursor: hand;
+                    """);
         switchBtn.setOnAction(e -> {
             if (!signUpMode) {
                 animateToRegister(switchBtn);
@@ -459,7 +465,7 @@ public class LoginApp {
         }
     }
 
-// Limpiar todos los highlights
+    // Limpiar todos los highlights
     private void clearHighlights() {
         String base = "-fx-background-color:#f5f7fb;-fx-background-radius:25;"
                 + "-fx-border-radius:25;-fx-border-color:transparent;"
