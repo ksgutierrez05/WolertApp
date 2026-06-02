@@ -4,7 +4,6 @@
  */
 package sistemagestion.view;
 
-
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -803,6 +802,10 @@ public class MapaAlerta {
                                 n.setCorreodestinatario(
                                         s.getUsuario().getCorreo()
                                 );
+                                System.out.println(">>> Notificando a: "
+                                        + s.getUsuario().getIdentificacion()
+                                        + " | correo: "
+                                        + s.getUsuario().getCorreo());
 
                                 notiSvc.insertar(n);
 

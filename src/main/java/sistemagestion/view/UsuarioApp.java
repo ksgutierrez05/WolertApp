@@ -9,6 +9,7 @@ package sistemagestion.view;
  * @author Maria Cristina
  */
 import javafx.animation.KeyFrame;
+import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,6 +39,7 @@ import javafx.stage.Screen;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
+import sistemagestion.service.NotificacionService;
 
 public class UsuarioApp {
 
@@ -55,9 +57,9 @@ public class UsuarioApp {
 
     // ── Servicios ─────────────────────────────────────────────────
     private AlertaService alertaService;
-    private NotificacionService notificacionService;
     private SuscripcionService suscripcionService;
     private BarrioService barrioService;
+    private NotificacionService notificacionService;
 
     // ── Usuario logueado ──────────────────────────────────────────
     private final Usuario usuarioActual;
@@ -65,7 +67,8 @@ public class UsuarioApp {
     // ── UI ────────────────────────────────────────────────────────
     private BorderPane root;
     private VBox nav;
-    private VBox mapaSubMenu = new VBox(5);
+    // FIX 1: mapaSubMenu inicializado como null para controlar su estado correctamente
+    private VBox mapaSubMenu = null;
     private boolean mapaExpandido = false;
 
     // ── Constructor ───────────────────────────────────────────────
@@ -74,11 +77,23 @@ public class UsuarioApp {
         Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         try {
             alertaService = new AlertaService();
-            notificacionService = new NotificacionService();
+        } catch (SQLException e) {
+            mostrarAlerta("Error", e.getMessage());
+        }
+        try {
             suscripcionService = new SuscripcionService();
+        } catch (SQLException e) {
+            mostrarAlerta("Error", e.getMessage());
+        }
+        try {
             barrioService = new BarrioService();
         } catch (SQLException e) {
-            mostrarAlerta("Error de conexión", e.getMessage());
+            mostrarAlerta("Error", e.getMessage());
+        }
+        try {
+            notificacionService = new NotificacionService();
+        } catch (SQLException e) {
+            mostrarAlerta("Error", e.getMessage());
         }
     }
 
@@ -86,7 +101,7 @@ public class UsuarioApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
-        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
+        // FIX 2: se elimina la carga duplicada de la fuente (ya se hace en el constructor)
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
@@ -104,33 +119,17 @@ public class UsuarioApp {
                 + "-fx-font-size: 22px;"
                 + "-fx-text-fill: white;");
         chatBtn.setGraphic(chatIco);
-        // ── DESPUÉS ──
-        chatBtn.setStyle(
-                "-fx-background-color: #1f3a56;"
-                + "-fx-text-fill: #F5F7FA;"
-                + "-fx-background-radius: 50%;"
-                + "-fx-min-width: 56px; -fx-min-height: 56px;"
-                + "-fx-max-width: 56px; -fx-max-height: 56px;"
-                + "-fx-cursor: hand;"
-                + "-fx-effect: dropshadow(gaussian, rgba(31,58,86,0.55), 18, 0, 0, 5);");
 
-        chatBtn.setOnMouseEntered(e -> chatBtn.setStyle(
-                "-fx-background-color: #16283d;"
-                + "-fx-text-fill: #F5F7FA;"
-                + "-fx-background-radius: 50%;"
-                + "-fx-min-width: 56px; -fx-min-height: 56px;"
-                + "-fx-max-width: 56px; -fx-max-height: 56px;"
-                + "-fx-cursor: hand;"
-                + "-fx-effect: dropshadow(gaussian, rgba(22,40,61,0.70), 22, 0, 0, 7);"));
+        String chatBase = "-fx-background-color:#1f3a56;-fx-text-fill:#F5F7FA;-fx-background-radius:50%;"
+                + "-fx-min-width:56px;-fx-min-height:56px;-fx-max-width:56px;-fx-max-height:56px;"
+                + "-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(31,58,86,0.55),18,0,0,5);";
+        String chatHover = "-fx-background-color:#16283d;-fx-text-fill:#F5F7FA;-fx-background-radius:50%;"
+                + "-fx-min-width:56px;-fx-min-height:56px;-fx-max-width:56px;-fx-max-height:56px;"
+                + "-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(22,40,61,0.70),22,0,0,7);";
 
-        chatBtn.setOnMouseExited(e -> chatBtn.setStyle(
-                "-fx-background-color: #1f3a56;"
-                + "-fx-text-fill: #F5F7FA;"
-                + "-fx-background-radius: 50%;"
-                + "-fx-min-width: 56px; -fx-min-height: 56px;"
-                + "-fx-max-width: 56px; -fx-max-height: 56px;"
-                + "-fx-cursor: hand;"
-                + "-fx-effect: dropshadow(gaussian, rgba(31,58,86,0.55), 18, 0, 0, 5);"));
+        chatBtn.setStyle(chatBase);
+        chatBtn.setOnMouseEntered(e -> chatBtn.setStyle(chatHover));
+        chatBtn.setOnMouseExited(e -> chatBtn.setStyle(chatBase));
         chatBtn.setOnAction(e -> {
             if (chatPopup.isShowing()) {
                 chatPopup.hide();
@@ -145,7 +144,6 @@ public class UsuarioApp {
         StackPane.setMargin(chatBtn, new Insets(0, 24, 24, 0));
         overlay.setStyle("-fx-padding: 0;");
 
-        // ── Tamaño según pantalla del usuario ─────────────────────────
         Screen screen = Screen.getPrimary();
         double w = screen.getVisualBounds().getWidth();
         double h = screen.getVisualBounds().getHeight();
@@ -186,8 +184,7 @@ public class UsuarioApp {
         logoText.setAlignment(Pos.CENTER_LEFT);
         logoText.getChildren().addAll(
                 label("WolertApp", 18, WHITE, true),
-                label("Sistema de Alertas Comunitarias", 9, "#8899bb", false)
-        );
+                label("Sistema de Alertas Comunitarias", 9, "#8899bb", false));
         logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
 
         // ── User card ─────────────────────────────────────────────────
@@ -219,8 +216,7 @@ public class UsuarioApp {
         userInfo.getChildren().addAll(
                 label(nombreCompleto, 13, WHITE, true),
                 label(barrioNombre, 10, "#8899bb", false),
-                statusRow
-        );
+                statusRow);
         userCard.getChildren().addAll(avatarBox, userInfo);
 
         // ── Nav ───────────────────────────────────────────────────────
@@ -232,7 +228,7 @@ public class UsuarioApp {
                 navItem("🗺️", "Mapa"),
                 navItem("👥", "Vecinos"),
                 navItem("🔔", "Mis Alertas"),
-                navItem("💬", "Notificaciones"),
+                navItem("🔕", "Notificaciones"),
                 navItem("👤", "Mi Cuenta")
         );
 
@@ -242,10 +238,8 @@ public class UsuarioApp {
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
         logout.setStyle("-fx-background-color: transparent;");
-        logout.setOnMouseEntered(e -> logout.setStyle(
-                "-fx-background-color: #ffffff15; -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle(
-                "-fx-background-color: transparent;"));
+        logout.setOnMouseEntered(e -> logout.setStyle("-fx-background-color: #ffffff15; -fx-background-radius: 8;"));
+        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
         logout.setOnMouseClicked(e -> cerrarSesion());
         logout.getChildren().addAll(
                 label("🚪", 14, RED, false),
@@ -256,12 +250,11 @@ public class UsuarioApp {
 
         sidebar.getChildren().addAll(logoBox, userCard, nav, spacer, logout);
 
-        // ── ScrollPane transparente que ocupa toda la altura ──────────
         ScrollPane scroll = new ScrollPane(sidebar);
         scroll.setFitToWidth(true);
-        scroll.setFitToHeight(true);           // ← ocupa toda la altura, elimina la raya blanca
+        scroll.setFitToHeight(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // ← sin barra visible
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle(
                 "-fx-background: transparent;"
                 + "-fx-background-color: transparent;"
@@ -302,7 +295,7 @@ public class UsuarioApp {
         });
 
         item.setOnMouseClicked((MouseEvent e) -> {
-            // Resetear todos los items
+            // Resetear estilos de todos los ítems del nav (excluye el submenú)
             nav.getChildren().forEach(node -> {
                 if (node instanceof HBox hbox) {
                     hbox.setStyle(normalStyle);
@@ -313,7 +306,6 @@ public class UsuarioApp {
                     });
                 }
             });
-            // Activar item actual
             item.setStyle(activeStyle);
             iconLabel.setTextFill(Color.WHITE);
             textLabel.setTextFill(Color.WHITE);
@@ -321,22 +313,20 @@ public class UsuarioApp {
             switch (text) {
                 case "Dashboard" ->
                     root.setCenter(buildMainContent());
-                case "Alertas" -> {
-                    AlertasView alertasView = new AlertasView(usuarioActual, alertaService, barrioService);
-                    root.setCenter(alertasView.getView());
-                }
-                case "Mis Alertas" -> {
-                    MisAlertasView misAlertasView = new MisAlertasView(usuarioActual, alertaService, barrioService, root);
-                    root.setCenter(misAlertasView.getView());
-                }
+                case "Alertas" ->
+                    root.setCenter(new AlertasView(usuarioActual, alertaService, barrioService).getView());
+                case "Mis Alertas" ->
+                    root.setCenter(new MisAlertasView(usuarioActual, alertaService, barrioService, root).getView());
                 case "Mapa" ->
                     toggleMapaSubMenu(item);
                 case "Vecinos" ->
                     root.setCenter(new VecinosView(usuarioActual, alertaService).getView());
-                case "Notificaciones" ->
-                    root.setCenter(new NotificacionesView(usuarioActual, notificacionService, root).getView());
                 case "Mi Cuenta" ->
                     root.setCenter(new MiCuentaView(usuarioActual, suscripcionService, root, () -> root.setCenter(buildMainContent())).getView());
+                case "Notificaciones" ->
+                    root.setCenter(
+                            new NotificacionesView(usuarioActual, notificacionService, root).getView()
+                    );
                 default ->
                     root.setCenter(buildPlaceholder(text));
             }
@@ -345,15 +335,18 @@ public class UsuarioApp {
         return item;
     }
 
+    // FIX 3: toggleMapaSubMenu corregido para evitar duplicados al hacer clic varias veces
     private void toggleMapaSubMenu(HBox mapaItem) {
         int index = nav.getChildren().indexOf(mapaItem);
         if (!mapaExpandido) {
             mapaSubMenu = buildMapaSubMenu();
             nav.getChildren().add(index + 1, mapaSubMenu);
-            mapaSubMenu.setVisible(true);
             mapaExpandido = true;
         } else {
-            nav.getChildren().remove(mapaSubMenu);
+            if (mapaSubMenu != null && nav.getChildren().contains(mapaSubMenu)) {
+                nav.getChildren().remove(mapaSubMenu);
+            }
+            mapaSubMenu = null;
             mapaExpandido = false;
         }
     }
@@ -377,12 +370,8 @@ public class UsuarioApp {
         lbl.setTextFill(Color.web("#cbd5e1"));
         lbl.setFont(Font.font(12));
         item.getChildren().add(lbl);
-        item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-background-color:#ffffff15;-fx-background-radius:6;"
-                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
-        item.setOnMouseExited(e -> item.setStyle(
-                "-fx-background-color:transparent;"
-                + "-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
+        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color:#ffffff15;-fx-background-radius:6;-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
+        item.setOnMouseExited(e -> item.setStyle("-fx-background-color:transparent;-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
         item.setOnMouseClicked(e -> root.setCenter(buildPlaceholder(text)));
         return item;
     }
@@ -399,8 +388,7 @@ public class UsuarioApp {
                 buildEmergencyBanner(),
                 buildStatCards(),
                 buildBottomRow(),
-                buildFooter()
-        );
+                buildFooter());
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
         scroll.setPannable(true);
@@ -412,9 +400,11 @@ public class UsuarioApp {
     }
 
     // ── Top bar ───────────────────────────────────────────────────
+    // ── Top bar ───────────────────────────────────────────────────
     private HBox buildTopBar() {
         HBox bar = new HBox();
         bar.setAlignment(Pos.CENTER_LEFT);
+
         VBox greeting = new VBox(4);
         String saludo = usuarioActual != null ? "¡Hola, " + usuarioActual.getPrimer_nombre() + "!" : "¡Hola!";
         Label hello = new Label(saludo);
@@ -432,6 +422,7 @@ public class UsuarioApp {
         LocalDateTime now0 = LocalDateTime.now(ZoneId.of("America/Bogota"));
         Label dateLbl = label("📅  " + now0.format(dateFmt), 13, "#374151", false);
         Label timeLbl = label(now0.format(timeFmt), 13, GRAY_TEXT, false);
+
         Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Bogota"));
             dateLbl.setText("📅  " + now.format(dateFmt));
@@ -439,27 +430,234 @@ public class UsuarioApp {
         }));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
+
         VBox dateBox = new VBox(2);
         dateBox.setAlignment(Pos.CENTER_RIGHT);
         dateBox.getChildren().addAll(dateLbl, timeLbl);
 
-        int notiCount = contarNotificaciones();
-        StackPane bell = new StackPane();
-        Label bellIcon = label("🔔", 20, "#374151", false);
-        if (notiCount > 0) {
-            Circle badge = new Circle(8, Color.web(RED));
-            badge.setTranslateX(10);
-            badge.setTranslateY(-10);
-            Label badgeNum = label(String.valueOf(notiCount), 8, WHITE, true);
-            badgeNum.setTranslateX(10);
-            badgeNum.setTranslateY(-10);
-            bell.getChildren().addAll(bellIcon, badge, badgeNum);
-        } else {
-            bell.getChildren().add(bellIcon);
+        // ── Campanita ─────────────────────────────────────────────────
+        List<Notificacion> misNotifs = List.of();
+        if (notificacionService != null && usuarioActual != null) {
+            try {
+                misNotifs = notificacionService.listar().stream()
+                        .filter(n -> usuarioActual.getCorreo() != null
+                        && usuarioActual.getCorreo().equalsIgnoreCase(n.getCorreodestinatario()))
+                        .sorted((a, b) -> b.getFechahora() != null && a.getFechahora() != null
+                        ? b.getFechahora().compareTo(a.getFechahora()) : 0)
+                        .collect(java.util.stream.Collectors.toList());
+            } catch (Exception ignored) {
+            }
         }
+
+        int totalBadge = misNotifs.size();
+
+        // Botón campana
+        StackPane bell = new StackPane();
         bell.setCursor(javafx.scene.Cursor.HAND);
-        bell.setOnMouseClicked(e -> root.setCenter(
-                new NotificacionesView(usuarioActual, notificacionService, root).getView()));
+
+        Region bellBg = new Region();
+        bellBg.setPrefSize(40, 40);
+        bellBg.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:50%;"
+                + "-fx-border-color:#e5e7eb;"
+                + "-fx-border-radius:50%;"
+                + "-fx-border-width:1.5;");
+
+        Label bellIco = new Label("\uf0f3");
+        bellIco.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:16px;-fx-text-fill:#374151;");
+
+        Label badge = new Label(totalBadge > 9 ? "9+" : String.valueOf(totalBadge));
+        badge.setStyle(
+                "-fx-background-color:#e53935;-fx-text-fill:white;"
+                + "-fx-font-size:9px;-fx-font-weight:bold;"
+                + "-fx-background-radius:20;-fx-padding:1 4;");
+        badge.setTranslateX(10);
+        badge.setTranslateY(-10);
+        badge.setVisible(totalBadge > 0);
+
+        bell.getChildren().addAll(bellBg, bellIco, badge);
+
+        bell.setOnMouseEntered(e -> bellBg.setStyle(
+                "-fx-background-color:#f0f7ff;"
+                + "-fx-background-radius:50%;"
+                + "-fx-border-color:#1565c0;"
+                + "-fx-border-radius:50%;"
+                + "-fx-border-width:1.5;"));
+        bell.setOnMouseExited(e -> bellBg.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:50%;"
+                + "-fx-border-color:#e5e7eb;"
+                + "-fx-border-radius:50%;"
+                + "-fx-border-width:1.5;"));
+
+        // Popup
+        Popup popup = new Popup();
+        popup.setAutoHide(true);
+
+        VBox popupBox = new VBox(0);
+        popupBox.setPrefWidth(320);
+        popupBox.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:14;"
+                + "-fx-border-color:#e5e7eb;"
+                + "-fx-border-radius:14;"
+                + "-fx-border-width:1;"
+                + "-fx-effect:dropshadow(gaussian,rgba(15,23,42,0.18),24,0,0,8);");
+
+        // Header popup
+        HBox popHeader = new HBox(8);
+        popHeader.setPadding(new Insets(14, 16, 12, 16));
+        popHeader.setAlignment(Pos.CENTER_LEFT);
+        popHeader.setStyle(
+                "-fx-background-color:#f8fafc;"
+                + "-fx-background-radius:14 14 0 0;"
+                + "-fx-border-color:transparent transparent #e5e7eb transparent;"
+                + "-fx-border-width:0 0 1 0;");
+
+        Label popTitle = new Label("Mis notificaciones");
+        popTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+        popTitle.setTextFill(Color.web("#111827"));
+        HBox.setHgrow(popTitle, Priority.ALWAYS);
+
+        Label popBadge = new Label(totalBadge + (totalBadge == 1 ? " nueva" : " nuevas"));
+        popBadge.setStyle(
+                "-fx-background-color:#1565c022;"
+                + "-fx-text-fill:#1565c0;"
+                + "-fx-font-size:11px;-fx-font-weight:bold;"
+                + "-fx-background-radius:20;-fx-padding:3 8;");
+        popHeader.getChildren().addAll(popTitle, popBadge);
+        popupBox.getChildren().add(popHeader);
+
+        // Lista de notificaciones
+        final List<Notificacion> misNotifsF = misNotifs;
+        if (misNotifsF.isEmpty()) {
+            VBox vacio = new VBox(8);
+            vacio.setAlignment(Pos.CENTER);
+            vacio.setPadding(new Insets(28));
+            Label icoVacio = new Label("🔕");
+            icoVacio.setFont(Font.font(36));
+            Label msgVacio = new Label("Sin notificaciones");
+            msgVacio.setStyle("-fx-font-size:13px;-fx-text-fill:" + GRAY_TEXT + ";");
+            vacio.getChildren().addAll(icoVacio, msgVacio);
+            popupBox.getChildren().add(vacio);
+        } else {
+            misNotifsF.stream().limit(5).forEach(n -> {
+                String estadoStr = n.getEstado() != null ? n.getEstado().name() : "";
+                String iconColor = switch (estadoStr) {
+                    case "LEIDA" ->
+                        GREEN;
+                    case "ENVIADA" ->
+                        BLUE;
+                    case "ERROR" ->
+                        RED;
+                    default ->
+                        ORANGE;
+                };
+
+                HBox fila = new HBox(10);
+                fila.setPadding(new Insets(11, 16, 11, 16));
+                fila.setAlignment(Pos.CENTER_LEFT);
+                fila.setStyle("-fx-border-color:transparent transparent #f3f4f6 transparent;"
+                        + "-fx-border-width:0 0 1 0;");
+                fila.setOnMouseEntered(e -> fila.setStyle(
+                        "-fx-background-color:#f0f7ff;"
+                        + "-fx-border-color:transparent transparent #f3f4f6 transparent;"
+                        + "-fx-border-width:0 0 1 0;-fx-cursor:hand;"));
+                fila.setOnMouseExited(e -> fila.setStyle(
+                        "-fx-border-color:transparent transparent #f3f4f6 transparent;"
+                        + "-fx-border-width:0 0 1 0;"));
+                fila.setOnMouseClicked(e -> {
+                    popup.hide();
+                    root.setCenter(new NotificacionesView(usuarioActual, notificacionService, root).getView());
+                });
+
+                // Ícono circular
+                StackPane iconWrap = new StackPane();
+                iconWrap.setPrefSize(34, 34);
+                iconWrap.setMinSize(34, 34);
+                iconWrap.setMaxSize(34, 34);
+                Region iconBg = new Region();
+                iconBg.setPrefSize(34, 34);
+                iconBg.setStyle("-fx-background-color:" + iconColor + "22;"
+                        + "-fx-background-radius:50%;");
+                Label iconLbl = new Label("\uf0f3");
+                iconLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                        + "-fx-font-size:13px;-fx-text-fill:" + iconColor + ";");
+                iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+                // Texto
+                VBox texto = new VBox(3);
+                HBox.setHgrow(texto, Priority.ALWAYS);
+
+                String msg = n.getMensaje() != null
+                        ? (n.getMensaje().length() > 42
+                        ? n.getMensaje().substring(0, 42) + "…"
+                        : n.getMensaje())
+                        : "Sin mensaje";
+                Label msgLbl = new Label(msg);
+                msgLbl.setStyle("-fx-font-size:12px;-fx-font-weight:bold;-fx-text-fill:#111827;");
+                msgLbl.setWrapText(true);
+
+                String fecha = n.getFechahora() != null
+                        ? n.getFechahora().format(DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "";
+                Label subLbl = new Label(fecha);
+                subLbl.setStyle("-fx-font-size:10px;-fx-text-fill:" + GRAY_TEXT + ";");
+
+                Label stateBadge = new Label(estadoStr);
+                stateBadge.setStyle(
+                        "-fx-background-color:" + iconColor + "22;"
+                        + "-fx-text-fill:" + iconColor + ";"
+                        + "-fx-font-size:9px;-fx-font-weight:bold;"
+                        + "-fx-background-radius:20;-fx-padding:2 6;");
+
+                texto.getChildren().addAll(msgLbl, subLbl, stateBadge);
+                fila.getChildren().addAll(iconWrap, texto);
+                popupBox.getChildren().add(fila);
+            });
+        }
+
+        // Footer popup
+        HBox popFooter = new HBox();
+        popFooter.setPadding(new Insets(10, 16, 12, 16));
+        popFooter.setAlignment(Pos.CENTER);
+        popFooter.setStyle(
+                "-fx-background-color:#f8fafc;"
+                + "-fx-background-radius:0 0 14 14;"
+                + "-fx-border-color:#e5e7eb transparent transparent transparent;"
+                + "-fx-border-width:1 0 0 0;-fx-cursor:hand;");
+        Label verTodas = new Label("Ver todas las notificaciones  →");
+        verTodas.setStyle("-fx-font-size:12px;-fx-font-weight:bold;-fx-text-fill:" + BLUE + ";");
+        popFooter.getChildren().add(verTodas);
+        popFooter.setOnMouseEntered(e -> popFooter.setStyle(
+                "-fx-background-color:#e8f0fe;"
+                + "-fx-background-radius:0 0 14 14;"
+                + "-fx-border-color:#e5e7eb transparent transparent transparent;"
+                + "-fx-border-width:1 0 0 0;-fx-cursor:hand;"));
+        popFooter.setOnMouseExited(e -> popFooter.setStyle(
+                "-fx-background-color:#f8fafc;"
+                + "-fx-background-radius:0 0 14 14;"
+                + "-fx-border-color:#e5e7eb transparent transparent transparent;"
+                + "-fx-border-width:1 0 0 0;-fx-cursor:hand;"));
+        popFooter.setOnMouseClicked(e -> {
+            popup.hide();
+            root.setCenter(new NotificacionesView(usuarioActual, notificacionService, root).getView());
+        });
+
+        popupBox.getChildren().add(popFooter);
+        popup.getContent().add(popupBox);
+
+        // Abrir / cerrar popup
+        bell.setOnMouseClicked(e -> {
+            if (popup.isShowing()) {
+                popup.hide();
+            } else {
+                javafx.geometry.Bounds b = bell.localToScreen(bell.getBoundsInLocal());
+                popup.show(bell, b.getMaxX() - 320, b.getMaxY() + 8);
+            }
+        });
 
         rightBox.getChildren().addAll(dateBox, bell);
         bar.getChildren().addAll(greeting, rightBox);
@@ -487,8 +685,8 @@ public class UsuarioApp {
         bellLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:22px;-fx-text-fill:white;");
         iconBox.getChildren().addAll(iconBg, bellLbl);
 
-        javafx.animation.ScaleTransition pulse
-                = new javafx.animation.ScaleTransition(javafx.util.Duration.seconds(1.1), iconBox);
+        // FIX 4: uso correcto de ScaleTransition (importado al inicio)
+        ScaleTransition pulse = new ScaleTransition(Duration.seconds(1.1), iconBox);
         pulse.setFromX(1.0);
         pulse.setFromY(1.0);
         pulse.setToX(1.13);
@@ -565,8 +763,7 @@ public class UsuarioApp {
         row.getChildren().addAll(
                 statCard("#fff0f0", "#e53935", "Incidentes este mes", incidentesMes, "+3 vs mes anterior"),
                 statCard("#fff8e1", "#fb8c00", "Alertas pendientes", alertasPendientes, "PENDIENTE / EN PROCESO"),
-                statCard("#e8f5e9", "#43a047", "Vecinos del barrio", vecinosActivos, "Reportaron en tu barrio")
-        );
+                statCard("#e8f5e9", "#43a047", "Vecinos del barrio", vecinosActivos, "Reportaron en tu barrio"));
         return row;
     }
 
@@ -593,12 +790,11 @@ public class UsuarioApp {
         iv.setFitWidth(28);
         iv.setFitHeight(28);
         iv.setPreserveRatio(true);
+        // FIX 5: carga de imagen con manejo seguro sin SwingFXUtils (evita dependencia javafx.swing)
         try {
             java.io.InputStream is = getClass().getResourceAsStream("/" + iconName + ".png");
             if (is != null) {
-                java.awt.image.BufferedImage original = javax.imageio.ImageIO.read(is);
-                java.awt.image.BufferedImage recortada = recortarTransparencia(original);
-                iv.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(recortada, null));
+                iv.setImage(new Image(is));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -646,7 +842,8 @@ public class UsuarioApp {
         iconBox.setMinSize(32, 32);
         iconBox.setMaxSize(32, 32);
         iconBox.setStyle("-fx-background-color:#e8f0fe;-fx-background-radius:8;");
-        Label iconLbl = new Label("\uf133");
+        // FIX 6: ícono corregido a campana (\uf0f3) en vez de calendario (\uf133)
+        Label iconLbl = new Label("\uf0f3");
         iconLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:16px;-fx-text-fill:#1565c0;");
         iconBox.getChildren().add(iconLbl);
 
@@ -720,8 +917,6 @@ public class UsuarioApp {
             default ->
                 "#e3f2fd";
         };
-
-        // ── DESPUÉS (poner esto) ──
         String faIcon = switch (tipo) {
             case "ROBO", "HURTO" ->
                 "\uf505";
@@ -742,10 +937,8 @@ public class UsuarioApp {
         Region circleBgRegion = new Region();
         circleBgRegion.setPrefSize(40, 40);
         circleBgRegion.setStyle("-fx-background-color:" + circleBg + ";-fx-background-radius:50%;");
-
         Label faLbl = new Label(faIcon);
         faLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:16px;-fx-text-fill:" + dotColor + ";");
-
         iconBox.getChildren().addAll(circleBgRegion, faLbl);
 
         VBox text = new VBox(3);
@@ -927,6 +1120,30 @@ public class UsuarioApp {
     }
 
     // =========================================================================
+    // PLACEHOLDER — FIX 7: método faltante implementado
+    // =========================================================================
+    private VBox buildPlaceholder(String texto) {
+        VBox box = new VBox(16);
+        box.setAlignment(Pos.CENTER);
+        box.setStyle("-fx-background-color: " + BG + ";");
+        box.setPadding(new Insets(60));
+
+        Label icon = new Label("🚧");
+        icon.setFont(Font.font(64));
+
+        Label title = new Label(texto);
+        title.setFont(Font.font("System", FontWeight.BOLD, 24));
+        title.setTextFill(Color.web("#111827"));
+
+        Label sub = new Label("Esta sección estará disponible próximamente.");
+        sub.setFont(Font.font(14));
+        sub.setTextFill(Color.web(GRAY_TEXT));
+
+        box.getChildren().addAll(icon, title, sub);
+        return box;
+    }
+
+    // =========================================================================
     // CERRAR SESIÓN
     // =========================================================================
     private void cerrarSesion() {
@@ -938,70 +1155,15 @@ public class UsuarioApp {
         Label title = new Label("Sesión cerrada");
         title.setFont(Font.font("System", FontWeight.BOLD, 30));
         title.setTextFill(Color.web("#111827"));
-        Label msg = new Label("Cerrando aplicación...");
+        Label msg = new Label("La aplicación se cerrará.");
         msg.setTextFill(Color.GRAY);
         bye.getChildren().addAll(icon, title, msg);
         root.setCenter(bye);
-        new Timeline(new KeyFrame(Duration.seconds(2),
-                ev -> ((Stage) root.getScene().getWindow()).close())).play();
-    }
 
-    // =========================================================================
-    // CONTADORES
-    // =========================================================================
-    private int contarAlertasActivas() {
-        if (alertaService == null) {
-            return 0;
-        }
-        try {
-            return (int) alertaService.listar().stream()
-                    .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                    || a.getEstado() == EstadoAlerta.EN_ATENCION)
-                    .count();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private int contarNotificaciones() {
-        if (notificacionService == null || usuarioActual == null) {
-            return 0;
-        }
-        try {
-            return (int) notificacionService.listar().stream()
-                    .filter(n -> usuarioActual.getCorreo() != null
-                    && usuarioActual.getCorreo().equalsIgnoreCase(n.getCorreodestinatario()))
-                    .count();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    // =========================================================================
-    // PLACEHOLDER
-    // =========================================================================
-    private ScrollPane buildPlaceholder(String nombre) {
-        VBox box = new VBox(20);
-        box.setAlignment(Pos.CENTER);
-        box.setPadding(new Insets(40));
-        box.setStyle("-fx-background-color: " + BG + ";");
-        Label icon = new Label("🚧");
-        icon.setFont(Font.font(70));
-        Label title = new Label(nombre);
-        title.setFont(Font.font("System", FontWeight.BOLD, 32));
-        title.setTextFill(Color.web("#111827"));
-        Label msg = new Label("Pantalla en construcción");
-        msg.setFont(Font.font(18));
-        msg.setTextFill(Color.GRAY);
-        Button volver = new Button("Volver al Dashboard");
-        volver.setStyle("-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
-                + "-fx-font-size:14px;-fx-background-radius:10;-fx-padding:10 20;-fx-cursor:hand;");
-        volver.setOnAction(e -> root.setCenter(buildMainContent()));
-        box.getChildren().addAll(icon, title, msg, volver);
-        ScrollPane scroll = new ScrollPane(box);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
-        return scroll;
+        new Timeline(new KeyFrame(Duration.seconds(2), ev -> {
+            Stage stage = (Stage) root.getScene().getWindow();
+            stage.close();
+        })).play();
     }
 
     // =========================================================================
@@ -1021,19 +1183,6 @@ public class UsuarioApp {
         item.setAlignment(Pos.CENTER_LEFT);
         item.getChildren().addAll(new Circle(5, Color.web(color)), label(text, 11, GRAY_TEXT, false));
         return item;
-    }
-
-    private String estadoBg(String estado) {
-        return switch (estado) {
-            case "PENDIENTE" ->
-                RED_LIGHT;
-            case "EN_PROCESO" ->
-                "#fff8e1";
-            case "RESUELTA" ->
-                "#e8f5e9";
-            default ->
-                "#f3f4f6";
-        };
     }
 
     private Label label(String text, double size, String color, boolean bold) {
@@ -1064,32 +1213,5 @@ public class UsuarioApp {
         a.setHeaderText(null);
         a.setContentText(msg);
         a.showAndWait();
-    }
-
-    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
-        int w = img.getWidth(), h = img.getHeight();
-        int top = h, bottom = 0, left = w, right = 0;
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
-                    if (y < top) {
-                        top = y;
-                    }
-                    if (y > bottom) {
-                        bottom = y;
-                    }
-                    if (x < left) {
-                        left = x;
-                    }
-                    if (x > right) {
-                        right = x;
-                    }
-                }
-            }
-        }
-        if (top >= bottom || left >= right) {
-            return img;
-        }
-        return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
 }

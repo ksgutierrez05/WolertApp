@@ -8,9 +8,6 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
-// view/NotificacionesAdminView.java
-
-
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

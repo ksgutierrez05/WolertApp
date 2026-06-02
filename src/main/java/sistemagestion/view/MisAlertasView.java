@@ -8,6 +8,8 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
+
+
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,44 +28,39 @@ import sistemagestion.model.*;
 import sistemagestion.service.AlertaService;
 import sistemagestion.service.BarrioService;
 
-/**
- * Vista "Mis Alertas" para el usuario ciudadano.
- *
- *
- * @author Maria Cristina
- */
 public class MisAlertasView {
 
-    // ── Colores ───────────────────────────────────────────────────
-    private static final String WHITE = "#ffffff";
-    private static final String BG = "#f4f6fb";
-    private static final String RED = "#e53935";
+    // ── Colores (mismos que AlertasView) ──────────────────────────
+    private static final String WHITE      = "#ffffff";
+    private static final String BG        = "#f4f6fb";
+    private static final String RED       = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE = "#fb8c00";
-    private static final String GREEN = "#43a047";
-    private static final String BLUE = "#1565c0";
+    private static final String ORANGE    = "#fb8c00";
+    private static final String GREEN     = "#43a047";
+    private static final String BLUE      = "#1565c0";
+    private static final String PURPLE    = "#7b1fa2";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER = "#e5e7eb";
+    private static final String BORDER    = "#e5e7eb";
 
-    private static final DateTimeFormatter FMT
-            = DateTimeFormatter.ofPattern("dd/MM/yyyy  HH:mm");
+    private static final DateTimeFormatter FMT =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy  HH:mm");
 
     // ── Dependencias ──────────────────────────────────────────────
-    private final Usuario usuarioActual;
+    private final Usuario       usuarioActual;
     private final AlertaService alertaService;
 
     // ── Estado ────────────────────────────────────────────────────
-    private final ObservableList<Alerta> misAlertas = FXCollections.observableArrayList();
+    private final ObservableList<Alerta> misAlertas       = FXCollections.observableArrayList();
     private final ObservableList<Alerta> alertasFiltradas = FXCollections.observableArrayList();
 
-    private static final int FILAS_POR_PAGINA = 7;
+    private static final int FILAS_POR_PAGINA = 8;
     private int paginaActual = 1;
 
     // ── Controles ─────────────────────────────────────────────────
-    private VBox listaContainer;
-    private Label lblMostrando;
-    private HBox paginacionBox;
-    private TextField campoBusqueda;
+    private VBox        listaContainer;
+    private Label       lblMostrando;
+    private HBox        paginacionBox;
+    private TextField   campoBusqueda;
     private ComboBox<String> filtroEstado;
     private ComboBox<String> filtroTipo;
 
@@ -73,32 +70,18 @@ public class MisAlertasView {
     private Label lblEnAtencionVal;
     private Label lblResueltasVal;
 
-    // ── Colores de métricas ────────────────────────
-    private static final String COLOR_TOTAL = RED;
-    private static final String COLOR_PEND = ORANGE;
-    private static final String COLOR_ATENCION = BLUE;
-    private static final String COLOR_RESUELTA = GREEN;
-
     // ─────────────────────────────────────────────────────────────
-    /**
-     * @param usuarioActual Usuario logueado (obtenido del login).
-     * @param alertaService Servicio de alertas.
-     * @param barrioService Requerido por compatibilidad (no se usa aquí
-     * directamente).
-     * @param rootPane Referencia al BorderPane raíz (no se usa — ya no hay
-     * botón nueva alerta).
-     */
     public MisAlertasView(Usuario usuarioActual,
-            AlertaService alertaService,
-            BarrioService barrioService, // mantenido por compatibilidad
-            BorderPane rootPane) {         // mantenido por compatibilidad
+                          AlertaService alertaService,
+                          BarrioService barrioService,
+                          BorderPane rootPane) {
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         this.usuarioActual = usuarioActual;
         this.alertaService = alertaService;
     }
 
     // ── Punto de entrada ─────────────────────────────────────────
     public ScrollPane getView() {
-        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         VBox content = new VBox(20);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color:" + BG + ";");
@@ -107,7 +90,7 @@ public class MisAlertasView {
                 buildTopBar(),
                 buildMetrics(),
                 buildToolbar(),
-                buildLista(),
+                buildTabla(),
                 buildPaginacion()
         );
 
@@ -121,7 +104,7 @@ public class MisAlertasView {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // TOP BAR — sin botón "Nueva alerta"
+    // TOP BAR
     // ═══════════════════════════════════════════════════════════════
     private HBox buildTopBar() {
         HBox bar = new HBox();
@@ -132,22 +115,13 @@ public class MisAlertasView {
         title.setFont(Font.font("System", FontWeight.BOLD, 28));
         title.setTextFill(Color.web("#111827"));
 
-        String nombreUsuario = usuarioActual != null
+        String nombre = usuarioActual != null
                 ? usuarioActual.getPrimer_nombre() + " " + usuarioActual.getPrimer_apellido()
                 : "Usuario";
-        Label sub = label("Historial de alertas reportadas por " + nombreUsuario, 13, GRAY_TEXT, false);
+        Label sub = label("Historial de reportes de " + nombre, 13, GRAY_TEXT, false);
         titles.getChildren().addAll(title, sub);
 
-        // Solo botón recargar — NO botón "nueva alerta"
-        Button btnRecargar = btnSecundario("↻  Recargar");
-        btnRecargar.setOnAction(e -> cargarMisAlertas());
-
-        HBox right = new HBox(10);
-        right.setAlignment(Pos.CENTER_RIGHT);
-        HBox.setHgrow(right, Priority.ALWAYS);
-        right.getChildren().add(btnRecargar);
-
-        bar.getChildren().addAll(titles, right);
+        bar.getChildren().add(titles);
         return bar;
     }
 
@@ -156,18 +130,18 @@ public class MisAlertasView {
     // ═══════════════════════════════════════════════════════════════
     private HBox buildMetrics() {
         HBox row = new HBox(16);
+        HBox.setHgrow(row, Priority.ALWAYS);
 
-        lblTotalVal = boldNum("0", RED);
+        lblTotalVal      = boldNum("0", RED);
         lblPendientesVal = boldNum("0", ORANGE);
         lblEnAtencionVal = boldNum("0", BLUE);
-        lblResueltasVal = boldNum("0", GREEN);
+        lblResueltasVal  = boldNum("0", GREEN);
 
         row.getChildren().addAll(
-                // fondo claro → icono color fuerte (mismo par)
-                statCard("\uf46d", RED_LIGHT, RED, "Mis alertas", lblTotalVal, "Total reportadas", RED),
-                statCard("\uf252", "#fff8e1", ORANGE, "Pendientes", lblPendientesVal, "Sin atender todavía", ORANGE),
-                statCard("\uf111", "#eff6ff", BLUE, "En proceso", lblEnAtencionVal, "En atención / asignada", BLUE),
-                statCard("\uf058", "#e8f5e9", GREEN, "Resueltas", lblResueltasVal, "Cerradas correctamente", GREEN)
+                statCard(RED_LIGHT,   RED,    "\uf46d", "Total reportadas",  lblTotalVal,      "Mis alertas",      RED),
+                statCard("#fff8e1",   ORANGE, "\uf252", "Pendientes",        lblPendientesVal, "Sin atender",      ORANGE),
+                statCard("#eff6ff",   BLUE,   "\uf111", "En atención",       lblEnAtencionVal, "En proceso",       BLUE),
+                statCard("#e8f5e9",   GREEN,  "\uf058", "Resueltas",         lblResueltasVal,  "Casos cerrados",   GREEN)
         );
         return row;
     }
@@ -178,60 +152,92 @@ public class MisAlertasView {
     private HBox buildToolbar() {
         HBox bar = new HBox(12);
         bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(16));
-        bar.setStyle("-fx-background-color:" + WHITE + "; -fx-background-radius:12;");
+        bar.setPadding(new Insets(16, 20, 16, 20));
+        bar.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
         shadow(bar);
 
+        // Campo de búsqueda
+        HBox searchBox = new HBox(8);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10;"
+                + "-fx-padding: 0 14;");
+        searchBox.setPrefHeight(42);
+        HBox.setHgrow(searchBox, Priority.ALWAYS);
+
+        Label searchIcon = new Label("\uf002");
+        searchIcon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: #9ca3af;");
+
         campoBusqueda = new TextField();
-        campoBusqueda.setPromptText("🔍  Buscar por descripción o barrio...");
-        campoBusqueda.setPrefHeight(40);
-        campoBusqueda.setMaxWidth(Double.MAX_VALUE);
-        campoBusqueda.setStyle(fieldStyle());
+        campoBusqueda.setPromptText("Buscar por descripción, barrio...");
+        campoBusqueda.setStyle(
+                "-fx-background-color: transparent;"
+                + "-fx-border-color: transparent;"
+                + "-fx-font-size: 13px;"
+                + "-fx-text-fill: #111827;");
+        campoBusqueda.setPrefHeight(42);
         HBox.setHgrow(campoBusqueda, Priority.ALWAYS);
         campoBusqueda.textProperty().addListener((obs, o, n) -> filtrarYMostrar());
+        searchBox.getChildren().addAll(searchIcon, campoBusqueda);
 
-        filtroEstado = new ComboBox<>();
+        // Filtros
+        filtroEstado = styledCombo();
         filtroEstado.getItems().add("Estado: Todos");
         for (EstadoAlerta e : EstadoAlerta.values()) {
             filtroEstado.getItems().add(e.name());
         }
         filtroEstado.setValue("Estado: Todos");
-        filtroEstado.setPrefHeight(40);
-        filtroEstado.setStyle(fieldStyle());
         filtroEstado.setOnAction(e -> filtrarYMostrar());
 
-        filtroTipo = new ComboBox<>();
+        filtroTipo = styledCombo();
         filtroTipo.getItems().add("Tipo: Todos");
         filtroTipo.setValue("Tipo: Todos");
-        filtroTipo.setPrefHeight(40);
-        filtroTipo.setStyle(fieldStyle());
         filtroTipo.setOnAction(e -> filtrarYMostrar());
 
-        bar.getChildren().addAll(campoBusqueda, filtroEstado, filtroTipo);
+        bar.getChildren().addAll(searchBox, filtroEstado, filtroTipo);
         return bar;
     }
 
+    private ComboBox<String> styledCombo() {
+        ComboBox<String> combo = new ComboBox<>();
+        combo.setPrefHeight(42);
+        combo.setPrefWidth(160);
+        combo.setStyle(
+                "-fx-background-color: #f5f7fb;"
+                + "-fx-background-radius: 10;"
+                + "-fx-border-color: transparent;"
+                + "-fx-border-radius: 10;"
+                + "-fx-font-size: 13px;"
+                + "-fx-text-fill: #374151;"
+                + "-fx-cursor: hand;");
+        return combo;
+    }
+
     // ═══════════════════════════════════════════════════════════════
-    // TABLA / LISTA
+    // TABLA
     // ═══════════════════════════════════════════════════════════════
-    private VBox buildLista() {
+    private VBox buildTabla() {
         VBox card = new VBox(0);
         card.setStyle("-fx-background-color:" + WHITE + "; -fx-background-radius:12;");
         shadow(card);
 
-        // Cabecera de columnas
+        // Cabecera
         HBox header = new HBox();
-        header.setPadding(new Insets(12, 18, 12, 18));
+        header.setPadding(new Insets(13, 18, 13, 18));
         header.setStyle("-fx-background-color:#f8f9fc; -fx-background-radius:12 12 0 0;"
                 + "-fx-border-color:transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width:0 0 1 0;");
         header.getChildren().addAll(
-                colH("Estado", 120),
-                colH("Tipo", 160),
-                colH("Descripción", 260),
-                colH("Barrio", 130),
-                colH("Fecha", 150),
-                colH("Acciones", 110)
+                colH("Estado",      120),
+                colH("Tipo",        155),
+                colH("Descripción", 240),
+                colH("Barrio",      120),
+                colH("Fecha",       145),
+                colH("Acciones",     80)
         );
         card.getChildren().add(header);
 
@@ -246,6 +252,7 @@ public class MisAlertasView {
                 + "-fx-border-width:1 0 0 0;");
         footer.getChildren().add(lblMostrando);
         card.getChildren().add(footer);
+
         return card;
     }
 
@@ -262,69 +269,55 @@ public class MisAlertasView {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CARGA DE DATOS — filtrada por username del usuario logueado
+    // CARGA DE DATOS
     // ═══════════════════════════════════════════════════════════════
     private void cargarMisAlertas() {
-        if (alertaService == null || usuarioActual == null) {
-            return;
-        }
-
+        if (alertaService == null || usuarioActual == null) return;
         try {
-            List<Alerta> todas = alertaService.listar();
-
-            // ── FILTRO CLAVE: solo las alertas del usuario logueado ──
             String usernameActual = usuarioActual.getUsername();
-            List<Alerta> mias = todas.stream()
+            List<Alerta> mias = alertaService.listar().stream()
                     .filter(a -> a.getUsuario() != null
-                    && usernameActual != null
-                    && usernameActual.equalsIgnoreCase(a.getUsuario().getUsername()))
+                            && usernameActual != null
+                            && usernameActual.equalsIgnoreCase(a.getUsuario().getUsername()))
                     .collect(Collectors.toList());
 
             misAlertas.setAll(mias);
 
-            // Cargar tipos dinámicos solo de sus alertas
+            // Tipos dinámicos
             filtroTipo.getItems().clear();
             filtroTipo.getItems().add("Tipo: Todos");
             mias.stream()
                     .filter(a -> a.getTipoalerta() != null && a.getTipoalerta().getNombre() != null)
                     .map(a -> a.getTipoalerta().getNombre())
-                    .distinct()
-                    .sorted()
+                    .distinct().sorted()
                     .forEach(t -> filtroTipo.getItems().add(t));
             filtroTipo.setValue("Tipo: Todos");
 
             filtrarYMostrar();
             actualizarMetricas();
-
         } catch (Exception e) {
             mostrarAlerta("Error al cargar alertas", e.getMessage());
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // FILTRADO
+    // ═══════════════════════════════════════════════════════════════
     private void filtrarYMostrar() {
-        String busq = campoBusqueda != null ? campoBusqueda.getText().toLowerCase().trim() : "";
-        String estado = filtroEstado != null ? filtroEstado.getValue() : "Estado: Todos";
-        String tipo = filtroTipo != null ? filtroTipo.getValue() : "Tipo: Todos";
+        String busq   = campoBusqueda != null ? campoBusqueda.getText().toLowerCase().trim() : "";
+        String estado = filtroEstado  != null ? filtroEstado.getValue() : "Estado: Todos";
+        String tipo   = filtroTipo    != null ? filtroTipo.getValue()   : "Tipo: Todos";
 
-        List<Alerta> filtradas = misAlertas.stream()
-                .filter(a -> {
-                    boolean matchB = busq.isEmpty()
-                            || (a.getDescripcion() != null
-                            && a.getDescripcion().toLowerCase().contains(busq))
-                            || (a.getBarrio() != null
-                            && a.getBarrio().getNombre().toLowerCase().contains(busq));
-
-                    boolean matchE = estado == null || estado.startsWith("Estado")
-                            || (a.getEstado() != null
-                            && a.getEstado().name().equalsIgnoreCase(estado));
-
-                    boolean matchT = tipo == null || tipo.startsWith("Tipo")
-                            || (a.getTipoalerta() != null
-                            && a.getTipoalerta().getNombre().equalsIgnoreCase(tipo));
-
-                    return matchB && matchE && matchT;
-                })
-                .collect(Collectors.toList());
+        List<Alerta> filtradas = misAlertas.stream().filter(a -> {
+            boolean matchB = busq.isEmpty()
+                    || (a.getDescripcion() != null && a.getDescripcion().toLowerCase().contains(busq))
+                    || (a.getBarrio() != null && a.getBarrio().getNombre().toLowerCase().contains(busq));
+            boolean matchE = estado == null || estado.startsWith("Estado")
+                    || (a.getEstado() != null && a.getEstado().name().equalsIgnoreCase(estado));
+            boolean matchT = tipo == null || tipo.startsWith("Tipo")
+                    || (a.getTipoalerta() != null && a.getTipoalerta().getNombre().equalsIgnoreCase(tipo));
+            return matchB && matchE && matchT;
+        }).collect(Collectors.toList());
 
         alertasFiltradas.setAll(filtradas);
         paginaActual = 1;
@@ -339,14 +332,16 @@ public class MisAlertasView {
         int hasta = Math.min(desde + FILAS_POR_PAGINA, total);
 
         if (total == 0) {
-            // Estado vacío — sin botón nueva alerta
             VBox vacio = new VBox(12);
             vacio.setAlignment(Pos.CENTER);
             vacio.setPadding(new Insets(48));
-            Label icn = new Label("📭");
+            Label icn = new Label("🔕");
             icn.setFont(Font.font(56));
-            Label msg = label("No tienes alertas reportadas todavía.", 14, GRAY_TEXT, false);
-            Label hint = label("Usa el botón ⚠ PÁNICO en el Dashboard para reportar una emergencia.", 12, GRAY_TEXT, false);
+            Label msg  = label("No tienes alertas que coincidan con los filtros.", 15, GRAY_TEXT, false);
+            Label hint = label("Usa el botón ⚠ PÁNICO en el Dashboard para reportar una emergencia.", 12, GREEN, false);
+            hint.setWrapText(true);
+            hint.setMaxWidth(400);
+            hint.setAlignment(Pos.CENTER);
             vacio.getChildren().addAll(icn, msg, hint);
             listaContainer.getChildren().add(vacio);
         } else {
@@ -364,147 +359,157 @@ public class MisAlertasView {
     // FILA
     // ═══════════════════════════════════════════════════════════════
     private HBox buildFila(Alerta a, boolean par) {
-        HBox fila = new HBox();
+        HBox fila = new HBox(0);
         fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setPadding(new Insets(12, 18, 12, 18));
+        fila.setPadding(new Insets(11, 18, 11, 18));
+
         String bgN = "-fx-background-color:" + (par ? WHITE : "#fafbfd") + ";"
                 + "-fx-border-color:transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width:0 0 1 0;";
         fila.setStyle(bgN);
-        fila.setOnMouseEntered(e -> fila.setStyle("-fx-background-color:#f0f4ff;"
+        fila.setOnMouseEntered(e -> fila.setStyle(
+                "-fx-background-color:#f0f4ff;"
                 + "-fx-border-color:transparent transparent " + BORDER + " transparent;"
                 + "-fx-border-width:0 0 1 0;"));
         fila.setOnMouseExited(e -> fila.setStyle(bgN));
 
-        // Estado badge
-        Label estLbl = badge(
-                a.getEstado() != null ? a.getEstado().name() : "—",
-                estadoBg(a.getEstado()),
-                colorEstado(a.getEstado())
-        );
-        HBox estBox = new HBox(estLbl);
-        estBox.setAlignment(Pos.CENTER_LEFT);
-        estBox.setPrefWidth(120);
+        // ── Estado ───────────────────────────────────────────────
+        String estLabel = (a.getEstado() != null ? a.getEstado().name() : "—").replace("_", " ");
+        Label estLbl = badge("● " + estLabel, estadoBg(a.getEstado()), colorEstado(a.getEstado()));
+        HBox estBox = celdaBox(estLbl, 120);
 
-        // Tipo badge
+        // ── Tipo ─────────────────────────────────────────────────
         String tipoNom = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "—";
-        Label tipoLbl = badge(emojiTipo(tipoNom) + "  " + tipoNom,
-                tipoBg(tipoNom), tipoColor(tipoNom));
-        tipoLbl.setPrefWidth(160);
+        Label tipoLbl = badge(emojiTipo(tipoNom) + "  " + tipoNom, tipoBg(tipoNom), tipoColor(tipoNom));
+        tipoLbl.setPrefWidth(155);
+        HBox tipoBox = celdaBox(tipoLbl, 155);
 
-        // Descripción
+        // ── Descripción ──────────────────────────────────────────
         String desc = a.getDescripcion() != null ? a.getDescripcion() : "—";
-        Label descLbl = celda(desc.length() > 40 ? desc.substring(0, 40) + "…" : desc, 260);
+        String descCrt = desc.length() > 36 ? desc.substring(0, 36) + "…" : desc;
+        Label descLbl = celda(descCrt, 240);
         descLbl.setTooltip(new Tooltip(desc));
 
-        // Barrio
-        Label barrioLbl = celda(a.getBarrio() != null ? a.getBarrio().getNombre() : "—", 130);
+        // ── Barrio ───────────────────────────────────────────────
+        String barrioNom = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
+        Label barrioLbl = celda(barrioNom, 120);
 
-        // Fecha
+        // ── Fecha ────────────────────────────────────────────────
         String fechaStr = a.getFechaHora() != null ? a.getFechaHora().format(FMT) : "—";
-        Label fechaLbl = celda(fechaStr, 150);
+        Label fechaLbl = celda(fechaStr, 145);
 
-        // Acciones
-        HBox acciones = buildAcciones(a);
+        // ── Acciones ─────────────────────────────────────────────
+        HBox acciones = new HBox(6);
+        acciones.setAlignment(Pos.CENTER);
+        acciones.setPrefWidth(80);
 
-        fila.getChildren().addAll(estBox, tipoLbl, descLbl, barrioLbl, fechaLbl, acciones);
-        return fila;
-    }
+        acciones.getChildren().add(
+                btnIcono("\uf06e", "Ver detalle", "#1565c0", "#e8f0fe", () -> abrirDetalle(a)));
 
-    // ═══════════════════════════════════════════════════════════════
-    // ACCIONES — solo ver detalle y cancelar (si aplica)
-    // ═══════════════════════════════════════════════════════════════
-    private HBox buildAcciones(Alerta a) {
-        HBox box = new HBox(6);
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.setPrefWidth(110);
-
-        // Ver detalle — siempre disponible
-        box.getChildren().add(btnIcono("👁", "Ver detalle", () -> abrirDetalle(a)));
-
-        // Cancelar — solo si está PENDIENTE o RECIBIDA
         boolean puedeCancelar = a.getEstado() == EstadoAlerta.PENDIENTE
                 || a.getEstado() == EstadoAlerta.RECIBIDA;
-        Button btnCancelar = btnIcono("✕", "Cancelar alerta", () -> cancelarAlerta(a));
+        Button btnCancelar = btnIcono("\uf00d", "Cancelar alerta", RED, RED_LIGHT,
+                () -> cancelarAlerta(a));
         btnCancelar.setDisable(!puedeCancelar);
         btnCancelar.setOpacity(puedeCancelar ? 1.0 : 0.3);
-        box.getChildren().add(btnCancelar);
+        acciones.getChildren().add(btnCancelar);
 
-        return box;
+        fila.getChildren().addAll(estBox, tipoBox, descLbl, barrioLbl, fechaLbl, acciones);
+        return fila;
     }
 
     // ═══════════════════════════════════════════════════════════════
     // DETALLE
     // ═══════════════════════════════════════════════════════════════
     private void abrirDetalle(Alerta a) {
-        Alert dlg = new Alert(Alert.AlertType.INFORMATION);
+        Dialog<Void> dlg = new Dialog<>();
         dlg.setTitle("Detalle de alerta #" + a.getId_alerta());
         dlg.setHeaderText(null);
 
         VBox content = new VBox(10);
-        content.setPadding(new Insets(16));
-        content.setPrefWidth(440);
+        content.setPadding(new Insets(20));
+        content.setPrefWidth(470);
 
-        // Badge estado grande centrado
+        // Badge estado centrado
         Label estBadge = badge(
-                a.getEstado() != null ? a.getEstado().name() : "—",
+                a.getEstado() != null ? a.getEstado().name().replace("_", " ") : "—",
                 estadoBg(a.getEstado()), colorEstado(a.getEstado()));
         estBadge.setFont(Font.font("System", FontWeight.BOLD, 14));
+        estBadge.setPadding(new Insets(5, 14, 5, 14));
         HBox estRow = new HBox(estBadge);
         estRow.setAlignment(Pos.CENTER);
         content.getChildren().addAll(estRow, new Separator());
 
+        // Información de la alerta
+        content.getChildren().add(seccionHeader("📋 INFORMACIÓN DE LA ALERTA"));
         content.getChildren().addAll(
-                detRow("🆔 ID alerta", "#" + a.getId_alerta()),
-                detRow("🔔 Tipo", a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "—"),
-                detRow("🏘 Barrio", a.getBarrio() != null ? a.getBarrio().getNombre() : "—"),
-                detRow("📋 Descripción", a.getDescripcion() != null ? a.getDescripcion() : "—"),
-                detRow("🔫 Tipo de arma", a.getTipoarma() != null ? a.getTipoarma().getNombre() : "Sin arma"),
-                detRow("🚗 Transporte", a.getMediotransporte() != null
-                        ? a.getMediotransporte().getNombre() : "Sin medio"),
-                detRow("📅 Fecha / Hora", a.getFechaHora() != null ? a.getFechaHora().format(FMT) : "—")
+                detRow("🆔 ID",            "#" + a.getId_alerta()),
+                detRow("🔔 Tipo",          a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "—"),
+                detRow("📋 Descripción",   nvl(a.getDescripcion())),
+                detRow("📅 Fecha / Hora",  a.getFechaHora() != null ? a.getFechaHora().format(FMT) : "—")
         );
 
+        content.getChildren().add(new Separator());
+
+        // Ubicación
+        content.getChildren().add(seccionHeader("📍 UBICACIÓN"));
+        content.getChildren().addAll(
+                detRow("🏘 Barrio", a.getBarrio() != null ? a.getBarrio().getNombre() : "—")
+        );
         if (a.getDireccion() != null) {
-            content.getChildren().add(new Separator());
+            Direccion d = a.getDireccion();
             content.getChildren().addAll(
-                    detRow("🏠 Calle", nvl(a.getDireccion().getCalle())),
-                    detRow("📌 Carrera", nvl(a.getDireccion().getCarrera())),
-                    detRow("📍 Referencia", nvl(a.getDireccion().getReferencia()))
+                    detRow("🏠 Calle",       nvl(d.getCalle())),
+                    detRow("📌 Carrera",     nvl(d.getCarrera())),
+                    detRow("📍 Referencia",  nvl(d.getReferencia()))
             );
         }
 
-        // Botón cancelar dentro del detalle si aplica
-        if (a.getEstado() == EstadoAlerta.PENDIENTE
-                || a.getEstado() == EstadoAlerta.RECIBIDA) {
+        content.getChildren().add(new Separator());
+
+        // Detalles del incidente
+        content.getChildren().add(seccionHeader("⚠ DETALLES DEL INCIDENTE"));
+        content.getChildren().addAll(
+                detRow("🔫 Tipo de arma",
+                        a.getTipoarma() != null ? a.getTipoarma().getNombre() : "Sin arma reportada"),
+                detRow("🚗 Medio de transporte",
+                        a.getMediotransporte() != null ? a.getMediotransporte().getNombre() : "Sin medio registrado")
+        );
+
+        // Botón cancelar si aplica
+        if (a.getEstado() == EstadoAlerta.PENDIENTE || a.getEstado() == EstadoAlerta.RECIBIDA) {
             content.getChildren().add(new Separator());
-            Button btnCancelDetalle = new Button("✕  Cancelar esta alerta");
-            btnCancelDetalle.setStyle("-fx-background-color:" + RED_LIGHT
-                    + "; -fx-text-fill:" + RED + ";"
+            Button btnCancelDetalle = new Button("Cancelar esta alerta");
+            btnCancelDetalle.setStyle(
+                    "-fx-background-color:" + RED_LIGHT + "; -fx-text-fill:" + RED + ";"
                     + "-fx-font-size:13px; -fx-font-weight:bold; -fx-background-radius:8;"
                     + "-fx-border-color:" + RED + "; -fx-border-radius:8;"
-                    + "-fx-padding:8 16; -fx-cursor:hand;");
-            btnCancelDetalle.setOnAction(e -> {
-                dlg.close();
-                cancelarAlerta(a);
-            });
-            content.getChildren().add(btnCancelDetalle);
+                    + "-fx-padding:9 20; -fx-cursor:hand;");
+            HBox btnRow = new HBox(btnCancelDetalle);
+            btnRow.setPadding(new Insets(4, 0, 0, 0));
+            btnCancelDetalle.setOnAction(e -> { dlg.close(); cancelarAlerta(a); });
+            content.getChildren().add(btnRow);
         }
 
-        dlg.getDialogPane().setContent(content);
-        dlg.getDialogPane().getButtonTypes().setAll(ButtonType.CLOSE);
+        ScrollPane scrollContent = new ScrollPane(content);
+        scrollContent.setFitToWidth(true);
+        scrollContent.setPrefHeight(460);
+        scrollContent.setStyle("-fx-background:white; -fx-background-color:white;");
+
+        dlg.getDialogPane().setContent(scrollContent);
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dlg.getDialogPane().setPrefWidth(500);
         dlg.showAndWait();
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // CANCELAR ALERTA
+    // CANCELAR
     // ═══════════════════════════════════════════════════════════════
     private void cancelarAlerta(Alerta a) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Cancelar alerta");
-        confirm.setHeaderText("¿Deseas cancelar la alerta #" + a.getId_alerta() + "?");
-        confirm.setContentText("La alerta pasará al estado CANCELADA. "
-                + "Esta acción no se puede deshacer.");
+        confirm.setHeaderText("¿Cancelar la alerta #" + a.getId_alerta() + "?");
+        confirm.setContentText("La alerta pasará al estado CANCELADA. Esta acción no se puede deshacer.");
 
         Button btnSi = (Button) confirm.getDialogPane().lookupButton(ButtonType.OK);
         btnSi.setText("Sí, cancelar");
@@ -517,7 +522,7 @@ public class MisAlertasView {
                     boolean ok = alertaService.actualizarEstado(
                             a.getId_alerta(), EstadoAlerta.CANCELADA.name());
                     if (ok) {
-                        mostrarExito("Alerta #" + a.getId_alerta() + " cancelada correctamente.");
+                        mostrarInfo("Alerta #" + a.getId_alerta() + " cancelada.");
                         cargarMisAlertas();
                     } else {
                         mostrarAlerta("Error", "No se pudo cancelar la alerta.");
@@ -533,80 +538,62 @@ public class MisAlertasView {
     // MÉTRICAS
     // ═══════════════════════════════════════════════════════════════
     private void actualizarMetricas() {
-        long total = misAlertas.size();
+        lblTotalVal.setText(String.valueOf(misAlertas.size()));
+        lblTotalVal.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + RED + ";");
+
         long pendientes = misAlertas.stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                || a.getEstado() == EstadoAlerta.RECIBIDA).count();
+                          || a.getEstado() == EstadoAlerta.RECIBIDA).count();
+        lblPendientesVal.setText(String.valueOf(pendientes));
+        lblPendientesVal.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + ORANGE + ";");
+
         long enAtencion = misAlertas.stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.EN_ATENCION
-                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA).count();
+                          || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA).count();
+        lblEnAtencionVal.setText(String.valueOf(enAtencion));
+        lblEnAtencionVal.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + BLUE + ";");
+
         long resueltas = misAlertas.stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.RESUELTA).count();
-
-        // setText no toca el color — el color quedó fijo en boldNum()
-        lblTotalVal.setText(String.valueOf(total));
-        lblPendientesVal.setText(String.valueOf(pendientes));
-        lblEnAtencionVal.setText(String.valueOf(enAtencion));
         lblResueltasVal.setText(String.valueOf(resueltas));
+        lblResueltasVal.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + GREEN + ";");
     }
 
     // ═══════════════════════════════════════════════════════════════
     // PAGINACIÓN
     // ═══════════════════════════════════════════════════════════════
     private void actualizarPaginacion() {
-        if (paginacionBox == null) {
-            return;
-        }
+        if (paginacionBox == null) return;
         paginacionBox.getChildren().clear();
 
-        int total = alertasFiltradas.size();
+        int total     = alertasFiltradas.size();
         int totalPags = (int) Math.ceil((double) total / FILAS_POR_PAGINA);
-        if (totalPags <= 1) {
-            return;
-        }
+        if (totalPags <= 1) return;
 
         paginacionBox.getChildren().add(btnPag("‹", paginaActual > 1,
-                () -> {
-                    paginaActual--;
-                    renderizarPagina();
-                }));
+                () -> { paginaActual--; renderizarPagina(); }));
 
         int ini = Math.max(1, paginaActual - 2);
         int fin = Math.min(totalPags, paginaActual + 2);
 
         if (ini > 1) {
             paginacionBox.getChildren().addAll(
-                    btnPag("1", true, () -> {
-                        paginaActual = 1;
-                        renderizarPagina();
-                    }),
+                    btnPag("1", true, () -> { paginaActual = 1; renderizarPagina(); }),
                     label("…", 13, GRAY_TEXT, false));
         }
-
         for (int i = ini; i <= fin; i++) {
             final int pg = i;
             paginacionBox.getChildren().add(btnPag(String.valueOf(i), true,
-                    () -> {
-                        paginaActual = pg;
-                        renderizarPagina();
-                    }));
+                    () -> { paginaActual = pg; renderizarPagina(); }));
         }
-
         if (fin < totalPags) {
             paginacionBox.getChildren().addAll(
                     label("…", 13, GRAY_TEXT, false),
                     btnPag(String.valueOf(totalPags), true,
-                            () -> {
-                                paginaActual = totalPags;
-                                renderizarPagina();
-                            }));
+                            () -> { paginaActual = totalPags; renderizarPagina(); }));
         }
-
         paginacionBox.getChildren().add(btnPag("›", paginaActual < totalPags,
-                () -> {
-                    paginaActual++;
-                    renderizarPagina();
-                }));
+                () -> { paginaActual++; renderizarPagina(); }));
     }
 
     private Button btnPag(String txt, boolean enabled, Runnable accion) {
@@ -622,62 +609,62 @@ public class MisAlertasView {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HELPERS UI
+    // HELPERS UI — idénticos a AlertasView
     // ═══════════════════════════════════════════════════════════════
-    private VBox statCard(String faUnicode, String bgIcon, String iconColor,
-            String title, Label valueLabel, String sub, String subColor) {
-
-        valueLabel.setStyle(
-                "-fx-font-size:34px;"
-                + "-fx-font-weight:bold;"
-                + "-fx-text-fill:" + iconColor + ";"
-        );
-
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(20, 18, 16, 18));
-        card.setPrefHeight(130);          // ← altura fija → más rectangular
-        card.setStyle("-fx-background-color:" + WHITE + "; -fx-background-radius:14;");
+    private VBox statCard(String bgIcon, String accentColor, String iconFA,
+                          String title, Label valueLabel, String sub, String subColor) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(20, 22, 20, 22));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
-        // Cuadrado de color + ícono FA
-        StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(46, 46);
-        iconBox.setMinSize(46, 46);
-        iconBox.setMaxSize(46, 46);
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(52, 52);
+        iconWrap.setMinSize(52, 52);
+        iconWrap.setMaxSize(52, 52);
 
-        Region iconBg = new Region();
-        iconBg.setPrefSize(46, 46);
-        iconBg.setStyle(
-                "-fx-background-color:" + bgIcon + ";"
-                + "-fx-background-radius:11;");
+        Rectangle iconBg = new Rectangle(52, 52);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
+        iconBg.setFill(Color.web(bgIcon));
 
-        Label iconLbl = new Label(faUnicode);
+        Label iconLbl = new Label(iconFA);
         iconLbl.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:20px;"
-                + "-fx-text-fill:" + iconColor + ";");        // ← color fuerte
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px;"
+                + "-fx-text-fill: " + accentColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
 
-        iconBox.getChildren().addAll(iconBg, iconLbl);
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;");
 
-        HBox topRow = new HBox(12);
-        topRow.setAlignment(Pos.CENTER_LEFT);
-        topRow.getChildren().addAll(iconBox, label(title, 12, GRAY_TEXT, false));
+        Label subLbl = new Label(sub);
+        subLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + subColor + ";");
 
-        // Subtexto en el mismo color del ícono
-        Label subLbl = label(sub, 11, subColor, true);
+        VBox textBox = new VBox(3, titleLbl, valueLabel, subLbl);
 
-        card.getChildren().addAll(topRow, valueLabel, subLbl);
-        card.setOnMouseEntered(e -> card.setTranslateY(-2));
-        card.setOnMouseExited(e -> card.setTranslateY(0));
+        HBox top = new HBox(16);
+        top.setAlignment(Pos.CENTER_LEFT);
+        top.getChildren().addAll(iconWrap, textBox);
+        card.getChildren().add(top);
+
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
+        card.setOnMouseExited(e  -> card.setTranslateY(0));
         return card;
     }
 
     private Label boldNum(String val, String color) {
         Label l = new Label(val);
-        l.setFont(Font.font("System", FontWeight.BOLD, 34));
-        l.setTextFill(Color.web(color));
+        l.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + color + ";");
         return l;
+    }
+
+    private HBox celdaBox(Label lbl, double width) {
+        HBox box = new HBox(lbl);
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPrefWidth(width);
+        return box;
     }
 
     private Label celda(String txt, double width) {
@@ -691,46 +678,45 @@ public class MisAlertasView {
     private Label badge(String texto, String bg, String color) {
         Label l = label(texto, 11, color, true);
         l.setPadding(new Insets(3, 9, 3, 9));
-        l.setStyle("-fx-background-color:" + bg + "; -fx-background-radius:20;");
+        l.setStyle("-fx-background-color:" + bg + "; -fx-background-radius:20;"
+                + "-fx-text-fill:" + color + "; -fx-font-size:11px; -fx-font-weight:bold;");
         return l;
     }
 
-    private Button btnIcono(String icon, String tooltip, Runnable accion) {
-        Button b = new Button(icon);
+    private Button btnIcono(String iconFA, String tooltip,
+                            String iconColor, String bgColor, Runnable accion) {
+        Button b = new Button(iconFA);
         b.setTooltip(new Tooltip(tooltip));
-        b.setStyle("-fx-background-color:transparent; -fx-font-size:14px;"
-                + "-fx-cursor:hand; -fx-padding:4 6;");
-        b.setOnMouseEntered(e -> b.setStyle("-fx-background-color:#f0f0f0; -fx-font-size:14px;"
-                + "-fx-cursor:hand; -fx-background-radius:6; -fx-padding:4 6;"));
-        b.setOnMouseExited(e -> b.setStyle("-fx-background-color:transparent; -fx-font-size:14px;"
-                + "-fx-cursor:hand; -fx-padding:4 6;"));
+        String base = "-fx-background-color: " + bgColor + ";"
+                + "-fx-text-fill: " + iconColor + ";"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px; -fx-background-radius: 8;"
+                + "-fx-padding: 7 10; -fx-cursor: hand;";
+        String hover = "-fx-background-color: " + iconColor + ";"
+                + "-fx-text-fill: white;"
+                + "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 13px; -fx-background-radius: 8;"
+                + "-fx-padding: 7 10; -fx-cursor: hand;";
+        b.setStyle(base);
+        b.setOnMouseEntered(e -> b.setStyle(hover));
+        b.setOnMouseExited(e  -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         return b;
-    }
-
-    private Button btnSecundario(String texto) {
-        Button btn = new Button(texto);
-        btn.setPrefHeight(38);
-        btn.setStyle("-fx-background-color:white; -fx-text-fill:#374151;"
-                + "-fx-font-size:13px; -fx-border-color:" + BORDER + ";"
-                + "-fx-border-radius:8; -fx-background-radius:8;"
-                + "-fx-padding:6 14; -fx-cursor:hand;");
-        return btn;
     }
 
     private HBox detRow(String campo, String valor) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         Label k = label(campo, 13, GRAY_TEXT, false);
-        k.setMinWidth(150);
+        k.setMinWidth(170);
         row.getChildren().addAll(k, label(valor != null ? valor : "—", 13, "#111827", false));
         return row;
     }
 
-    private String fieldStyle() {
-        return "-fx-background-color:white; -fx-border-color:" + BORDER + ";"
-                + "-fx-border-radius:8; -fx-background-radius:8;"
-                + "-fx-font-size:13px; -fx-padding:6 12;";
+    private Label seccionHeader(String texto) {
+        Label l = label(texto, 11, "#888", true);
+        VBox.setMargin(l, new Insets(8, 0, 2, 0));
+        return l;
     }
 
     private void shadow(Region node) {
@@ -749,7 +735,7 @@ public class MisAlertasView {
         a.showAndWait();
     }
 
-    private void mostrarExito(String msg) {
+    private void mostrarInfo(String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle("Éxito");
         a.setHeaderText(null);
@@ -760,123 +746,69 @@ public class MisAlertasView {
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
         lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size)
-                : Font.font("System", size));
+                         : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
 
-    private String nvl(String val) {
-        return val != null ? val : "—";
-    }
+    private String nvl(String val) { return val != null ? val : "—"; }
 
     // ── Colores por EstadoAlerta ──────────────────────────────────
     private String colorEstado(EstadoAlerta e) {
-        if (e == null) {
-            return GRAY_TEXT;
-        }
+        if (e == null) return GRAY_TEXT;
         return switch (e) {
-            case PENDIENTE ->
-                ORANGE;
-            case RECIBIDA ->
-                BLUE;
-            case EN_ATENCION ->
-                "#7b1fa2";
-            case UNIDAD_ASIGNADA ->
-                "#0288d1";
-            case RESUELTA ->
-                GREEN;
-            case CANCELADA ->
-                GRAY_TEXT;
+            case PENDIENTE       -> ORANGE;
+            case RECIBIDA        -> BLUE;
+            case EN_ATENCION     -> PURPLE;
+            case UNIDAD_ASIGNADA -> "#0288d1";
+            case RESUELTA        -> GREEN;
+            case CANCELADA       -> GRAY_TEXT;
         };
     }
 
     private String estadoBg(EstadoAlerta e) {
-        if (e == null) {
-            return "#f3f4f6";
-        }
+        if (e == null) return "#f3f4f6";
         return switch (e) {
-            case PENDIENTE ->
-                "#fff8e1";
-            case RECIBIDA ->
-                "#eff6ff";
-            case EN_ATENCION ->
-                "#f3e5f5";
-            case UNIDAD_ASIGNADA ->
-                "#e1f5fe";
-            case RESUELTA ->
-                "#e8f5e9";
-            case CANCELADA ->
-                "#f3f4f6";
+            case PENDIENTE       -> "#fff8e1";
+            case RECIBIDA        -> "#eff6ff";
+            case EN_ATENCION     -> "#f3e5f5";
+            case UNIDAD_ASIGNADA -> "#e1f5fe";
+            case RESUELTA        -> "#e8f5e9";
+            case CANCELADA       -> "#f3f4f6";
         };
     }
 
     // ── Emoji / colores por TipoAlerta ────────────────────────────
     private String emojiTipo(String nombre) {
-        if (nombre == null) {
-            return "🚨";
-        }
+        if (nombre == null) return "🚨";
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT")) {
-            return "🦹";
-        }
-        if (n.contains("SOSPECH")) {
-            return "🕵";
-        }
-        if (n.contains("INCEND")) {
-            return "🔥";
-        }
-        if (n.contains("RUIDO") || n.contains("ALTER")) {
-            return "📢";
-        }
-        if (n.contains("MÉDI") || n.contains("MEDIC")) {
-            return "➕";
-        }
-        if (n.contains("ACCID")) {
-            return "⚠";
-        }
-        if (n.contains("ANIMAL")) {
-            return "🐕";
-        }
+        if (n.contains("ROB") || n.contains("ASALT")) return "🦹";
+        if (n.contains("SOSPECH"))                    return "🕵";
+        if (n.contains("INCEND"))                     return "🔥";
+        if (n.contains("RUIDO") || n.contains("ALTER")) return "📢";
+        if (n.contains("MÉDI") || n.contains("MEDIC")) return "➕";
+        if (n.contains("ACCID"))                      return "⚠";
+        if (n.contains("ANIMAL"))                     return "🐕";
         return "🚨";
     }
 
     private String tipoColor(String nombre) {
-        if (nombre == null) {
-            return GRAY_TEXT;
-        }
+        if (nombre == null) return GRAY_TEXT;
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT")) {
-            return "#b91c1c";
-        }
-        if (n.contains("INCEND")) {
-            return "#c2410c";
-        }
-        if (n.contains("MÉDI") || n.contains("MEDIC")) {
-            return "#15803d";
-        }
-        if (n.contains("ACCID")) {
-            return "#1d4ed8";
-        }
+        if (n.contains("ROB") || n.contains("ASALT")) return "#b91c1c";
+        if (n.contains("INCEND"))                      return "#c2410c";
+        if (n.contains("MÉDI") || n.contains("MEDIC")) return "#15803d";
+        if (n.contains("ACCID"))                       return "#1d4ed8";
         return "#374151";
     }
 
     private String tipoBg(String nombre) {
-        if (nombre == null) {
-            return "#f3f4f6";
-        }
+        if (nombre == null) return "#f3f4f6";
         String n = nombre.toUpperCase();
-        if (n.contains("ROB") || n.contains("ASALT")) {
-            return "#fff1f2";
-        }
-        if (n.contains("INCEND")) {
-            return "#fff7ed";
-        }
-        if (n.contains("MÉDI") || n.contains("MEDIC")) {
-            return "#f0fdf4";
-        }
-        if (n.contains("ACCID")) {
-            return "#eff6ff";
-        }
+        if (n.contains("ROB") || n.contains("ASALT")) return "#fff1f2";
+        if (n.contains("INCEND"))                      return "#fff7ed";
+        if (n.contains("MÉDI") || n.contains("MEDIC")) return "#f0fdf4";
+        if (n.contains("ACCID"))                       return "#eff6ff";
         return "#f3f4f6";
     }
 }

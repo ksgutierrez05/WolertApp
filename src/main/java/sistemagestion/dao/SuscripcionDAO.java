@@ -29,14 +29,14 @@ public class SuscripcionDAO {
     }
 
     public SuscripcionDAO() throws SQLException {
-        
+
     }
 
     public boolean insertar(
             String cedulaUsuario,
             String tipoAlerta,
-            String nombreComuna,  
-            String nombreBarrio,   
+            String nombreComuna,
+            String nombreBarrio,
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_insertar_suscripcion(?, ?, ?, ?, ?)}";
@@ -58,8 +58,8 @@ public class SuscripcionDAO {
             int idSuscripcion,
             String cedulaUsuario,
             String tipoAlerta,
-            String nombreComuna,   
-            String nombreBarrio,  
+            String nombreComuna,
+            String nombreBarrio,
             String estado
     ) {
         String sql = "{call pkg_alertas.pr_actualizar_suscripcion(?, ?, ?, ?, ?, ?)}";
@@ -90,7 +90,6 @@ public class SuscripcionDAO {
         }
     }
 
-
     public List<Suscripcion> listar() {
         List<Suscripcion> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_suscripciones(?)}";
@@ -117,8 +116,8 @@ public class SuscripcionDAO {
         Usuario u = new Usuario();
         u.setPrimer_nombre(rs.getString("NOMBRE_USUARIO"));
         u.setIdentificacion(rs.getString("CEDULA"));
+        u.setCorreo(rs.getString("CORREO"));
         s.setUsuario(u);
-
         TipoAlerta t = new TipoAlerta();
         t.setNombre(rs.getString("TIPO_ALERTA"));
         s.setTipoalerta(t);
@@ -130,7 +129,6 @@ public class SuscripcionDAO {
             s.setComuna(c);
         }
 
-        
         String nombreBarrio = rs.getString("BARRIO");
         if (nombreBarrio != null) {
             Barrio b = new Barrio();

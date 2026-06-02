@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
+import sistemagestion.model.Direccion;
 import sistemagestion.model.EstadoUsuario;
 import sistemagestion.model.RolUsuario;
 import sistemagestion.model.Usuario;
@@ -26,7 +27,7 @@ public class UsuarioDAO {
     }
 
     public UsuarioDAO() throws SQLException {
-        
+
     }
 
     public boolean insertar(
@@ -216,9 +217,9 @@ public class UsuarioDAO {
         }
     }
 
-    // Para login 
     private Usuario mapear(ResultSet rs) throws SQLException {
         Usuario u = new Usuario();
+
         u.setId_usuario(rs.getInt("ID_USUARIO"));
         u.setPrimer_nombre(rs.getString("PRIMER_NOMBRE"));
         u.setSegundo_nombre(rs.getString("SEGUNDO_NOMBRE"));
@@ -230,10 +231,23 @@ public class UsuarioDAO {
         u.setUsername(rs.getString("USERNAME"));
         u.setPassword(rs.getString("PASSWORD"));
         u.setEstado(EstadoUsuario.valueOf(rs.getString("ACTIVO")));
+
         RolUsuario r = new RolUsuario();
         r.setIdRol(rs.getInt("ID_ROL"));
         r.setNombre(rs.getString("ROL_NOMBRE"));
         u.setRol(r);
+
+        // Dirección (puede venir nula)
+        Direccion d = new Direccion();
+
+        d.setCalle(rs.getString("CALLE"));
+        d.setCarrera(rs.getString("CARRERA"));
+        d.setEtapa(rs.getString("ETAPA"));
+        d.setManzana(rs.getString("MANZANA"));
+        d.setCasa(rs.getString("CASA"));
+
+        u.setDireccion(d);
+
         return u;
     }
 
