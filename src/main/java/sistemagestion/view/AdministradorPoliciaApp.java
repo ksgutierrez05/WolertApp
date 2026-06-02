@@ -121,40 +121,47 @@ public class AdministradorPoliciaApp {
     // =========================================================================
     // SIDEBAR
     // =========================================================================
-    private VBox buildSidebar() {
+    private ScrollPane buildSidebar() {
+
         VBox sidebar = new VBox();
         sidebar.setPrefWidth(240);
         sidebar.setMinWidth(240);
         sidebar.setMaxWidth(240);
-        sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);");
-        VBox.setVgrow(sidebar, Priority.ALWAYS);
-        sidebar.setMaxHeight(Double.MAX_VALUE);
+
+        sidebar.setStyle(
+                "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+        );
 
         // Logo
         HBox logoBox = new HBox(10);
         logoBox.setPadding(new Insets(20, 16, 20, 16));
         logoBox.setAlignment(Pos.CENTER_LEFT);
-        StackPane wolfIcon = new StackPane();
-        Circle iconCircle = new Circle(22, Color.web("#2a3560"));
+
         ImageView logoImg = new ImageView(
-                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
+                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png"))
+        );
+
         logoImg.setFitWidth(65);
         logoImg.setFitHeight(65);
         logoImg.setPreserveRatio(true);
-        logoImg.setTranslateY(-2);
+
         VBox logoText = new VBox(2);
         logoText.getChildren().addAll(
                 label("WolertApp", 15, WHITE, true),
-                label("Administrador Policía", 9, "#8899bb", false));
+                label("Administrador Policía", 9, "#8899bb", false)
+        );
+
         logoBox.getChildren().addAll(logoImg, logoText);
 
         // Perfil
         HBox profileCard = buildProfileCard();
 
-        // Nav
+        // Navegación
         nav = new VBox(2);
         nav.setPadding(new Insets(12, 8, 12, 8));
+
         HBox mapaItem = buildMapaNavItem();
+
         nav.getChildren().addAll(
                 navItem("🏠", "Centro de operaciones"),
                 navItem("🚨", "Alertas"),
@@ -170,22 +177,65 @@ public class AdministradorPoliciaApp {
                 navItem("⚙", "Configuración")
         );
 
+        // Espaciador
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        // Logout
+        // Cerrar sesión
         HBox logout = new HBox(10);
         logout.setPadding(new Insets(14, 16, 18, 16));
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
-        logout.setStyle("-fx-background-color: transparent;");
-        logout.setOnMouseEntered(e -> logout.setStyle("-fx-background-color: rgba(229,57,53,0.15); -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
-        logout.setOnMouseClicked(e -> cerrarSesion());
-        logout.getChildren().addAll(label("🚪", 15, RED, false), label("Cerrar sesión", 13, RED, true));
 
-        sidebar.getChildren().addAll(logoBox, profileCard, nav, spacer, logout);
-        return sidebar;
+        logout.setStyle("-fx-background-color: transparent;");
+
+        logout.setOnMouseEntered(e
+                -> logout.setStyle(
+                        "-fx-background-color: rgba(255,255,255,0.15);"
+                        + "-fx-background-radius: 8;"
+                )
+        );
+
+        logout.setOnMouseExited(e
+                -> logout.setStyle("-fx-background-color: transparent;")
+        );
+
+        logout.setOnMouseClicked(e -> cerrarSesion());
+
+        logout.getChildren().addAll(
+                label("🚪", 15, WHITE, false),
+                label("Cerrar sesión", 13, WHITE, true)
+        );
+
+        sidebar.getChildren().addAll(
+                logoBox,
+                profileCard,
+                nav,
+                spacer,
+                logout
+        );
+
+        ScrollPane scroll = new ScrollPane(sidebar);
+
+        scroll.setFitToWidth(true);
+        scroll.setPannable(true);
+
+        scroll.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scroll.setStyle(
+                "-fx-background: transparent;"
+                + "-fx-background-color: transparent;"
+                + "-fx-border-width: 0;"
+                + "-fx-padding: 0;"
+        );
+
+        return scroll;
     }
 
     private HBox buildProfileCard() {
@@ -729,22 +779,8 @@ public class AdministradorPoliciaApp {
 
     // =========================================================================
     // CERRAR SESIÓN
-    // =========================================================================
     private void cerrarSesion() {
-        VBox bye = new VBox(20);
-        bye.setAlignment(Pos.CENTER);
-        bye.setStyle("-fx-background-color: " + BG + ";");
-        Label icon = new Label("👋");
-        icon.setFont(Font.font(70));
-        Label title = new Label("Sesión cerrada");
-        title.setFont(Font.font("System", FontWeight.BOLD, 30));
-        title.setTextFill(Color.web("#111827"));
-        Label msg = new Label("Cerrando aplicación...");
-        msg.setTextFill(Color.GRAY);
-        bye.getChildren().addAll(icon, title, msg);
-        root.setCenter(bye);
-        new Timeline(new KeyFrame(Duration.seconds(2),
-                ev -> ((Stage) root.getScene().getWindow()).close())).play();
+        ((Stage) root.getScene().getWindow()).close();
     }
 
     // =========================================================================
@@ -943,17 +979,17 @@ public class AdministradorPoliciaApp {
         return row;
     }
 
-    private Button actionBtn(String icon, String text) {
-        Button btn = new Button(icon + "\n" + text);
-        btn.setPrefSize(100, 70);
-        btn.setWrapText(true);
-        btn.setFont(Font.font("System", 12));
-        String base = "-fx-background-color: " + BG + "; -fx-text-fill: #111827; -fx-background-radius: 10; -fx-border-color: " + BORDER + "; -fx-border-radius: 10; -fx-cursor: hand;";
-        String hover = "-fx-background-color: " + BLUE_LIGHT + "; -fx-text-fill: " + BLUE + "; -fx-background-radius: 10; -fx-border-color: " + BLUE + "; -fx-border-radius: 10; -fx-cursor: hand;";
-        btn.setStyle(base);
-        btn.setOnMouseEntered(e -> btn.setStyle(hover));
-        btn.setOnMouseExited(e -> btn.setStyle(base));
-        return btn;
+    private Label faIcon(String code, double size, String color) {
+
+        Label lbl = new Label(code);
+
+        lbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: " + size + "px;"
+                + "-fx-text-fill: " + color + ";"
+        );
+
+        return lbl;
     }
 
     private Label label(String text, double size, String color, boolean bold) {

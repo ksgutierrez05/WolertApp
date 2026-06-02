@@ -9,8 +9,6 @@ package sistemagestion.view;
  * @author Maria Cristina
  */
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,7 +20,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import java.sql.SQLException;
 import java.util.List;
 import javafx.scene.image.Image;
@@ -289,18 +286,9 @@ public class PoliciaApp {
     // =========================================================================
     // CERRAR SESIÓN
     // =========================================================================
-    private void cerrarSesion() {
-        VBox bye = new VBox(20);
-        bye.setAlignment(Pos.CENTER);
-        bye.setStyle("-fx-background-color: " + BG + ";");
-        bye.getChildren().addAll(
-                label("👋", 70, "#111827", false),
-                label("Sesión cerrada", 30, "#111827", true),
-                label("Cerrando aplicación...", 13, GRAY_TEXT, false));
-        root.setCenter(bye);
-        new Timeline(new KeyFrame(Duration.seconds(2),
-                ev -> ((Stage) root.getScene().getWindow()).close())).play();
-    }
+   private void cerrarSesion() {
+    ((Stage) root.getScene().getWindow()).close();
+}
 
     // ── Helpers ──────────────────────────────────────────────────
     private Label label(String text, double size, String color, boolean bold) {

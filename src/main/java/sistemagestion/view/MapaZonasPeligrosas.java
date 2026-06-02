@@ -93,6 +93,8 @@ public class MapaZonasPeligrosas {
     public MapaZonasPeligrosas(AlertaService alertaService) {
         this.alertaService = alertaService;
     }
+    
+    
 
     public Node build() {
         BorderPane root = new BorderPane();

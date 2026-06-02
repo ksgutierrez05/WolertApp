@@ -43,43 +43,46 @@ import java.util.stream.Collectors;
 public class MapaAlarmasRegistradas {
 
     // ── Paleta (igual que MapaAlarmas para coherencia visual) ─────────────────
-    private static final String C_INPUT_BG   = "#f7f7f7";
+    private static final String C_INPUT_BG = "#f7f7f7";
     private static final String C_INPUT_TEXT = "#4b5563";
-    private static final String C_LABEL      = "#374151";
-    private static final String C_SEPARATOR  = "#e5e7eb";
-    private static final String C_DARK_GRAD  = "linear-gradient(to right, #16283d, #1f3a56)";
+    private static final String C_LABEL = "#374151";
+    private static final String C_SEPARATOR = "#e5e7eb";
+    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
 
     // Colores por estado
-    private static final java.awt.Color COLOR_ACTIVA       = new java.awt.Color(34, 197, 94);   // verde
-    private static final java.awt.Color COLOR_INACTIVA     = new java.awt.Color(156, 163, 175); // gris
+    private static final java.awt.Color COLOR_ACTIVA = new java.awt.Color(34, 197, 94);   // verde
+    private static final java.awt.Color COLOR_INACTIVA = new java.awt.Color(156, 163, 175); // gris
     private static final java.awt.Color COLOR_MANTENIMIENTO = new java.awt.Color(251, 191, 36); // amarillo
 
     // ── Servicios ─────────────────────────────────────────────────────────────
     private AlarmaService alarmaService;
 
     // ── Estado ────────────────────────────────────────────────────────────────
-    private JXMapViewer       mapa;
-    private List<Alarma>      todasLasAlarmas  = new ArrayList<>();
-    private List<Alarma>      alarmasFiltradas = new ArrayList<>();
-    private Alarma            alarmaSeleccionada;
+    private JXMapViewer mapa;
+    private List<Alarma> todasLasAlarmas = new ArrayList<>();
+    private List<Alarma> alarmasFiltradas = new ArrayList<>();
+    private Alarma alarmaSeleccionada;
 
     // ── Controles ─────────────────────────────────────────────────────────────
-    private ComboBox<String>  cmbFiltroEstado;
-    private TextField         txtBusqueda;
-    private Label             lblContador;
-    private Label             lblDetalleNombre;
-    private Label             lblDetalleBarrio;
-    private Label             lblDetalleCoordenadas;
-    private Label             lblDetalleRadio;
-    private Label             lblDetalleEstado;
-    private VBox              panelDetalle;
-    private VBox              panelSugerencias;
-    private ListView<Alarma>  lstSugerencias;
+    private ComboBox<String> cmbFiltroEstado;
+    private TextField txtBusqueda;
+    private Label lblContador;
+    private Label lblDetalleNombre;
+    private Label lblDetalleBarrio;
+    private Label lblDetalleCoordenadas;
+    private Label lblDetalleRadio;
+    private Label lblDetalleEstado;
+    private VBox panelDetalle;
+    private VBox panelSugerencias;
+    private ListView<Alarma> lstSugerencias;
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public MapaAlarmasRegistradas() {
-        try { alarmaService = new AlarmaService(); }
-        catch (SQLException e) { System.out.println("Error AlarmaService: " + e.getMessage()); }
+        try {
+            alarmaService = new AlarmaService();
+        } catch (SQLException e) {
+            System.out.println("Error AlarmaService: " + e.getMessage());
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -101,6 +104,15 @@ public class MapaAlarmasRegistradas {
         stage.show();
     }
 
+    public javafx.scene.Node build() {
+        BorderPane root = new BorderPane();
+        root.setTop(buildTopBar());
+        root.setCenter(buildCentro());
+        root.setStyle("-fx-background-color:white;");
+        cargarAlarmas();
+        return root;
+    }
+
     // ════════════════════════════════════════════════════════════════════════
     // BARRA SUPERIOR
     // ════════════════════════════════════════════════════════════════════════
@@ -112,8 +124,11 @@ public class MapaAlarmasRegistradas {
                     getClass().getResourceAsStream("/LogoWolertApp.png"));
             logoImg.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(
                     recortarTransparencia(raw), null));
-        } catch (Exception ignored) {}
-        logoImg.setFitHeight(24); logoImg.setFitWidth(24); logoImg.setPreserveRatio(true);
+        } catch (Exception ignored) {
+        }
+        logoImg.setFitHeight(24);
+        logoImg.setFitWidth(24);
+        logoImg.setPreserveRatio(true);
 
         StackPane logoBox = new StackPane(logoImg);
         logoBox.setStyle("-fx-background-color:" + C_DARK_GRAD
@@ -146,7 +161,7 @@ public class MapaAlarmasRegistradas {
                 + "-fx-background-radius:20;-fx-padding:4 14 4 14;");
 
         HBox bar = new HBox(10, logoBox, logoText, sep, new Label("🗺️"), titulo,
-                            spacer, leyenda, lblContador);
+                spacer, leyenda, lblContador);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
@@ -212,7 +227,8 @@ public class MapaAlarmasRegistradas {
         TileFactoryInfo info = new TileFactoryInfo(
                 1, 15, 17, 256, true, true,
                 "https://tile.openstreetmap.org", "x", "y", "z") {
-            @Override public String getTileUrl(int x, int y, int zoom) {
+            @Override
+            public String getTileUrl(int x, int y, int zoom) {
                 return baseURL + "/" + (17 - zoom) + "/" + x + "/" + y + ".png";
             }
         };
@@ -225,7 +241,10 @@ public class MapaAlarmasRegistradas {
         mapa.addMouseMotionListener(pan);
         mapa.addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapa));
         mapa.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onMapaClick(e); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onMapaClick(e);
+            }
         });
         mapa.setOverlayPainter(this::pintarOverlay);
         swingNode.setContent(mapa);
@@ -233,7 +252,9 @@ public class MapaAlarmasRegistradas {
 
     // Information Expert: click detecta alarma más cercana al punto
     private void onMapaClick(MouseEvent e) {
-        if (alarmasFiltradas.isEmpty()) return;
+        if (alarmasFiltradas.isEmpty()) {
+            return;
+        }
 
         Alarma encontrada = null;
         double distMin = Double.MAX_VALUE;
@@ -245,7 +266,7 @@ public class MapaAlarmasRegistradas {
             int cy = (int) pt.getY() - mapa.getViewportBounds().y;
             double dist = Math.hypot(e.getX() - cx, e.getY() - cy);
             if (dist < 20 && dist < distMin) {
-                distMin    = dist;
+                distMin = dist;
                 encontrada = a;
             }
         }
@@ -304,13 +325,14 @@ public class MapaAlarmasRegistradas {
             try {
                 java.io.InputStream is = getClass().getResourceAsStream("/SirenaPin.png");
                 if (is != null) {
-                    java.awt.image.BufferedImage img =
-                            recortarTransparencia(javax.imageio.ImageIO.read(is));
+                    java.awt.image.BufferedImage img
+                            = recortarTransparencia(javax.imageio.ImageIO.read(is));
                     int iw = (alarma == alarmaSeleccionada) ? 38 : 28;
                     int ih = (int) (img.getHeight() * (iw / (double) img.getWidth()));
                     g.drawImage(img, cx - iw / 2, cy - ih, iw, ih, null);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             // Punto de color del estado sobre el marcador
             g.setColor(colorEstado);
@@ -387,10 +409,14 @@ public class MapaAlarmasRegistradas {
                     String nombre = item.getNombre() != null ? item.getNombre() : "—";
                     String estado = item.getEstado() != null ? item.getEstado().name() : "—";
                     String colorPunto = switch (estado) {
-                        case "ACTIVA"        -> "#22c55e";
-                        case "INACTIVA"      -> "#9ca3af";
-                        case "MANTENIMIENTO" -> "#f59e0b";
-                        default              -> "#374151";
+                        case "ACTIVA" ->
+                            "#22c55e";
+                        case "INACTIVA" ->
+                            "#9ca3af";
+                        case "MANTENIMIENTO" ->
+                            "#f59e0b";
+                        default ->
+                            "#374151";
                     };
 
                     javafx.scene.shape.Circle punto = new javafx.scene.shape.Circle(5);
@@ -411,10 +437,10 @@ public class MapaAlarmasRegistradas {
                     setGraphic(fila);
                     setStyle("-fx-background-color:transparent;-fx-cursor:hand;");
 
-                    setOnMouseEntered(e ->
-                            setStyle("-fx-background-color:#f0f4ff;-fx-cursor:hand;"));
-                    setOnMouseExited(e ->
-                            setStyle("-fx-background-color:transparent;-fx-cursor:hand;"));
+                    setOnMouseEntered(e
+                            -> setStyle("-fx-background-color:#f0f4ff;-fx-cursor:hand;"));
+                    setOnMouseExited(e
+                            -> setStyle("-fx-background-color:transparent;-fx-cursor:hand;"));
                 }
             }
         });
@@ -429,7 +455,10 @@ public class MapaAlarmasRegistradas {
         txtBusqueda.focusedProperty().addListener((obs, ov, focused) -> {
             if (!focused) {
                 new Thread(() -> {
-                    try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException ignored) {
+                    }
                     Platform.runLater(this::ocultarSugerencias);
                 }).start();
             }
@@ -440,7 +469,9 @@ public class MapaAlarmasRegistradas {
         // foco del TextField pueda cancelar el evento
         lstSugerencias.setOnMousePressed(e -> {
             int idx = lstSugerencias.getSelectionModel().getSelectedIndex();
-            if (idx < 0) return;
+            if (idx < 0) {
+                return;
+            }
             Alarma elegida = lstSugerencias.getItems().get(idx);
             Platform.runLater(() -> {
                 ocultarSugerencias();
@@ -498,7 +529,7 @@ public class MapaAlarmasRegistradas {
         String busq = texto.toLowerCase().trim();
         List<Alarma> coincidencias = todasLasAlarmas.stream()
                 .filter(a -> a.getNombre() != null
-                        && a.getNombre().toLowerCase().contains(busq))
+                && a.getNombre().toLowerCase().contains(busq))
                 .limit(6) // máximo 6 sugerencias visibles
                 .collect(Collectors.toList());
 
@@ -528,7 +559,9 @@ public class MapaAlarmasRegistradas {
 
     // ── Selecciona una alarma, centra el mapa y muestra su detalle ──────────
     private void seleccionarAlarma(Alarma alarma) {
-        if (alarma == null) return;
+        if (alarma == null) {
+            return;
+        }
         alarmaSeleccionada = alarma;
 
         // Restaurar lista completa para que el pin sea visible en el mapa
@@ -548,37 +581,40 @@ public class MapaAlarmasRegistradas {
         }
 
         int count = alarmasFiltradas.size();
-        Platform.runLater(() ->
-                lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
+        Platform.runLater(()
+                -> lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
     }
 
     // ── Panel de detalle ──────────────────────────────────────────────────────
     private ScrollPane buildPanelDetalle() {
         // Labels de detalle
-        lblDetalleNombre      = filaDetalle("—");
-        lblDetalleBarrio      = filaDetalle("—");
+        lblDetalleNombre = filaDetalle("—");
+        lblDetalleBarrio = filaDetalle("—");
         lblDetalleCoordenadas = filaDetalle("—");
-        lblDetalleRadio       = filaDetalle("—");
-        lblDetalleEstado      = filaDetalle("—");
+        lblDetalleRadio = filaDetalle("—");
+        lblDetalleEstado = filaDetalle("—");
 
         panelDetalle = new VBox(10,
-                new Label("Selecciona una alarma en el mapa") {{
-                    setFont(Font.font("Arial", 12));
-                    setTextFill(Color.web("#9ca3af"));
-                    setWrapText(true);
-                }},
-                grupoDetalle("Nombre",       lblDetalleNombre),
-                grupoDetalle("Barrio",        lblDetalleBarrio),
-                grupoDetalle("Coordenadas",   lblDetalleCoordenadas),
-                grupoDetalle("Radio (m)",     lblDetalleRadio),
-                grupoDetalle("Estado",        lblDetalleEstado)
+                new Label("Selecciona una alarma en el mapa") {
+            {
+                setFont(Font.font("Arial", 12));
+                setTextFill(Color.web("#9ca3af"));
+                setWrapText(true);
+            }
+        },
+                grupoDetalle("Nombre", lblDetalleNombre),
+                grupoDetalle("Barrio", lblDetalleBarrio),
+                grupoDetalle("Coordenadas", lblDetalleCoordenadas),
+                grupoDetalle("Radio (m)", lblDetalleRadio),
+                grupoDetalle("Estado", lblDetalleEstado)
         );
         panelDetalle.setPadding(new Insets(16, 20, 16, 20));
         panelDetalle.setStyle("-fx-background-color:white;");
 
         // Ocultar filas de datos hasta que haya selección
-        for (int i = 1; i < panelDetalle.getChildren().size(); i++)
+        for (int i = 1; i < panelDetalle.getChildren().size(); i++) {
             panelDetalle.getChildren().get(i).setVisible(false);
+        }
 
         ScrollPane scroll = new ScrollPane(panelDetalle);
         scroll.setFitToWidth(true);
@@ -608,7 +644,6 @@ public class MapaAlarmasRegistradas {
     // ════════════════════════════════════════════════════════════════════════
     // LÓGICA DE NEGOCIO
     // ════════════════════════════════════════════════════════════════════════
-
     // Information Expert: cargar alarmas y pintarlas
     private void cargarAlarmas() {
         try {
@@ -624,17 +659,17 @@ public class MapaAlarmasRegistradas {
     private void aplicarFiltros() {
         String busqueda = (txtBusqueda != null && txtBusqueda.getText() != null)
                 ? txtBusqueda.getText().toLowerCase().trim() : "";
-        String estado   = (cmbFiltroEstado != null) ? cmbFiltroEstado.getValue() : "Todos";
+        String estado = (cmbFiltroEstado != null) ? cmbFiltroEstado.getValue() : "Todos";
 
         alarmasFiltradas = todasLasAlarmas.stream()
                 .filter(a -> busqueda.isEmpty() || a.getNombre().toLowerCase().contains(busqueda))
                 .filter(a -> "Todos".equals(estado) || (a.getEstado() != null
-                        && a.getEstado().name().equals(estado)))
+                && a.getEstado().name().equals(estado)))
                 .collect(Collectors.toList());
 
         int count = alarmasFiltradas.size();
-        Platform.runLater(() ->
-                lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
+        Platform.runLater(()
+                -> lblContador.setText(count + (count == 1 ? " alarma" : " alarmas")));
 
         // Si la seleccionada ya no está en el filtro, limpiarla
         if (alarmaSeleccionada != null && !alarmasFiltradas.contains(alarmaSeleccionada)) {
@@ -642,13 +677,15 @@ public class MapaAlarmasRegistradas {
             Platform.runLater(() -> mostrarDetalle(null));
         }
 
-        if (mapa != null) SwingUtilities.invokeLater(mapa::repaint);
+        if (mapa != null) {
+            SwingUtilities.invokeLater(mapa::repaint);
+        }
 
         // Centrar el mapa en la primera alarma si hay resultados
         if (!alarmasFiltradas.isEmpty() && mapa != null) {
             Alarma primera = alarmasFiltradas.get(0);
-            SwingUtilities.invokeLater(() ->
-                    mapa.setAddressLocation(
+            SwingUtilities.invokeLater(()
+                    -> mapa.setAddressLocation(
                             new GeoPosition(primera.getLatitud(), primera.getLongitud())));
         }
     }
@@ -658,8 +695,9 @@ public class MapaAlarmasRegistradas {
         boolean haySeleccion = a != null;
 
         // Mostrar/ocultar filas de detalle
-        for (int i = 1; i < panelDetalle.getChildren().size(); i++)
+        for (int i = 1; i < panelDetalle.getChildren().size(); i++) {
             panelDetalle.getChildren().get(i).setVisible(haySeleccion);
+        }
 
         // Actualizar texto del hint
         if (!haySeleccion) {
@@ -679,10 +717,14 @@ public class MapaAlarmasRegistradas {
         String estadoStr = a.getEstado() != null ? a.getEstado().name() : "—";
         lblDetalleEstado.setText(estadoStr);
         String colorEstado = switch (estadoStr) {
-            case "ACTIVA"        -> "#22c55e";
-            case "INACTIVA"      -> "#9ca3af";
-            case "MANTENIMIENTO" -> "#f59e0b";
-            default              -> "#374151";
+            case "ACTIVA" ->
+                "#22c55e";
+            case "INACTIVA" ->
+                "#9ca3af";
+            case "MANTENIMIENTO" ->
+                "#f59e0b";
+            default ->
+                "#374151";
         };
         lblDetalleEstado.setTextFill(Color.web(colorEstado));
     }
@@ -718,7 +760,8 @@ public class MapaAlarmasRegistradas {
         cb.setPrefHeight(48);
 
         cb.setCellFactory(lv -> new ListCell<String>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item);
                 setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;"
@@ -734,7 +777,8 @@ public class MapaAlarmasRegistradas {
         });
 
         cb.setButtonCell(new ListCell<String>() {
-            @Override protected void updateItem(String item, boolean empty) {
+            @Override
+            protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item != null) {
                     setStyle("-fx-background-color:" + C_INPUT_BG + ";"
@@ -751,11 +795,16 @@ public class MapaAlarmasRegistradas {
 
     // ── Color por estado de alarma ─────────────────────────────────────────────
     private java.awt.Color colorPorEstado(EstadoAlarma estado) {
-        if (estado == null) return COLOR_INACTIVA;
+        if (estado == null) {
+            return COLOR_INACTIVA;
+        }
         return switch (estado) {
-            case ACTIVA        -> COLOR_ACTIVA;
-            case INACTIVA      -> COLOR_INACTIVA;
-            case EN_MANTENIMIENTO -> COLOR_MANTENIMIENTO;
+            case ACTIVA ->
+                COLOR_ACTIVA;
+            case INACTIVA ->
+                COLOR_INACTIVA;
+            case EN_MANTENIMIENTO ->
+                COLOR_MANTENIMIENTO;
         };
     }
 
@@ -768,14 +817,24 @@ public class MapaAlarmasRegistradas {
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
                 if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
-                    if (y < top)    top    = y;
-                    if (y > bottom) bottom = y;
-                    if (x < left)   left   = x;
-                    if (x > right)  right  = x;
+                    if (y < top) {
+                        top = y;
+                    }
+                    if (y > bottom) {
+                        bottom = y;
+                    }
+                    if (x < left) {
+                        left = x;
+                    }
+                    if (x > right) {
+                        right = x;
+                    }
                 }
             }
         }
-        if (top >= bottom || left >= right) return img;
+        if (top >= bottom || left >= right) {
+            return img;
+        }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
 }

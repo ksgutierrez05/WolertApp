@@ -209,36 +209,21 @@ public class AdministradorApp {
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
         logout.setStyle("-fx-background-color: transparent;");
+
         logout.setOnMouseEntered(e -> logout.setStyle(
-                "-fx-background-color: " + SIDEBAR_LOGOUT_HOVER + "; -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
+                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
+
+        logout.setOnMouseExited(e -> logout.setStyle(
+                "-fx-background-color: transparent;"));
+
         logout.setOnMouseClicked(e -> {
-            VBox logoutView = new VBox(20);
-            logoutView.setAlignment(Pos.CENTER);
-            logoutView.setStyle("-fx-background-color: " + BG + ";");
-            Label icon = new Label("👋");
-            icon.setFont(Font.font(LOGOUT_ICON_SIZE));
-            Label title = new Label("Sesión cerrada");
-            title.setFont(Font.font("System", FontWeight.BOLD, 30));
-            Label msg = new Label("Cerrando aplicación...");
-            msg.setTextFill(Color.GRAY);
-            logoutView.getChildren().addAll(icon, title, msg);
-            root.setCenter(logoutView);
-            new Timeline(new KeyFrame(Duration.seconds(2), ev -> {
-                try {
-                    Stage stage = (Stage) root.getScene().getWindow();
-                    LoginApp login = new LoginApp();
-                    javafx.scene.Scene loginScene = new javafx.scene.Scene(login.getView(), 1000, 650);
-                    stage.setScene(loginScene);
-                    stage.setTitle("WolertApp – Login");
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            })).play();
+            Stage stage = (Stage) root.getScene().getWindow();
+            stage.close();
         });
+
         logout.getChildren().addAll(
-                label("🚪", 14, RED, false),
-                label("Cerrar sesión", 13, RED, false));
+                label("🚪", 14, WHITE, false),
+                label("Cerrar sesión", 13, WHITE, true));
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -277,8 +262,9 @@ public class AdministradorApp {
                     root.setCenter(new UsuariosAdminView().getView());
                 case "Alertas" ->
                     root.setCenter(new AlertasAdminView(alertaService).getView());
-                case "Alarmas" ->
-                    root.setCenter(new AlarmaAdminView().getView());
+                case "Alarmas" -> {
+                    new MapaAlarmasRegistradas().mostrar();
+                }
                 case "Comunas" ->
                     root.setCenter(new ComunaAdminView().getView());
                 case "Barrios" ->

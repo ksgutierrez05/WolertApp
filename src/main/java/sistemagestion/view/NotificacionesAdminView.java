@@ -60,37 +60,133 @@ public class NotificacionesAdminView {
     }
 
     private VBox buildTabla() {
-        VBox card = new VBox(0);
-        card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
-        card.setEffect(new DropShadow(12, 0, 2, Color.web("#0000001a")));
 
-        HBox header = new HBox();
-        header.setPadding(new Insets(14, 16, 14, 16));
-        header.setStyle("-fx-border-color: transparent transparent " + BORDER
-                + " transparent; -fx-border-width: 0 0 1 0;");
-        header.getChildren().addAll(
-                colHeader("Mensaje"),
-                colHeader("Destinatario"),
-                colHeader("Fecha"),
-                colHeader("Estado")
+        VBox card = new VBox();
+        card.setStyle(
+                "-fx-background-color: white;"
+                + "-fx-background-radius: 12;"
         );
-        card.getChildren().add(header);
+
+        card.setEffect(new DropShadow(
+                12,
+                Color.rgb(0, 0, 0, 0.12)
+        ));
+
+        GridPane tabla = new GridPane();
+        tabla.setMaxWidth(Double.MAX_VALUE);
+
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setPercentWidth(45);
+
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setPercentWidth(25);
+
+        ColumnConstraints c3 = new ColumnConstraints();
+        c3.setPercentWidth(15);
+
+        ColumnConstraints c4 = new ColumnConstraints();
+        c4.setPercentWidth(15);
+
+        tabla.getColumnConstraints().addAll(c1, c2, c3, c4);
+
+        agregarHeader(tabla, 0, "Mensaje");
+        agregarHeader(tabla, 1, "Destinatario");
+        agregarHeader(tabla, 2, "Fecha");
+        agregarHeader(tabla, 3, "Estado");
 
         List<Notificacion> notifs = cargarNotificaciones();
 
         if (notifs.isEmpty()) {
-            Label vacio = label("No hay notificaciones registradas.", 14, GRAY_TEXT, false);
-            VBox.setMargin(vacio, new Insets(24));
+
+            Label vacio = label(
+                    "No hay notificaciones registradas.",
+                    14,
+                    GRAY_TEXT,
+                    false
+            );
+
+            VBox.setMargin(vacio, new Insets(25));
+
             card.getChildren().add(vacio);
             return card;
         }
 
-        boolean par = true;
+        int fila = 1;
+
         for (Notificacion n : notifs) {
-            card.getChildren().add(buildFila(n, par));
-            par = !par;
+
+            String mensaje = n.getMensaje() != null
+                    ? n.getMensaje()
+                    : "—";
+
+            String destinatario = n.getCorreodestinatario() != null
+                    ? n.getCorreodestinatario()
+                    : "—";
+
+            String fecha = n.getFechahora() != null
+                    ? n.getFechahora().toLocalDate().toString()
+                    : "—";
+
+            String estado = n.getEstado() != null
+                    ? n.getEstado().name()
+                    : "—";
+
+            agregarCelda(tabla, fila, 0, mensaje);
+            agregarCelda(tabla, fila, 1, destinatario);
+            agregarCelda(tabla, fila, 2, fecha);
+            agregarCelda(tabla, fila, 3, estado);
+
+            fila++;
         }
+
+        card.getChildren().add(tabla);
+
         return card;
+    }
+
+    private void agregarHeader(GridPane tabla, int columna, String texto) {
+
+        Label lbl = new Label(texto);
+
+        lbl.setFont(Font.font("System", FontWeight.BOLD, 13));
+
+        lbl.setTextFill(Color.web("#6b7280"));
+
+        lbl.setMaxWidth(Double.MAX_VALUE);
+
+        lbl.setPadding(new Insets(15));
+
+        lbl.setStyle(
+                "-fx-background-color:#f8fafc;"
+                + "-fx-border-color:#e5e7eb;"
+                + "-fx-border-width:0 0 1 0;"
+        );
+
+        tabla.add(lbl, columna, 0);
+    }
+
+    private void agregarCelda(
+            GridPane tabla,
+            int fila,
+            int columna,
+            String texto) {
+
+        Label lbl = new Label(texto);
+
+        lbl.setWrapText(true);
+
+        lbl.setMaxWidth(Double.MAX_VALUE);
+
+        lbl.setPadding(new Insets(15));
+
+        lbl.setTextFill(Color.web("#374151"));
+
+        lbl.setStyle(
+                "-fx-border-color:#e5e7eb;"
+                + "-fx-border-width:0 0 1 0;"
+        );
+
+        tabla.add(lbl, columna, fila);
     }
 
     private HBox buildFila(Notificacion n, boolean par) {

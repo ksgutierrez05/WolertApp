@@ -19,7 +19,6 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -29,6 +28,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javafx.scene.image.Image;
@@ -372,7 +372,25 @@ public class UsuarioApp {
         item.getChildren().add(lbl);
         item.setOnMouseEntered(e -> item.setStyle("-fx-background-color:#ffffff15;-fx-background-radius:6;-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
         item.setOnMouseExited(e -> item.setStyle("-fx-background-color:transparent;-fx-focus-color:transparent;-fx-faint-focus-color:transparent;"));
-        item.setOnMouseClicked(e -> root.setCenter(buildPlaceholder(text)));
+        item.setOnMouseClicked(e -> {
+            switch (text) {
+                case "📍 Mapa de alertas":
+                    root.setCenter(new MapaAlertas(alertaService).build());
+                    break;
+
+                case "⚠ Zonas peligrosas":
+                    root.setCenter(new MapaZonasPeligrosas(alertaService).build());
+                    break;
+
+                case "👥 Alertas comunitarias":
+                    root.setCenter(new MapaAlarmasRegistradas().build());
+                    break;
+
+                default:
+                    root.setCenter(buildPlaceholder(text));
+                    break;
+            }
+        });
         return item;
     }
 
@@ -726,45 +744,66 @@ public class UsuarioApp {
     // ── Stat cards ────────────────────────────────────────────────
     private HBox buildStatCards() {
         HBox row = new HBox(16);
-        long incidentesMes = 0, alertasPendientes = 0, vecinosActivos = 0;
 
-        if (alertaService != null && usuarioActual != null) {
+        // Tarjetas con valores en 0 inicialmente
+        VBox cardIncidentes = statCard("#fff0f0", "#e53935", "Incidentes este mes", 0, "+3 vs mes anterior");
+        VBox cardPendientes = statCard("#fff8e1", "#fb8c00", "Alertas pendientes", 0, "PENDIENTE / EN PROCESO");
+        VBox cardVecinos = statCard("#e8f5e9", "#43a047", "Vecinos del barrio", 0, "Reportaron en tu barrio");
+
+        row.getChildren().addAll(cardIncidentes, cardPendientes, cardVecinos);
+
+        // Carga en hilo separado para no bloquear la UI
+        new Thread(() -> {
+            long incidentesMes = 0, alertasPendientes = 0, vecinosActivos = 0;
             try {
-                List<Alerta> misAlertas = alertaService.listar().stream()
-                        .filter(a -> usuarioActual.getUsername().equals(
-                        a.getUsuario() != null ? a.getUsuario().getUsername() : ""))
-                        .toList();
-                incidentesMes = misAlertas.stream()
-                        .filter(a -> a.getFechaHora() != null
-                        && a.getFechaHora().getMonth() == LocalDateTime.now().getMonth()
-                        && a.getFechaHora().getYear() == LocalDateTime.now().getYear())
-                        .count();
-                alertasPendientes = misAlertas.stream()
-                        .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                        || a.getEstado() == EstadoAlerta.EN_ATENCION)
-                        .count();
+                if (alertaService != null && usuarioActual != null) {
+                    List<Alerta> misAlertas = alertaService.listar().stream()
+                            .filter(a -> usuarioActual.getUsername().equals(
+                            a.getUsuario() != null ? a.getUsuario().getUsername() : ""))
+                            .toList();
+                    incidentesMes = misAlertas.stream()
+                            .filter(a -> a.getFechaHora() != null
+                            && a.getFechaHora().getMonth() == LocalDateTime.now().getMonth()
+                            && a.getFechaHora().getYear() == LocalDateTime.now().getYear())
+                            .count();
+                    alertasPendientes = misAlertas.stream()
+                            .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
+                            || a.getEstado() == EstadoAlerta.EN_ATENCION)
+                            .count();
+
+                    if (usuarioActual.getDireccion() != null
+                            && usuarioActual.getDireccion().getBarrio() != null) {
+                        String miBarrio = usuarioActual.getDireccion().getBarrio().getNombre();
+                        vecinosActivos = alertaService.listar().stream()
+                                .filter(a -> a.getBarrio() != null
+                                && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
+                                .map(a -> a.getUsuario() != null ? a.getUsuario().getUsername() : "")
+                                .distinct().count();
+                    }
+                }
             } catch (Exception ignored) {
             }
-        }
-        if (alertaService != null && usuarioActual != null
-                && usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getBarrio() != null) {
-            try {
-                String miBarrio = usuarioActual.getDireccion().getBarrio().getNombre();
-                vecinosActivos = alertaService.listar().stream()
-                        .filter(a -> a.getBarrio() != null
-                        && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre()))
-                        .map(a -> a.getUsuario() != null ? a.getUsuario().getUsername() : "")
-                        .distinct().count();
-            } catch (Exception ignored) {
-            }
-        }
 
-        row.getChildren().addAll(
-                statCard("#fff0f0", "#e53935", "Incidentes este mes", incidentesMes, "+3 vs mes anterior"),
-                statCard("#fff8e1", "#fb8c00", "Alertas pendientes", alertasPendientes, "PENDIENTE / EN PROCESO"),
-                statCard("#e8f5e9", "#43a047", "Vecinos del barrio", vecinosActivos, "Reportaron en tu barrio"));
+            final long fi = incidentesMes, fp = alertasPendientes, fv = vecinosActivos;
+            javafx.application.Platform.runLater(() -> {
+                actualizarValorCard(cardIncidentes, fi, "#e53935");
+                actualizarValorCard(cardPendientes, fp, "#fb8c00");
+                actualizarValorCard(cardVecinos, fv, "#43a047");
+            });
+        }, "stats-loader").start();
+
         return row;
+    }
+
+// Helper para actualizar solo el label del valor sin reconstruir la tarjeta
+    private void actualizarValorCard(VBox card, long valor, String color) {
+        try {
+            HBox topRow = (HBox) card.getChildren().get(0);
+            VBox infoBox = (VBox) topRow.getChildren().get(1);
+            Label valLbl = (Label) infoBox.getChildren().get(1);
+            valLbl.setText(String.valueOf(valor));
+        } catch (Exception ignored) {
+        }
     }
 
     private VBox statCard(String bgIcon, String accentColor, String title, long value, String sub) {
@@ -842,7 +881,6 @@ public class UsuarioApp {
         iconBox.setMinSize(32, 32);
         iconBox.setMaxSize(32, 32);
         iconBox.setStyle("-fx-background-color:#e8f0fe;-fx-background-radius:8;");
-        // FIX 6: ícono corregido a campana (\uf0f3) en vez de calendario (\uf133)
         Label iconLbl = new Label("\uf0f3");
         iconLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:16px;-fx-text-fill:#1565c0;");
         iconBox.getChildren().add(iconLbl);
@@ -858,22 +896,41 @@ public class UsuarioApp {
         header.getChildren().addAll(titleRow, verTodas);
         card.getChildren().addAll(header, separator());
 
-        if (alertaService != null) {
+        // Spinner mientras carga
+        ProgressIndicator spinner = new ProgressIndicator();
+        spinner.setPrefSize(32, 32);
+        spinner.setStyle("-fx-progress-color:#1565c0;");
+        HBox spinnerBox = new HBox(spinner);
+        spinnerBox.setAlignment(Pos.CENTER);
+        spinnerBox.setPadding(new Insets(16));
+        card.getChildren().add(spinnerBox);
+
+        new Thread(() -> {
+            List<Alerta> alertas = new ArrayList<>();
+            String errorMsg = null;
             try {
-                List<Alerta> alertas = alertaService.listar();
-                if (alertas.isEmpty()) {
-                    card.getChildren().add(label("No hay alertas registradas", 13, GRAY_TEXT, false));
-                } else {
-                    alertas.stream().limit(4).forEach(a
-                            -> card.getChildren().addAll(alertaItem(a), separator()));
+                if (alertaService != null) {
+                    alertas = alertaService.listar();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                card.getChildren().add(label("Error al cargar alertas", 13, RED, false));
+                errorMsg = "Error al cargar alertas";
             }
-        } else {
-            card.getChildren().add(label("Sin conexión al servicio de alertas", 13, GRAY_TEXT, false));
-        }
+
+            final List<Alerta> resultado = alertas;
+            final String error = errorMsg;
+            javafx.application.Platform.runLater(() -> {
+                card.getChildren().remove(spinnerBox);
+                if (error != null) {
+                    card.getChildren().add(label(error, 13, RED, false));
+                } else if (resultado.isEmpty()) {
+                    card.getChildren().add(label("No hay alertas registradas", 13, GRAY_TEXT, false));
+                } else {
+                    resultado.stream().limit(4).forEach(a
+                            -> card.getChildren().addAll(alertaItem(a), separator()));
+                }
+            });
+        }, "alertas-loader").start();
+
         return card;
     }
 
@@ -993,6 +1050,7 @@ public class UsuarioApp {
         card.setStyle("-fx-background-color: " + WHITE + "; -fx-background-radius: 12;");
         shadow(card);
 
+        // ── Header ────────────────────────────────────────────────────
         HBox header = new HBox(8);
         header.setAlignment(Pos.CENTER_LEFT);
         StackPane pinBox = new StackPane();
@@ -1001,72 +1059,138 @@ public class UsuarioApp {
         pinBox.setMaxSize(32, 32);
         pinBox.setStyle("-fx-background-color:#e8f0fe;-fx-background-radius:50%;");
         Label pinLbl = new Label("\uf3c5");
-        pinLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:15px;-fx-text-fill:#1565c0");
+        pinLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:15px;-fx-text-fill:#1565c0;");
         pinBox.getChildren().add(pinLbl);
-        header.getChildren().addAll(pinBox, label("Mapa del barrio", 15, "#111827", true));
-
-        StackPane mapArea = new StackPane();
-        mapArea.setPrefHeight(220);
-        Rectangle mapBg = new Rectangle();
-        mapBg.setFill(Color.web("#d1e8d1"));
-        mapBg.widthProperty().bind(mapArea.widthProperty());
-        mapBg.heightProperty().bind(mapArea.heightProperty());
-        mapBg.setArcWidth(10);
-        mapBg.setArcHeight(10);
-
-        Pane streets = new Pane();
-        streets.setPrefSize(340, 200);
-        for (int i = 0; i < 4; i++) {
-            Rectangle h = new Rectangle(340, 3);
-            h.setFill(Color.web("#b8d4b8"));
-            h.setY(40 + i * 45);
-            streets.getChildren().add(h);
-        }
-        for (int i = 0; i < 5; i++) {
-            Rectangle v = new Rectangle(3, 200);
-            v.setFill(Color.web("#b8d4b8"));
-            v.setX(40 + i * 65);
-            streets.getChildren().add(v);
-        }
-        streets.getChildren().addAll(
-                mapDot(80, 60, RED), mapDot(200, 40, ORANGE), mapDot(300, 55, GREEN),
-                mapDot(60, 140, GREEN), mapDot(310, 150, RED));
-
-        VBox popup = new VBox(6);
-        popup.setPadding(new Insets(10, 14, 10, 14));
-        popup.setStyle("-fx-background-color:white;-fx-background-radius:8;");
-        popup.setEffect(new DropShadow(8, Color.web("#0000001a")));
-        popup.setTranslateX(30);
-        popup.setTranslateY(10);
-        popup.setAlignment(Pos.CENTER_LEFT);
 
         String barrioDisplay = usuarioActual != null
                 && usuarioActual.getDireccion() != null
                 && usuarioActual.getDireccion().getBarrio() != null
                 ? usuarioActual.getDireccion().getBarrio().getNombre() : "Tu barrio";
 
-        Button abrirMapaBtn = new Button("Abrir mapa  ↗");
-        String bBase = "-fx-background-color:" + BLUE + ";-fx-text-fill:white;-fx-font-size:12px;"
-                + "-fx-font-weight:bold;-fx-background-radius:6;-fx-padding:7 16;-fx-cursor:hand;";
-        String bHover = "-fx-background-color:#0d47a1;-fx-text-fill:white;-fx-font-size:12px;"
-                + "-fx-font-weight:bold;-fx-background-radius:6;-fx-padding:7 16;-fx-cursor:hand;";
-        abrirMapaBtn.setStyle(bBase);
-        abrirMapaBtn.setOnMouseEntered(e -> abrirMapaBtn.setStyle(bHover));
-        abrirMapaBtn.setOnMouseExited(e -> abrirMapaBtn.setStyle(bBase));
-        abrirMapaBtn.setOnAction(e -> root.setCenter(buildPlaceholder("Mapa")));
-        popup.getChildren().addAll(
-                label("Mapa interactivo", 12, "#374151", true),
-                label(barrioDisplay, 11, BLUE, false),
-                abrirMapaBtn);
+        HBox.setHgrow(new Region(), Priority.ALWAYS);
+        Label abrirLbl = label("Expandir  ↗", 11, BLUE, false);
+        abrirLbl.setCursor(javafx.scene.Cursor.HAND);
+        abrirLbl.setOnMouseClicked(e -> root.setCenter(new MapaAlertas(alertaService).build()));
 
-        mapArea.getChildren().addAll(mapBg, streets, popup);
+        Region spacerH = new Region();
+        HBox.setHgrow(spacerH, Priority.ALWAYS);
+        header.getChildren().addAll(pinBox, label("Alertas en " + barrioDisplay, 14, "#111827", true), spacerH, abrirLbl);
 
+        // ── Contenedor del mapa embebido ──────────────────────────────
+        javafx.scene.layout.StackPane mapaContainer = new javafx.scene.layout.StackPane();
+        mapaContainer.setPrefHeight(210);
+        mapaContainer.setMinHeight(210);
+        mapaContainer.setMaxHeight(210);
+        mapaContainer.setStyle("-fx-background-radius:10;-fx-background-color:#e8f0fe;");
+        VBox.setVgrow(mapaContainer, Priority.NEVER);
+
+        // Spinner mientras inicializa el mapa Swing
+        ProgressIndicator mapaSpinner = new ProgressIndicator();
+        mapaSpinner.setPrefSize(36, 36);
+        mapaSpinner.setStyle("-fx-progress-color:#1565c0;");
+        mapaContainer.getChildren().add(mapaSpinner);
+
+        // Inicializar SwingNode en hilo Swing, luego agregarlo al FX thread
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            org.jxmapviewer.JXMapViewer miniMapa = new org.jxmapviewer.JXMapViewer();
+
+            org.jxmapviewer.viewer.TileFactoryInfo info = new org.jxmapviewer.viewer.TileFactoryInfo(
+                    1, 15, 17, 256, true, true,
+                    "https://tile.openstreetmap.org", "x", "y", "z") {
+                @Override
+                public String getTileUrl(int x, int y, int zoom) {
+                    return baseURL + "/" + (17 - zoom) + "/" + x + "/" + y + ".png";
+                }
+            };
+            miniMapa.setTileFactory(new org.jxmapviewer.viewer.DefaultTileFactory(info));
+            miniMapa.setAddressLocation(new org.jxmapviewer.viewer.GeoPosition(10.4795, -73.2536));
+            miniMapa.setZoom(5);
+
+            // Pan con mouse
+            org.jxmapviewer.input.PanMouseInputListener pan
+                    = new org.jxmapviewer.input.PanMouseInputListener(miniMapa);
+            miniMapa.addMouseListener(pan);
+            miniMapa.addMouseMotionListener(pan);
+            miniMapa.addMouseWheelListener(
+                    new org.jxmapviewer.input.ZoomMouseWheelListenerCenter(miniMapa));
+
+            // Pintar alertas del barrio del usuario
+            miniMapa.setOverlayPainter((g, map, w, h) -> {
+                g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                try {
+                    if (alertaService == null) {
+                        return;
+                    }
+                    String miBarrio = (usuarioActual != null
+                            && usuarioActual.getDireccion() != null
+                            && usuarioActual.getDireccion().getBarrio() != null)
+                            ? usuarioActual.getDireccion().getBarrio().getNombre() : null;
+
+                    List<Alerta> alertas = alertaService.listar().stream()
+                            .filter(a -> miBarrio == null || (a.getBarrio() != null
+                            && miBarrio.equalsIgnoreCase(a.getBarrio().getNombre())))
+                            .filter(a -> a.getLatitud() != 0 || a.getLongitud() != 0)
+                            .collect(java.util.stream.Collectors.toList());
+
+                    for (Alerta a : alertas) {
+                        java.awt.geom.Point2D pt = map.getTileFactory().geoToPixel(
+                                new org.jxmapviewer.viewer.GeoPosition(
+                                        a.getLatitud(), a.getLongitud()), map.getZoom());
+                        int cx = (int) pt.getX() - map.getViewportBounds().x;
+                        int cy = (int) pt.getY() - map.getViewportBounds().y;
+
+                        String estado = a.getEstado() != null ? a.getEstado().name() : "";
+                        java.awt.Color col = switch (estado) {
+                            case "PENDIENTE" ->
+                                new java.awt.Color(229, 57, 53);
+                            case "EN_ATENCION" ->
+                                new java.awt.Color(251, 140, 0);
+                            case "RESUELTA" ->
+                                new java.awt.Color(67, 160, 71);
+                            default ->
+                                new java.awt.Color(107, 114, 128);
+                        };
+
+                        // Pin pequeño
+                        int r = 7;
+                        g.setColor(col);
+                        g.fillOval(cx - r, cy - r, r * 2, r * 2);
+                        g.setColor(java.awt.Color.WHITE);
+                        g.setStroke(new java.awt.BasicStroke(1.5f));
+                        g.drawOval(cx - r, cy - r, r * 2, r * 2);
+                    }
+                } catch (Exception ignored) {
+                }
+            });
+
+            javafx.embed.swing.SwingNode swingNode = new javafx.embed.swing.SwingNode();
+            swingNode.setContent(miniMapa);
+
+            // Doble clic → abrir mapa completo
+            swingNode.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2) {
+                    root.setCenter(new MapaAlertas(alertaService).build());
+                }
+            });
+
+            javafx.application.Platform.runLater(() -> {
+                mapaContainer.getChildren().setAll(swingNode);
+            });
+        });
+
+        // ── Leyenda ───────────────────────────────────────────────────
         HBox legend = new HBox(16);
         legend.setAlignment(Pos.CENTER);
         legend.getChildren().addAll(
-                legendItem(RED, "Activo"), legendItem(ORANGE, "En revisión"), legendItem(GREEN, "Resuelto"));
+                legendItem(RED, "Pendiente"),
+                legendItem(ORANGE, "En revisión"),
+                legendItem(GREEN, "Resuelto"));
 
-        card.getChildren().addAll(header, mapArea, legend);
+        Label hint = label("Doble clic para abrir mapa completo", 10, GRAY_TEXT, false);
+        hint.setAlignment(Pos.CENTER);
+
+        card.getChildren().addAll(header, mapaContainer, legend, hint);
         return card;
     }
 
@@ -1147,37 +1271,14 @@ public class UsuarioApp {
     // CERRAR SESIÓN
     // =========================================================================
     private void cerrarSesion() {
-        VBox bye = new VBox(20);
-        bye.setAlignment(Pos.CENTER);
-        bye.setStyle("-fx-background-color: " + BG + ";");
-        Label icon = new Label("👋");
-        icon.setFont(Font.font(70));
-        Label title = new Label("Sesión cerrada");
-        title.setFont(Font.font("System", FontWeight.BOLD, 30));
-        title.setTextFill(Color.web("#111827"));
-        Label msg = new Label("La aplicación se cerrará.");
-        msg.setTextFill(Color.GRAY);
-        bye.getChildren().addAll(icon, title, msg);
-        root.setCenter(bye);
-
-        new Timeline(new KeyFrame(Duration.seconds(2), ev -> {
-            Stage stage = (Stage) root.getScene().getWindow();
-            stage.close();
-        })).play();
+        Stage stage = (Stage) root.getScene().getWindow();
+        stage.close();
     }
 
     // =========================================================================
     // HELPERS UI
     // =========================================================================
-    private Circle mapDot(double x, double y, String color) {
-        Circle c = new Circle(7, Color.web(color));
-        c.setCenterX(x);
-        c.setCenterY(y);
-        c.setStroke(Color.WHITE);
-        c.setStrokeWidth(2);
-        return c;
-    }
-
+   
     private HBox legendItem(String color, String text) {
         HBox item = new HBox(6);
         item.setAlignment(Pos.CENTER_LEFT);
