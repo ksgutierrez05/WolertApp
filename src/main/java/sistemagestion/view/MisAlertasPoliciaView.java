@@ -84,12 +84,35 @@ public class MisAlertasPoliciaView {
                 buildFiltros(todasAlertas, listaContainer),
                 listaContainer
         );
+        Timeline autoRefresh = new Timeline(
+                new KeyFrame(Duration.seconds(30), e -> {
+                    try {
+                        List<Alerta> nuevasAlertas = cargarAlertas();
+
+                        listaContainer.getChildren().clear();
+
+                        renderAlertas(
+                                listaContainer,
+                                nuevasAlertas,
+                                null,
+                                ""
+                        );
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                })
+        );
+
+        autoRefresh.setCycleCount(Timeline.INDEFINITE);
+        autoRefresh.play();
 
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";"
                 + "-fx-border-color: transparent; -fx-border-width: 0;");
+
         return scroll;
     }
 
@@ -779,9 +802,22 @@ public class MisAlertasPoliciaView {
                         feedback.setTextFill(Color.web(GREEN));
                         feedback.setText("Atención registrada correctamente.");
                         situacion.clear();
-                        root.setCenter(new MisAlertasPoliciaView(
-                                usuarioActual, policiaActual,
-                                alertaService, atencionService, root).build());
+                        Timeline autoRefresh = new Timeline(
+                                new KeyFrame(Duration.seconds(30), e -> {
+                                    root.setCenter(
+                                            new MisAlertasPoliciaView(
+                                                    usuarioActual,
+                                                    policiaActual,
+                                                    alertaService,
+                                                    atencionService,
+                                                    root
+                                            ).build()
+                                    );
+                                })
+                        );
+
+                        autoRefresh.setCycleCount(Timeline.INDEFINITE);
+                        autoRefresh.play();
                     } else {
                         feedback.setTextFill(Color.web(RED));
                         feedback.setText("No se pudo registrar la atención.");
