@@ -15,6 +15,7 @@ import sistemagestion.util.Validador;
  * @author Maria Cristina
  */
 public class NotificacionService {
+
     private NotificacionDAO notificacionDAO;
 
     public NotificacionService() throws SQLException {
@@ -40,12 +41,18 @@ public class NotificacionService {
         return guardado;
     }
 
+    public List<Notificacion> listarPorUnidad(int idUnidad) {
+        return notificacionDAO.listarPorUnidad(idUnidad);
+    }
+
     public List<Notificacion> listar() {
         return notificacionDAO.listar();
     }
 
     public boolean eliminar(int id) {
-        if (id <= 0) throw new IllegalArgumentException();
+        if (id <= 0) {
+            throw new IllegalArgumentException();
+        }
         return notificacionDAO.eliminar(id);
     }
 }
