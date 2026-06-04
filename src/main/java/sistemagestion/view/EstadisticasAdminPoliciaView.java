@@ -1,52 +1,56 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package sistemagestion.view;
 
-/**
- *
- * @author Maria Cristina
- */
-
-
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.image.ImageView;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
-/**
- * Vista: estadísticas generales del sistema.
- * Uso: root.setCenter(new EstadisticasAdminPoliciaView(services...).build());
- */
 public class EstadisticasAdminPoliciaView {
 
-    private static final String BG           = "#f4f6fb";
-    private static final String WHITE        = "#ffffff";
-    private static final String RED          = "#e53935";
-    private static final String RED_LIGHT    = "#fff0f0";
-    private static final String ORANGE       = "#fb8c00";
-    private static final String ORANGE_LIGHT = "#fff3e0";
-    private static final String GREEN        = "#43a047";
-    private static final String GREEN_LIGHT  = "#e8f5e9";
-    private static final String BLUE         = "#1565c0";
-    private static final String BLUE_LIGHT   = "#e8f0fe";
-    private static final String GRAY_TEXT    = "#6b7280";
-    private static final String BORDER       = "#e5e7eb";
+    private static final String BG        = "#f4f6fb";
+    private static final String RED       = "#e53935";
+    private static final String ORANGE    = "#fb8c00";
+    private static final String GREEN     = "#43a047";
+    private static final String BLUE      = "#1565c0";
+    private static final String PURPLE    = "#7b1fa2";
+    private static final String TEAL      = "#00796b";
+    private static final String GRAY      = "#9e9e9e";
+    private static final String GRAY_TEXT = "#6b7280";
+    private static final String BORDER    = "#e5e7eb";
 
-    private final AlertaService        alertaService;
+    private static final String[] BAR_COLORS_ESTADO = {
+        "#fb8c00", "#1565c0", "#7b1fa2", "#0288d1", "#43a047", "#9e9e9e"
+    };
+    private static final String[] BAR_COLORS_POLICIA = {
+        "#43a047", "#1565c0", "#fb8c00", "#9e9e9e"
+    };
+    private static final String[] BAR_COLORS_ALARMA = {
+        "#43a047", "#fb8c00", "#9e9e9e"
+    };
+
+    private final AlertaService           alertaService;
     private final AsignacionUnidadService asignacionService;
-    private final UnidadPolicialService  unidadService;
-    private final PoliciaService         policiaService;
-    private final AlarmaService          alarmaService;
-    private final NotificacionService    notificacionService;
+    private final UnidadPolicialService   unidadService;
+    private final PoliciaService          policiaService;
+    private final AlarmaService           alarmaService;
+    private final NotificacionService     notificacionService;
+
+    private List<Alerta>       alertas;
+    private List<Policia>      policias;
+    private List<UnidadPolicial> unidades;
+    private List<Alarma>       alarmas;
 
     public EstadisticasAdminPoliciaView(
             AlertaService alertaService,
@@ -55,163 +59,324 @@ public class EstadisticasAdminPoliciaView {
             PoliciaService policiaService,
             AlarmaService alarmaService,
             NotificacionService notificacionService) {
+        Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         this.alertaService       = alertaService;
         this.asignacionService   = asignacionService;
         this.unidadService       = unidadService;
         this.policiaService      = policiaService;
         this.alarmaService       = alarmaService;
         this.notificacionService = notificacionService;
+        cargarDatos();
     }
 
+    // ── PUNTO DE ENTRADA ─────────────────────────────────────────
     public ScrollPane build() {
-        VBox content = new VBox(18);
-        content.setPadding(new Insets(22));
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: " + BG + ";");
 
-        Label title = new Label("📊 Estadísticas");
-        title.setFont(Font.font("System", FontWeight.BOLD, 22));
-        title.setTextFill(Color.web("#111827"));
+        content.getChildren().addAll(
+                buildTopBar(),
+                buildStatCards(),
+                buildFilaCentral(),
+                buildPanelEstadosAlarma()
+        );
 
-        // Fila 1
-        HBox row1 = new HBox(16);
-        row1.getChildren().addAll(
-                statCard(RED_LIGHT,    RED,    "Alertas activas",    contarAlertasActivas(),   "+3 vs mes anterior",          "IncidentesPin"),
-                statCard(ORANGE_LIGHT, ORANGE, "Alertas pendientes", contarAsignaciones(),     "PENDIENTE / EN PROCESO",      "AlertasPendientesPin"),
-                statCard(GREEN_LIGHT,  GREEN,  "Unidades activas",   contarUnidadesActivas(),  "Estado OPERATIVA",            "UnidadPin"),
-                statCard(BLUE_LIGHT,   BLUE,   "Policías activos",   contarPoliciasActivos(),  "Estado DISPONIBLE",           "PoliciaPin"));
-
-        // Fila 2
-        HBox row2 = new HBox(16);
-        row2.getChildren().addAll(
-                statCard(ORANGE_LIGHT, ORANGE, "Alarmas activas",  contarAlarmasActivas(),    "ACTIVA / EN MANTENIMIENTO",   "AlarmaPin"),
-                statCard(BLUE_LIGHT,   BLUE,   "Notificaciones",   contarNotificaciones(),    "Total enviadas",              "NotificacionPin"));
-
-        content.getChildren().addAll(title, row1, row2);
-        return wrapScroll(content);
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
+        return scroll;
     }
 
-    // ── Stat card ────────────────────────────────────────────────
-    private VBox statCard(String bgIcon, String accentColor, String title, long value, String sub, String iconName) {
+    // ── TOP BAR ──────────────────────────────────────────────────
+    private HBox buildTopBar() {
+        HBox bar = new HBox();
+        bar.setAlignment(Pos.CENTER_LEFT);
+        VBox title = new VBox(4);
+        Label h1 = new Label("Estadísticas");
+        h1.setFont(Font.font("System", FontWeight.BOLD, 28));
+        h1.setTextFill(Color.web("#111827"));
+        title.getChildren().addAll(h1,
+                label("Métricas operacionales del sistema policial", 13, GRAY_TEXT, false));
+        bar.getChildren().add(title);
+        return bar;
+    }
+
+    // ── STAT CARDS ───────────────────────────────────────────────
+    private HBox buildStatCards() {
+        HBox row = new HBox(16);
+        HBox.setHgrow(row, Priority.ALWAYS);
+
+        long totalAlertas  = alertas.size();
+        long alertasActivas = alertas.stream()
+                .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
+                          || a.getEstado() == EstadoAlerta.RECIBIDA
+                          || a.getEstado() == EstadoAlerta.EN_ATENCION
+                          || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
+                .count();
+        long policiasDisp = policias.stream()
+                .filter(p -> p.getEstadopolicial() == EstadoPolicia.DISPONIBLE
+                          || p.getEstadopolicial() == EstadoPolicia.EN_SERVICIO)
+                .count();
+        long unidadesOper = unidades.stream()
+                .filter(u -> u.getEstado() == EstadoUnidadPolicial.OPERATIVA)
+                .count();
+
+        row.getChildren().addAll(
+                statCard("#e8f0fe", BLUE,   "",
+                        String.valueOf(totalAlertas), "Alertas totales", "Historial completo"),
+                statCard("#fff0f0", RED,    "",
+                        String.valueOf(alertasActivas), "Alertas activas", "↑ Requieren atención"),
+                statCard("#e8f5e9", GREEN,  "",
+                        String.valueOf(unidadesOper), "Unidades operativas", "Estado OPERATIVA"),
+                statCard("#fff8e1", ORANGE, "",
+                        String.valueOf(policiasDisp), "Policías activos", "DISPONIBLE · EN SERVICIO")
+        );
+        return row;
+    }
+
+    // ── FILA CENTRAL — por estado alerta | por estado policía ────
+    private HBox buildFilaCentral() {
+        HBox row = new HBox(16);
+        row.getChildren().addAll(
+                buildPanelBarrasEstadoAlerta(),
+                buildPanelBarrasEstadoPolicia());
+        return row;
+    }
+
+    private VBox buildPanelBarrasEstadoAlerta() {
+        VBox panel = crearPanel("Alertas por estado", "", ORANGE, "#fff8e1");
+
+        Map<String, Long> porEstado = new LinkedHashMap<>();
+        porEstado.put("PENDIENTE",       contarAlerta(EstadoAlerta.PENDIENTE));
+        porEstado.put("RECIBIDA",        contarAlerta(EstadoAlerta.RECIBIDA));
+        porEstado.put("EN ATENCIÓN",     contarAlerta(EstadoAlerta.EN_ATENCION));
+        porEstado.put("UNIDAD ASIGNADA", contarAlerta(EstadoAlerta.UNIDAD_ASIGNADA));
+        porEstado.put("RESUELTA",        contarAlerta(EstadoAlerta.RESUELTA));
+        porEstado.put("CANCELADA",       contarAlerta(EstadoAlerta.CANCELADA));
+
+        long maximo = porEstado.values().stream().mapToLong(Long::longValue).max().orElse(1);
+        int idx = 0;
+        for (Map.Entry<String, Long> entry : porEstado.entrySet()) {
+            panel.getChildren().add(buildBarraHorizontal(
+                    entry.getKey(), entry.getValue(), maximo,
+                    BAR_COLORS_ESTADO[idx % BAR_COLORS_ESTADO.length]));
+            idx++;
+        }
+        HBox.setHgrow(panel, Priority.ALWAYS);
+        return panel;
+    }
+
+    private VBox buildPanelBarrasEstadoPolicia() {
+        VBox panel = crearPanel("Policías por estado", "", BLUE, "#e8f0fe");
+
+        Map<String, Long> porEstado = new LinkedHashMap<>();
+        porEstado.put("DISPONIBLE",       contarPolicia(EstadoPolicia.DISPONIBLE));
+        porEstado.put("EN SERVICIO",      contarPolicia(EstadoPolicia.EN_SERVICIO));
+        porEstado.put("OCUPADO",          contarPolicia(EstadoPolicia.OCUPADO));
+        porEstado.put("FUERA DE SERVICIO", policias.stream()
+                .filter(p -> p.getEstadopolicial() != EstadoPolicia.DISPONIBLE
+                          && p.getEstadopolicial() != EstadoPolicia.EN_SERVICIO
+                          && p.getEstadopolicial() != EstadoPolicia.OCUPADO).count());
+
+        long maximo = porEstado.values().stream().mapToLong(Long::longValue).max().orElse(1);
+        int idx = 0;
+        for (Map.Entry<String, Long> entry : porEstado.entrySet()) {
+            panel.getChildren().add(buildBarraHorizontal(
+                    entry.getKey(), entry.getValue(), maximo,
+                    BAR_COLORS_POLICIA[idx % BAR_COLORS_POLICIA.length]));
+            idx++;
+        }
+        HBox.setHgrow(panel, Priority.ALWAYS);
+        return panel;
+    }
+
+    private HBox buildBarraHorizontal(String nombre, long valor, long maximo, String color) {
+        HBox row = new HBox(8);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(4, 0, 4, 0));
+
+        Label etiqueta = label(nombre, 12, GRAY_TEXT, false);
+        etiqueta.setPrefWidth(140);
+        etiqueta.setAlignment(Pos.CENTER_RIGHT);
+
+        double pct = maximo > 0 ? (double) valor / maximo : 0;
+        double maxBarWidth = 260;
+
+        StackPane barraContainer = new StackPane();
+        barraContainer.setPrefWidth(maxBarWidth);
+        barraContainer.setAlignment(Pos.CENTER_LEFT);
+
+        Rectangle fondo = new Rectangle(maxBarWidth, 12);
+        fondo.setArcWidth(6); fondo.setArcHeight(6);
+        fondo.setFill(Color.web("#e5e7eb"));
+
+        Rectangle barra = new Rectangle(Math.max(4, pct * maxBarWidth), 12);
+        barra.setArcWidth(6); barra.setArcHeight(6);
+        barra.setFill(Color.web(color));
+
+        StackPane.setAlignment(fondo, Pos.CENTER_LEFT);
+        StackPane.setAlignment(barra, Pos.CENTER_LEFT);
+        barraContainer.getChildren().addAll(fondo, barra);
+
+        Label numLbl = label(String.valueOf(valor), 12, "#111827", true);
+        numLbl.setPrefWidth(28);
+        numLbl.setAlignment(Pos.CENTER_RIGHT);
+
+        row.getChildren().addAll(etiqueta, barraContainer, numLbl);
+        return row;
+    }
+
+    // ── PANEL INFERIOR — Estado de alarmas ───────────────────────
+    private VBox buildPanelEstadosAlarma() {
+        VBox panel = crearPanel("Estado de alarmas y unidades", "", RED, "#fff0f0");
+
+        long totalAlarmas = Math.max(alarmas.size(), 1);
+        record Info(String nombre, long cantidad, String color) {}
+
+        List<Info> filas = List.of(
+                new Info("Alarmas activas",        contarAlarma(EstadoAlarma.ACTIVA),           GREEN),
+                new Info("Alarmas en mantenimiento", contarAlarma(EstadoAlarma.EN_MANTENIMIENTO), ORANGE),
+                new Info("Alarmas inactivas",       contarAlarma(EstadoAlarma.INACTIVA),         GRAY),
+                new Info("Unidades operativas",     contarUnidad(EstadoUnidadPolicial.OPERATIVA), GREEN),
+                new Info("Unidades activas",        contarUnidad(EstadoUnidadPolicial.ACTIVA),    ORANGE),
+                new Info("Unidades inactivas",      contarUnidad(EstadoUnidadPolicial.INACTIVA),  GRAY)
+        );
+
+        for (Info info : filas) {
+            long total = info.nombre().startsWith("Alarma") ? totalAlarmas
+                    : Math.max(unidades.size(), 1);
+            int pct = (int) Math.round((double) info.cantidad() / total * 100);
+            panel.getChildren().add(buildFilaEstado(info.color(), info.nombre(), info.cantidad(), pct));
+        }
+
+        panel.setMaxWidth(Double.MAX_VALUE);
+        return panel;
+    }
+
+    private HBox buildFilaEstado(String color, String nombre, long cantidad, int pct) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(7, 0, 7, 0));
+
+        Circle dot = new Circle(6, Color.web(color));
+
+        Label nombreLbl = label(nombre, 13, "#374151", false);
+        HBox.setHgrow(nombreLbl, Priority.ALWAYS);
+
+        Label cantidadLbl = label(String.valueOf(cantidad), 13, "#111827", true);
+        Label pctLbl = label(" (" + pct + "%)", 12, GRAY_TEXT, false);
+
+        HBox numBox = new HBox(0, cantidadLbl, pctLbl);
+        numBox.setAlignment(Pos.CENTER_RIGHT);
+
+        row.getChildren().addAll(dot, nombreLbl, numBox);
+        return row;
+    }
+
+    // ── CARGA DE DATOS ───────────────────────────────────────────
+    private void cargarDatos() {
+        try { alertas  = alertaService.listar();   } catch (Exception e) { alertas  = List.of(); }
+        try { policias = policiaService.listar();  } catch (Exception e) { policias = List.of(); }
+        try { unidades = unidadService.listar();   } catch (Exception e) { unidades = List.of(); }
+        try { alarmas  = alarmaService.listar();   } catch (Exception e) { alarmas  = List.of(); }
+    }
+
+    private long contarAlerta(EstadoAlerta e) {
+        return alertas.stream().filter(a -> a.getEstado() == e).count();
+    }
+
+    private long contarPolicia(EstadoPolicia e) {
+        return policias.stream().filter(p -> p.getEstadopolicial() == e).count();
+    }
+
+    private long contarUnidad(EstadoUnidadPolicial e) {
+        return unidades.stream().filter(u -> u.getEstado() == e).count();
+    }
+
+    private long contarAlarma(EstadoAlarma e) {
+        return alarmas.stream().filter(a -> a.getEstado() == e).count();
+    }
+
+    // ── HELPERS UI ───────────────────────────────────────────────
+    private VBox crearPanel(String titulo, String iconFA, String iconColor, String iconBg) {
+        VBox panel = new VBox(12);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: white; -fx-background-radius: 16;");
+        panel.setEffect(new DropShadow(15, 0, 3, Color.web("#0000001a")));
+
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(34, 34);
+        iconWrap.setMinSize(34, 34);
+        iconWrap.setMaxSize(34, 34);
+
+        Rectangle bg = new Rectangle(34, 34);
+        bg.setArcWidth(10); bg.setArcHeight(10);
+        bg.setFill(Color.web(iconBg));
+
+        Label iconLbl = new Label(iconFA);
+        iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 15px; -fx-text-fill: " + iconColor + ";");
+        iconWrap.getChildren().addAll(bg, iconLbl);
+
+        Label tituloLbl = new Label(titulo);
+        tituloLbl.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #111827;");
+
+        HBox header = new HBox(10, iconWrap, tituloLbl);
+        header.setAlignment(Pos.CENTER_LEFT);
+        panel.getChildren().addAll(header, separadorH());
+        return panel;
+    }
+
+    private VBox statCard(String bgIcon, String accentColor, String iconFA,
+                          String valor, String titulo, String variacion) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
-        card.setStyle("-fx-background-color:white; -fx-background-radius:18;");
-        card.setPrefWidth(260);
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
         HBox.setHgrow(card, Priority.ALWAYS);
+        card.setEffect(new DropShadow(15, 0, 3, Color.web("#0000001a")));
 
         StackPane iconWrap = new StackPane();
         iconWrap.setPrefSize(52, 52);
         iconWrap.setMinSize(52, 52);
         iconWrap.setMaxSize(52, 52);
-        Region colorBg = new Region();
-        colorBg.setPrefSize(52, 52);
-        colorBg.setStyle("-fx-background-color:" + bgIcon + "; -fx-background-radius:14;");
-        ImageView iv = new ImageView();
-        iv.setFitWidth(28); iv.setFitHeight(28); iv.setPreserveRatio(true);
-        try {
-            java.io.InputStream is = getClass().getResourceAsStream("/" + iconName + ".png");
-            if (is != null) {
-                java.awt.image.BufferedImage original = javax.imageio.ImageIO.read(is);
-                java.awt.image.BufferedImage recortada = recortarTransparencia(original);
-                iv.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(recortada, null));
-            }
-        } catch (Exception ignored) {}
-        iconWrap.getChildren().addAll(colorBg, iv);
 
-        Label titleLbl = label(title, 13, "#374151", true);
-        Label valLbl   = new Label(String.valueOf(value));
-        valLbl.setStyle("-fx-font-size:36px; -fx-font-weight:bold; -fx-text-fill:" + accentColor + ";");
-        Label subLbl   = label(sub, 11, GRAY_TEXT, false);
+        Rectangle iconBg = new Rectangle(52, 52);
+        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setFill(Color.web(bgIcon));
 
-        VBox textBlock = new VBox(3);
-        textBlock.getChildren().addAll(titleLbl, valLbl, subLbl);
+        Label iconLbl = new Label(iconFA);
+        iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 22px; -fx-text-fill: " + accentColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
 
-        HBox topRow = new HBox(16);
-        topRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-        topRow.getChildren().addAll(iconWrap, textBlock);
-        card.getChildren().add(topRow);
+        Label tituloLbl = new Label(titulo);
+        tituloLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;");
+        Label valorLbl = new Label(valor);
+        valorLbl.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + accentColor + ";");
+        Label varLbl = new Label(variacion);
+        varLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + accentColor + ";");
 
-        card.setOnMouseEntered(e -> {
-            card.setTranslateY(-3);
-            card.setStyle("-fx-background-color:white; -fx-background-radius:18;"
-                    + "-fx-border-color:" + accentColor + "; -fx-border-width:1.5; -fx-border-radius:18;");
-        });
-        card.setOnMouseExited(e -> {
-            card.setTranslateY(0);
-            card.setStyle("-fx-background-color:white; -fx-background-radius:18;");
-        });
+        HBox top = new HBox(16, iconWrap, new VBox(3, tituloLbl, valorLbl, varLbl));
+        top.setAlignment(Pos.CENTER_LEFT);
+        card.getChildren().add(top);
+        card.setOnMouseEntered(e -> card.setTranslateY(-3));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
-    // ── Contadores ───────────────────────────────────────────────
-    private long contarAlertasActivas() {
-        try {
-            return alertaService.listar().stream()
-                    .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                              || a.getEstado() == EstadoAlerta.EN_ATENCION
-                              || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA
-                              || a.getEstado() == EstadoAlerta.RECIBIDA)
-                    .count();
-        } catch (Exception e) { return 0; }
+    private Region separadorH() {
+        Region sep = new Region();
+        sep.setPrefHeight(1);
+        sep.setStyle("-fx-background-color: " + BORDER + ";");
+        return sep;
     }
 
-    private long contarAsignaciones() {
-        try { return asignacionService == null ? 0 : asignacionService.listar().size(); }
-        catch (Exception e) { return 0; }
-    }
-
-    private long contarUnidadesActivas() {
-        try {
-            return unidadService.listar().stream()
-                    .filter(u -> u.getEstado() == EstadoUnidadPolicial.OPERATIVA).count();
-        } catch (Exception e) { return 0; }
-    }
-
-    private long contarPoliciasActivos() {
-        try {
-            return policiaService.listar().stream()
-                    .filter(p -> p.getEstadopolicial() == EstadoPolicia.DISPONIBLE
-                              || p.getEstadopolicial() == EstadoPolicia.EN_SERVICIO)
-                    .count();
-        } catch (Exception e) { return 0; }
-    }
-
-    private long contarAlarmasActivas() {
-        try {
-            return alarmaService.listar().stream()
-                    .filter(a -> a.getEstado() == EstadoAlarma.ACTIVA
-                              || a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO)
-                    .count();
-        } catch (Exception e) { return 0; }
-    }
-
-    private long contarNotificaciones() {
-        try { return notificacionService == null ? 0 : notificacionService.listar().size(); }
-        catch (Exception e) { return 0; }
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);
         lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size) : Font.font("System", size));
         lbl.setTextFill(Color.web(color));
         return lbl;
-    }
-
-    private ScrollPane wrapScroll(VBox content) {
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
-        return scroll;
-    }
-
-    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage image) {
-        int minX = image.getWidth(), minY = image.getHeight(), maxX = 0, maxY = 0;
-        for (int y = 0; y < image.getHeight(); y++)
-            for (int x = 0; x < image.getWidth(); x++) {
-                int alpha = (image.getRGB(x, y) >> 24) & 0xff;
-                if (alpha > 0) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
-            }
-        return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 }

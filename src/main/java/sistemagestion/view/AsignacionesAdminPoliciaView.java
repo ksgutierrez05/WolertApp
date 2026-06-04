@@ -711,22 +711,310 @@ public class AsignacionesAdminPoliciaView {
 
     // ── Acciones ─────────────────────────────────────────────────
     private void verAsignacion(AsignacionUnidad a) {
-        String unidad = (a.getUnidadpolicial() != null
-                && a.getUnidadpolicial().getNombre() != null)
-                ? a.getUnidadpolicial().getNombre() : "Sin unidad";
-        String fecha = a.getFechahoraasignacion() != null
-                ? a.getFechahoraasignacion().format(FMT) : "—";
-        String obs = (a.getObservacion() != null) ? a.getObservacion() : "—";
+        Stage dlg = new Stage();
+        dlg.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dlg.setTitle("Detalle de asignación");
+        dlg.setResizable(false);
 
-        mostrarInfo("Detalle de asignación",
-                "Unidad: " + unidad + "\n"
-                + "Fecha:  " + fecha + "\n"
-                + "Obs.:   " + obs);
+        VBox root = new VBox(0);
+        root.setPrefWidth(420);
+        root.setStyle("-fx-background-color:" + BG + ";");
+
+        // Header azul
+        HBox header = new HBox();
+        header.setPadding(new Insets(20, 24, 18, 24));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color:" + BLUE + ";");
+        Label titleLbl = new Label("Detalle de asignación");
+        titleLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
+        titleLbl.setTextFill(Color.web(WHITE));
+        header.getChildren().add(titleLbl);
+
+        // Cuerpo con filas de datos
+        VBox body = new VBox(0);
+        body.setStyle("-fx-background-color:white;");
+        body.setPadding(new Insets(8, 0, 8, 0));
+
+        String unidad = a.getUnidadpolicial() != null ? a.getUnidadpolicial().getNombre() : "Sin unidad";
+        String obs = (a.getObservacion() != null && !a.getObservacion().isBlank()) ? a.getObservacion() : "—";
+        String fecha = a.getFechahoraasignacion() != null ? a.getFechahoraasignacion().format(FMT) : "—";
+
+        // Alerta
+        String alertaTxt = "—";
+        if (a.getAlerta() != null) {
+            String tipo = a.getAlerta().getTipoalerta() != null ? a.getAlerta().getTipoalerta().getNombre() : "Alerta";
+            String barrio = a.getAlerta().getBarrio() != null ? a.getAlerta().getBarrio().getNombre() : "Sin barrio";
+            String estado = a.getAlerta().getEstado() != null ? a.getAlerta().getEstado().toString() : "—";
+            alertaTxt = "#" + a.getAlerta().getId_alerta() + " — " + tipo + " en " + barrio + "  [" + estado + "]";
+        }
+
+        body.getChildren().addAll(
+                filaDetalle("\uf0f3", "Alerta", alertaTxt, BLUE),
+                separador(),
+                filaDetalle("\uf505", "Unidad", unidad, GREEN),
+                separador(),
+                filaDetalle("\uf249", "Observación", obs, ORANGE),
+                separador(),
+                filaDetalle("\uf073", "Fecha / Hora", fecha, PURPLE)
+        );
+
+        // Botón cerrar
+        HBox btnBar = new HBox();
+        btnBar.setPadding(new Insets(16, 24, 20, 24));
+        btnBar.setAlignment(Pos.CENTER_RIGHT);
+        btnBar.setStyle("-fx-background-color:white;-fx-border-color:#e5e7eb "
+                + "transparent transparent;-fx-border-width:1 0 0 0;");
+        Button btnCerrar = mkBtn("Cerrar", BLUE, "#0d47a1");
+        btnCerrar.setOnAction(e -> dlg.close());
+        btnBar.getChildren().add(btnCerrar);
+
+        root.getChildren().addAll(header, body, btnBar);
+        dlg.setScene(new javafx.scene.Scene(root));
+        dlg.showAndWait();
+    }
+
+// ── Helper filaDetalle ────────────────────────────────────────
+    private HBox filaDetalle(String iconFA, String titulo, String valor, String color) {
+        HBox fila = new HBox(14);
+        fila.setPadding(new Insets(14, 24, 14, 24));
+        fila.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(36, 36);
+        iconWrap.setMinSize(36, 36);
+        javafx.scene.shape.Rectangle bg = new javafx.scene.shape.Rectangle(36, 36);
+        bg.setArcWidth(10);
+        bg.setArcHeight(10);
+        bg.setFill(Color.web(color + "22")); // color suave de fondo
+        Label icn = new Label(iconFA);
+        icn.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:14px;-fx-text-fill:" + color + ";");
+        iconWrap.getChildren().addAll(bg, icn);
+
+        VBox texto = new VBox(2);
+        Label lTitulo = label(titulo, 11, GRAY_TEXT, false);
+        Label lValor = label(valor, 13, "#111827", true);
+        lValor.setWrapText(true);
+        texto.getChildren().addAll(lTitulo, lValor);
+        HBox.setHgrow(texto, Priority.ALWAYS);
+
+        fila.getChildren().addAll(iconWrap, texto);
+        return fila;
+    }
+
+    private javafx.scene.shape.Rectangle separador() {
+        javafx.scene.shape.Rectangle sep = new javafx.scene.shape.Rectangle();
+        sep.setHeight(1);
+        sep.setFill(Color.web(BORDER));
+        sep.widthProperty().bind(
+                javafx.beans.binding.Bindings.createDoubleBinding(() -> 420.0)
+        );
+        return sep;
     }
 
     private void editarAsignacion(AsignacionUnidad a) {
+        Stage dlg = new Stage();
+        dlg.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dlg.setTitle("Editar asignación");
+        dlg.setResizable(false);
 
-        mostrarInfo("Editar", "Funcionalidad de edición próximamente disponible.");
+        VBox root = new VBox(0);
+        root.setPrefWidth(460);
+        root.setStyle("-fx-background-color:" + BG + ";");
+
+        // Header
+        HBox header = new HBox(12);
+        header.setPadding(new Insets(20, 24, 18, 24));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color:" + ORANGE + ";");
+        Label titleLbl = new Label("Editar asignación");
+        titleLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
+        titleLbl.setTextFill(Color.web(WHITE));
+        Label subLbl = label("Modifica los datos de la asignación.", 12, "#ffe0b2", false);
+        VBox headerText = new VBox(4, titleLbl, subLbl);
+        header.getChildren().add(headerText);
+
+        VBox form = new VBox(14);
+        form.setPadding(new Insets(24));
+        form.setStyle("-fx-background-color:white;");
+
+        // ── Alerta (precargada) ──────────────────────────────────
+        Label lblAlerta = label("Alerta *", 12, "#374151", true);
+        ComboBox<Alerta> cmbAlerta = new ComboBox<>();
+        cmbAlerta.setMaxWidth(Double.MAX_VALUE);
+        cmbAlerta.setPrefHeight(40);
+        cmbAlerta.setStyle("-fx-background-color:#f5f7fb;-fx-background-radius:8;"
+                + "-fx-border-color:#e5e7eb;-fx-font-size:13px;");
+        try {
+            List<Alerta> alertas = new AlertaService().listar(); // todas, no solo pendientes
+            cmbAlerta.getItems().setAll(alertas);
+            if (a.getAlerta() != null) {
+                alertas.stream()
+                        .filter(al -> al.getId_alerta() == a.getAlerta().getId_alerta())
+                        .findFirst()
+                        .ifPresent(cmbAlerta::setValue); // ← precarga la alerta actual
+            }
+        } catch (Exception ignored) {
+        }
+
+        cmbAlerta.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(Alerta item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+                String tipo = item.getTipoalerta() != null ? item.getTipoalerta().getNombre() : "Sin tipo";
+                String barrio = item.getBarrio() != null ? item.getBarrio().getNombre() : "Sin barrio";
+                setText("#" + item.getId_alerta() + " — " + tipo + " en " + barrio
+                        + "  [" + (item.getEstado() != null ? item.getEstado() : "—") + "]");
+            }
+        });
+        cmbAlerta.setButtonCell(new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(Alerta item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText("Selecciona la alerta");
+                    return;
+                }
+                String tipo = item.getTipoalerta() != null ? item.getTipoalerta().getNombre() : "Sin tipo";
+                String barrio = item.getBarrio() != null ? item.getBarrio().getNombre() : "Sin barrio";
+                setText("#" + item.getId_alerta() + " — " + tipo + " en " + barrio);
+            }
+        });
+
+        // ── Unidad (precargada) ──────────────────────────────────
+        Label lblUnidad = label("Unidad policial *", 12, "#374151", true);
+        ComboBox<UnidadPolicial> cmbUnidad = new ComboBox<>();
+        cmbUnidad.setMaxWidth(Double.MAX_VALUE);
+        cmbUnidad.setPrefHeight(40);
+        cmbUnidad.setStyle("-fx-background-color:#f5f7fb;-fx-background-radius:8;"
+                + "-fx-border-color:#e5e7eb;-fx-font-size:13px;");
+        try {
+            List<UnidadPolicial> unidades = unidadService.listar(); // todas
+            cmbUnidad.getItems().setAll(unidades);
+            if (a.getUnidadpolicial() != null) {
+                unidades.stream()
+                        .filter(u -> u.getId_unidad() == a.getUnidadpolicial().getId_unidad())
+                        .findFirst()
+                        .ifPresent(cmbUnidad::setValue); // ← precarga la unidad actual
+            }
+        } catch (Exception ignored) {
+        }
+
+        cmbUnidad.setCellFactory(lv -> new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(UnidadPolicial item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNombre() + " — " + item.getEstado());
+            }
+        });
+        cmbUnidad.setButtonCell(new javafx.scene.control.ListCell<>() {
+            @Override
+            protected void updateItem(UnidadPolicial item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? "Selecciona la unidad" : item.getNombre());
+            }
+        });
+
+        // ── Observación (precargada) ─────────────────────────────
+        Label lblObs = label("Observación", 12, "#374151", true);
+        TextField txtObs = new TextField(a.getObservacion() != null ? a.getObservacion() : "");
+        txtObs.setPrefHeight(40);
+        txtObs.setMaxWidth(Double.MAX_VALUE);
+        txtObs.setStyle("-fx-background-color:#f5f7fb;-fx-background-radius:8;"
+                + "-fx-border-color:#e5e7eb;-fx-font-size:13px;");
+
+        // ── Fecha (precargada) ───────────────────────────────────
+        Label lblFecha = label("Fecha y hora", 12, "#374151", true);
+        TextField txtFecha = new TextField(
+                a.getFechahoraasignacion() != null ? a.getFechahoraasignacion().format(FMT) : "");
+        txtFecha.setPromptText("dd/MM/yyyy HH:mm");
+        txtFecha.setPrefHeight(40);
+        txtFecha.setMaxWidth(Double.MAX_VALUE);
+        txtFecha.setStyle("-fx-background-color:#f5f7fb;-fx-background-radius:8;"
+                + "-fx-border-color:#e5e7eb;-fx-font-size:13px;");
+
+        Label errLbl = label("", 12, RED, false);
+        errLbl.setWrapText(true);
+
+        form.getChildren().addAll(
+                new VBox(4, lblAlerta, cmbAlerta),
+                new VBox(4, lblUnidad, cmbUnidad),
+                new VBox(4, lblObs, txtObs),
+                new VBox(4, lblFecha, txtFecha),
+                errLbl
+        );
+
+        // Botones
+        HBox btnBar = new HBox(10);
+        btnBar.setPadding(new Insets(16, 24, 20, 24));
+        btnBar.setAlignment(Pos.CENTER_RIGHT);
+        btnBar.setStyle("-fx-background-color:white;-fx-border-color:#e5e7eb "
+                + "transparent transparent;-fx-border-width:1 0 0 0;");
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.setPrefHeight(40);
+        btnCancelar.setStyle("-fx-background-color:#f3f4f6;-fx-text-fill:#374151;"
+                + "-fx-font-size:13px;-fx-font-weight:bold;"
+                + "-fx-background-radius:8;-fx-padding:8 18;-fx-cursor:hand;");
+        btnCancelar.setOnAction(e -> dlg.close());
+
+        Button btnGuardar = mkBtn("Guardar cambios", ORANGE, "#e65100");
+        btnGuardar.setOnAction(e -> {
+            errLbl.setText("");
+            Alerta alertaSel = cmbAlerta.getValue();
+            UnidadPolicial uni = cmbUnidad.getValue();
+
+            if (alertaSel == null) {
+                errLbl.setText("Selecciona una alerta.");
+                return;
+            }
+            if (uni == null) {
+                errLbl.setText("Selecciona una unidad.");
+                return;
+            }
+
+            LocalDateTime fecha;
+            try {
+                fecha = LocalDateTime.parse(txtFecha.getText().trim(), FMT);
+            } catch (Exception ex) {
+                errLbl.setText("Formato de fecha inválido. Usa dd/MM/yyyy HH:mm");
+                return;
+            }
+
+            try {
+                AsignacionUnidad actualizada = new AsignacionUnidad();
+                actualizada.setId_asignacion(a.getId_asignacion());
+                Alerta al = new Alerta();
+                al.setId_alerta(alertaSel.getId_alerta());
+                actualizada.setAlerta(al);
+                actualizada.setUnidadpolicial(uni);
+                actualizada.setObservacion(txtObs.getText().isBlank()
+                        ? "Sin observación" : txtObs.getText().trim());
+                actualizada.setFechahoraasignacion(fecha);
+
+                boolean ok = asignacionService.actualizar(actualizada);
+                if (ok) {
+                    todasLasAsignaciones = asignacionService.listar();
+                    renderizarLista(todasLasAsignaciones);
+                    dlg.close();
+                    mostrarInfo("Actualizada", "Asignación actualizada correctamente.");
+                } else {
+                    errLbl.setText("No se pudo actualizar la asignación.");
+                }
+            } catch (Exception ex) {
+                errLbl.setText("Error: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+
+        btnBar.getChildren().addAll(btnCancelar, btnGuardar);
+        root.getChildren().addAll(header, form, btnBar);
+        dlg.setScene(new javafx.scene.Scene(root));
+        dlg.showAndWait();
     }
 
     private void eliminarAsignacion(AsignacionUnidad a) {

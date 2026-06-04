@@ -42,11 +42,14 @@ public class CentroOperacionesPoliciaView {
     private final AtencionAlertaService atencionService;
     private final AlarmaService alarmaService;
     private final NotificacionService notificacionService;
+    private final TipoArmaService tipoArmaService;
+    private final MedioTransporteService medioTransporteService;
     private final BorderPane root;
 
     public CentroOperacionesPoliciaView(Usuario usuarioActual, Policia policiaActual,
             AlertaService alertaService, AtencionAlertaService atencionService,
-            AlarmaService alarmaService, NotificacionService notificacionService,
+            AlarmaService alarmaService, NotificacionService notificacionService, TipoArmaService tipoArmaService,
+            MedioTransporteService medioTransporteService,
             BorderPane root) {
         this.usuarioActual = usuarioActual;
         this.policiaActual = policiaActual;
@@ -54,6 +57,8 @@ public class CentroOperacionesPoliciaView {
         this.atencionService = atencionService;
         this.alarmaService = alarmaService;
         this.notificacionService = notificacionService;
+        this.tipoArmaService = tipoArmaService;
+        this.medioTransporteService = medioTransporteService;
         this.root = root;
     }
 
@@ -252,7 +257,7 @@ public class CentroOperacionesPoliciaView {
         verTodasBtn.setOnMouseClicked(e
                 -> root.setCenter(new MisAlertasPoliciaView(
                         usuarioActual, policiaActual,
-                        alertaService, atencionService, root).build()));
+                        alertaService, atencionService, tipoArmaService, medioTransporteService, root).build()));
         hAlerta.getChildren().addAll(iconAlertaBox, tituloAlertas, verTodasBtn);
         alertas.getChildren().addAll(hAlerta, separator());
 
@@ -276,7 +281,7 @@ public class CentroOperacionesPoliciaView {
                             fila.setOnMouseClicked(e
                                     -> root.setCenter(new MisAlertasPoliciaView(
                                             usuarioActual, policiaActual,
-                                            alertaService, atencionService, root).build()));
+                                            alertaService, atencionService, tipoArmaService, medioTransporteService, root).build()));
                             alertas.getChildren().addAll(fila, separator());
                         });
             }

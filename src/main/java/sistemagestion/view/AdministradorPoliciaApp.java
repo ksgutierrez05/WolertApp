@@ -1,5 +1,4 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+/* Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package sistemagestion.view;
@@ -32,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Screen;
 
 import sistemagestion.model.*;
 import sistemagestion.service.*;
@@ -104,17 +104,22 @@ public class AdministradorPoliciaApp {
     // SHOW
     // =========================================================================
     public void show(Stage stage) {
-
         root = new BorderPane();
         root.setLeft(buildSidebar());
         root.setCenter(buildMainContent());
         root.setStyle("-fx-background-color: " + BG + ";");
 
-        Scene scene = new Scene(root, 1100, 650);
+        Screen screen = Screen.getPrimary();
+        double w = screen.getVisualBounds().getWidth();
+        double h = screen.getVisualBounds().getHeight();
+
+        Scene scene = new Scene(root, w * 0.85, h * 0.85);
         stage.setTitle("WolertApp – Administrador Policía");
         stage.setScene(scene);
         stage.setResizable(true);
-        stage.setMaximized(false);
+        stage.setMinWidth(900);
+        stage.setMinHeight(580);
+        // Se elimina setMaximized(false)
         stage.show();
     }
 
@@ -122,12 +127,13 @@ public class AdministradorPoliciaApp {
     // SIDEBAR
     // =========================================================================
     private ScrollPane buildSidebar() {
-
         VBox sidebar = new VBox();
         sidebar.setPrefWidth(240);
         sidebar.setMinWidth(240);
         sidebar.setMaxWidth(240);
-
+        sidebar.setMaxHeight(Double.MAX_VALUE);
+        sidebar.setFillWidth(true);
+        VBox.setVgrow(sidebar, Priority.ALWAYS);
         sidebar.setStyle(
                 "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
         );
@@ -140,7 +146,6 @@ public class AdministradorPoliciaApp {
         ImageView logoImg = new ImageView(
                 new Image(getClass().getResourceAsStream("/LogoWolertAPP.png"))
         );
-
         logoImg.setFitWidth(65);
         logoImg.setFitHeight(65);
         logoImg.setPreserveRatio(true);
@@ -150,7 +155,6 @@ public class AdministradorPoliciaApp {
                 label("WolertApp", 15, WHITE, true),
                 label("Administrador Policía", 9, "#8899bb", false)
         );
-
         logoBox.getChildren().addAll(logoImg, logoText);
 
         // Perfil
@@ -186,55 +190,32 @@ public class AdministradorPoliciaApp {
         logout.setPadding(new Insets(14, 16, 18, 16));
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
-
         logout.setStyle("-fx-background-color: transparent;");
-
-        logout.setOnMouseEntered(e
-                -> logout.setStyle(
-                        "-fx-background-color: rgba(255,255,255,0.15);"
-                        + "-fx-background-radius: 8;"
-                )
-        );
-
-        logout.setOnMouseExited(e
-                -> logout.setStyle("-fx-background-color: transparent;")
-        );
-
+        logout.setOnMouseEntered(e -> logout.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.15);"
+                + "-fx-background-radius: 8;"
+        ));
+        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
         logout.setOnMouseClicked(e -> cerrarSesion());
-
         logout.getChildren().addAll(
-                label("🚪", 15, WHITE, false),
-                label("Cerrar sesión", 13, WHITE, true)
+                label("🚪", 15, RED, false),
+                label("Cerrar sesión", 13, RED, false)
         );
 
-        sidebar.getChildren().addAll(
-                logoBox,
-                profileCard,
-                nav,
-                spacer,
-                logout
-        );
+        sidebar.getChildren().addAll(logoBox, profileCard, nav, spacer, logout);
 
         ScrollPane scroll = new ScrollPane(sidebar);
-
         scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
         scroll.setPannable(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setStyle(
                 "-fx-background: transparent;"
                 + "-fx-background-color: transparent;"
-                + "-fx-border-width: 0;"
+                + "-fx-border-color: transparent;"
                 + "-fx-padding: 0;"
         );
-
         return scroll;
     }
 
@@ -398,9 +379,13 @@ public class AdministradorPoliciaApp {
                 buildStats(),
                 buildCenterPanels(),
                 buildBottomPanels());
+
         ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
+        scroll.setPannable(true);
+        scroll.setFocusTraversable(false);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
         return scroll;
     }
