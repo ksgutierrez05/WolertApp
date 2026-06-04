@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import sistemagestion.dao.AlertaDAO;
 import sistemagestion.model.Alerta;
+import sistemagestion.model.EstadoAlerta;
 import sistemagestion.util.Validador;
 
 public class AlertaService {
@@ -112,7 +113,18 @@ public class AlertaService {
             throw new IllegalArgumentException();
         }
         Validador.validarCampoVacio(estado);
-        return alertaDAO.actualizarEstado(id, estado);
+
+        boolean actualizado = alertaDAO.actualizarEstado(id, estado);
+
+        if (actualizado) {
+            Alerta a = alertaDAO.buscarPorId(id);
+            if (a != null) {
+                a.setEstado(EstadoAlerta.valueOf(estado));
+                AlertaEmailSender.enviarCambioEstado(a);
+            }
+        }
+
+        return actualizado;
     }
 
     public boolean eliminar(int id) {
