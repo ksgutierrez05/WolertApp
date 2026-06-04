@@ -19,21 +19,30 @@ public class NotificacionService {
     private NotificacionDAO notificacionDAO;
 
     public NotificacionService() throws SQLException {
-        notificacionDAO= new NotificacionDAO();
+        notificacionDAO = new NotificacionDAO();
     }
 
     public boolean insertar(Notificacion n) {
-
         Validador.validarObjeto(n);
         Validador.validarObjeto(n.getUsuario());
         Validador.validarObjeto(n.getAlerta());
         Validador.validarCampoVacio(n.getMensaje());
 
-        return notificacionDAO.insertar(
+        boolean guardado = notificacionDAO.insertar(
                 n.getAlerta().getId_alerta(),
                 n.getUsuario().getIdentificacion(),
                 n.getMensaje()
         );
+
+        if (guardado) {
+            NotificacionEmailSender.enviar(n);
+        }
+
+        return guardado;
+    }
+
+    public List<Notificacion> listarPorUnidad(int idUnidad) {
+        return notificacionDAO.listarPorUnidad(idUnidad);
     }
 
     public List<Notificacion> listar() {
@@ -41,11 +50,9 @@ public class NotificacionService {
     }
 
     public boolean eliminar(int id) {
-
         if (id <= 0) {
             throw new IllegalArgumentException();
         }
-
         return notificacionDAO.eliminar(id);
     }
 }

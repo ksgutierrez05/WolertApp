@@ -22,17 +22,30 @@ public class PoliciaService {
         policiaDAO = new PoliciaDAO();
     }
 
-    public boolean insertar(Policia p) {
-
+    public boolean insertarCompleto(Policia p, String username, String password, String nombreRol) {
         Validador.validarObjeto(p);
-        Validador.validarObjeto(p.getUnidadpolicial());
+        Validador.validarCampoVacio(p.getIdentificacion());
+        Validador.validarCampoVacio(p.getPrimer_nombre());
+        Validador.validarCampoVacio(p.getPrimer_apellido());
         Validador.validarCampoVacio(p.getPlaca());
         Validador.validarCampoVacio(p.getRango());
         Validador.validarEnum(p.getEstadopolicial());
 
-        return policiaDAO.insertar(
+        String nombreUnidad = (p.getUnidadpolicial() != null)
+                ? p.getUnidadpolicial().getNombre() : null;
+
+        return policiaDAO.insertarCompleto(
                 p.getIdentificacion(),
-                p.getUnidadpolicial().getNombre(),
+                p.getPrimer_nombre(),
+                p.getSegundo_nombre(),
+                p.getPrimer_apellido(),
+                p.getSegundo_apellido(),
+                p.getTelefono(),
+                p.getCorreo(),
+                username,
+                password,
+                nombreRol,
+                nombreUnidad,
                 p.getPlaca(),
                 p.getRango(),
                 p.getEstadopolicial().name()
@@ -40,21 +53,26 @@ public class PoliciaService {
     }
 
     public boolean actualizar(Policia p) {
-
-        Validador.validarObjeto(p);
-        Validador.validarObjeto(p.getUnidadpolicial());
-        Validador.validarCampoVacio(p.getPlaca());
-        Validador.validarCampoVacio(p.getRango());
-        Validador.validarEnum(p.getEstadopolicial());
-
-        return policiaDAO.actualizar(
-                p.getIdentificacion(),
-                p.getUnidadpolicial().getNombre(),
-                p.getPlaca(),
-                p.getRango(),
-                p.getEstadopolicial().name()
-        );
-    }
+    Validador.validarObjeto(p);
+    Validador.validarObjeto(p.getUnidadpolicial());
+    Validador.validarCampoVacio(p.getPlaca());
+    Validador.validarCampoVacio(p.getRango());
+    Validador.validarEnum(p.getEstadopolicial());
+    return policiaDAO.actualizar(
+            p.getIdentificacion(),
+            p.getPrimer_nombre(),
+            p.getSegundo_nombre(),
+            p.getPrimer_apellido(),
+            p.getSegundo_apellido(),
+            p.getTelefono(),
+            p.getCorreo(),
+            p.getUsername(),
+            p.getUnidadpolicial().getNombre(),
+            p.getPlaca(),
+            p.getRango(),
+            p.getEstadopolicial().name()
+    );
+}
 
     public boolean eliminar(String cedulaUsuario) {
 

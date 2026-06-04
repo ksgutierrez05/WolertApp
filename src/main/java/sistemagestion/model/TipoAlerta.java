@@ -9,9 +9,18 @@ package sistemagestion.model;
  * @author Maria Cristina
  */
 public class TipoAlerta {
+
     private int id_tipoalerta;
     private String nombre;
-   
+    private String prioridad;
+
+    public String getPrioridad() {
+        return prioridad;
+    }
+
+    public void setPrioridad(String prioridad) {
+        this.prioridad = prioridad;
+    }
 
     public int getId_tipoalerta() {
         return id_tipoalerta;
@@ -29,7 +38,4 @@ public class TipoAlerta {
         this.nombre = nombre;
     }
 
-   
-    
-    
 }

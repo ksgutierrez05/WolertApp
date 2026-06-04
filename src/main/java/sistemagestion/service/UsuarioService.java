@@ -89,11 +89,29 @@ public class UsuarioService {
         );
     }
 
+    public boolean suspender(String cedula) throws SQLException {
+        Validador.validarIdentificacion(cedula);
+        Usuario u = dao.buscarPorCedula(cedula);
+        boolean ok = dao.inactivar(cedula);
+        if (ok) {
+            UsuarioEmailSender.enviarSuspension(u);  // ← una sola línea
+        }
+        return ok;
+    }
+
+    public boolean activar(String cedula) throws SQLException {
+        Validador.validarIdentificacion(cedula);
+        Usuario u = dao.buscarPorCedula(cedula);
+        boolean ok = dao.activar(cedula);
+        if (ok) {
+            UsuarioEmailSender.enviarReactivacion(u); // ← una sola línea
+        }
+        return ok;
+    }
+
     public Usuario login(String username, String password) throws SQLException {
-
         Validador.validarUsername(username);
-        Validador.validarPassword(password);
-
+        Validador.validarCampoVacio(password);
         return dao.login(username, password);
     }
 
