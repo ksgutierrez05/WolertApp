@@ -13,8 +13,10 @@ import java.util.List;
 import oracle.jdbc.OracleTypes;
 import sistemagestion.model.Alerta;
 import sistemagestion.model.AtencionAlerta;
+import sistemagestion.model.EstadoAlerta;
 import sistemagestion.model.EstadoAtencionAlerta;
 import sistemagestion.model.MedioTransporte;
+import sistemagestion.model.Policia;
 import sistemagestion.model.TipoArma;
 import sistemagestion.model.UnidadPolicial;
 
@@ -29,7 +31,7 @@ public class AtencionAlertaDAO {
     }
 
     public AtencionAlertaDAO() throws SQLException {
-     
+
     }
 
     public boolean insertar(
@@ -37,11 +39,12 @@ public class AtencionAlertaDAO {
             String nombreUnidad,
             String estadoFinal,
             String descripcion,
-            String tipoArma, 
-            String medioTransporte, 
-            String observacion
+            String tipoArma,
+            String medioTransporte,
+            String observacion,
+            int idPolicia
     ) {
-        String sql = "{call pkg_alertas.pr_insertar_atencion(?, ?, ?, ?, ?, ?, ?)}";
+        String sql = "{call pkg_alertas.pr_insertar_atencion(?, ?, ?, ?, ?, ?, ?, ?)}"; // ← 8 parámetros
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setInt(1, idAlerta);
             cs.setString(2, nombreUnidad);
@@ -50,20 +53,29 @@ public class AtencionAlertaDAO {
             cs.setString(5, tipoArma);
             cs.setString(6, medioTransporte);
             cs.setString(7, observacion);
+            if (idPolicia > 0) {
+                cs.setInt(8, idPolicia);
+            } else {
+                cs.setNull(8, java.sql.Types.INTEGER);
+            }
             cs.execute();
             return true;
         } catch (SQLException e) {
-            System.out.println("Error insertar atencion: " + e.getMessage());
+            System.out.println("=== ERROR DAO ===");
+            System.out.println("Mensaje: " + e.getMessage());
+            System.out.println("Codigo: " + e.getErrorCode());
+            e.printStackTrace();
+
             return false;
+
         }
     }
 
-    
     public boolean actualizar(
             int idAtencion,
             String estadoFinal,
             String descripcion,
-            String tipoArma, 
+            String tipoArma,
             String medioTransporte,
             String observacion
     ) {
@@ -113,7 +125,6 @@ public class AtencionAlertaDAO {
         return null;
     }
 
-    
     public List<AtencionAlerta> listar() {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_atenciones(?)}";
@@ -130,7 +141,6 @@ public class AtencionAlertaDAO {
         return lista;
     }
 
-   
     public List<AtencionAlerta> listarPorAlerta(int idAlerta) {
         List<AtencionAlerta> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_atenciones_por_alerta(?, ?)}";
@@ -199,11 +209,24 @@ public class AtencionAlertaDAO {
         // alerta asociada
         Alerta al = new Alerta();
         al.setId_alerta(rs.getInt("ID_ALERTA"));
+        al.setEstado(EstadoAlerta.valueOf(rs.getString("ESTADO_ALERTA")));
         a.setAlerta(al);
 
         // unidad que atendió
         UnidadPolicial u = new UnidadPolicial();
         u.setNombre(rs.getString("NOMBRE_UNIDAD"));
+        a.setUnidad(u);
+
+        String nombrePolicia = rs.getString("NOMBRE_POLICIA");
+        if (nombrePolicia != null) {
+            Policia p = new Policia();
+            String[] partes = nombrePolicia.split(" ", 2);
+            p.setPrimer_nombre(partes[0]);
+            p.setPrimer_apellido(partes.length > 1 ? partes[1] : "");
+            List<Policia> policias = new ArrayList<>();
+            policias.add(p);
+            u.setPolicias(policias);
+        }
         a.setUnidad(u);
 
         // opcionales 

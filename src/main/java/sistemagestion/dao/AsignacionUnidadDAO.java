@@ -15,6 +15,9 @@ import java.util.List;
 import oracle.jdbc.OracleTypes;
 import sistemagestion.model.Alerta;
 import sistemagestion.model.AsignacionUnidad;
+import sistemagestion.model.Barrio;
+import sistemagestion.model.EstadoAlerta;
+import sistemagestion.model.EstadoUnidadPolicial;
 import sistemagestion.model.UnidadPolicial;
 
 /**
@@ -28,7 +31,7 @@ public class AsignacionUnidadDAO {
     }
 
     public AsignacionUnidadDAO() throws SQLException {
-        
+
     }
 
     public boolean insertar(
@@ -85,7 +88,7 @@ public class AsignacionUnidadDAO {
         }
     }
 
-    public List<AsignacionUnidad> listar() {
+    /*public List<AsignacionUnidad> listar() {
         List<AsignacionUnidad> lista = new ArrayList<>();
         String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
@@ -99,25 +102,83 @@ public class AsignacionUnidadDAO {
             System.out.println("Error listar asignaciones: " + e.getMessage());
         }
         return lista;
+    }*/
+    public boolean asignarUnidadCercana(int idAlerta) {
+        String sql = "{CALL pkg_alertas.pr_asignar_unidad_cercana(?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.setInt(1, idAlerta);
+            cs.execute();
+            System.out.println("asignarUnidadCercana OK para alerta " + idAlerta);
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Error asignarUnidadCercana: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public List<AsignacionUnidad> listar() {
+        List<AsignacionUnidad> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_asignaciones(?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.registerOutParameter(1, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(1);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+            System.out.println("listar asignaciones OK: " + lista.size() + " registros");
+        } catch (SQLException e) {
+            System.err.println("Error listar asignaciones: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return lista;
     }
 
     // vw_asignaciones retorna
     private AsignacionUnidad mapear(ResultSet rs) throws SQLException {
+
         AsignacionUnidad a = new AsignacionUnidad();
         a.setId_asignacion(rs.getInt("ID_ASIGNACION"));
         a.setObservacion(rs.getString("OBSERVACION"));
-        a.setFechahoraasignacion(
-            rs.getTimestamp("FECHA").toLocalDateTime()
-        );
 
-        // alerta — la vista retorna estado y descripcion
+        if (rs.getTimestamp("FECHA") != null) {
+            a.setFechahoraasignacion(rs.getTimestamp("FECHA").toLocalDateTime());
+        }
+
         Alerta al = new Alerta();
+        al.setId_alerta(rs.getInt("ID_ALERTA"));
         al.setDescripcion(rs.getString("DESCRIPCION_ALERTA"));
+        try {
+            String estadoAlerta = rs.getString("ESTADO_ALERTA");
+            if (estadoAlerta != null) {
+                al.setEstado(EstadoAlerta.valueOf(estadoAlerta.toUpperCase()));
+            }
+        } catch (Exception ignored) {
+        }
+
+        String barrioAlerta = rs.getString("BARRIO_ALERTA");
+        if (barrioAlerta != null) {
+            Barrio ba = new Barrio();
+            ba.setNombre(barrioAlerta);
+            al.setBarrio(ba);
+        }
         a.setAlerta(al);
 
-        // unidad — la vista retorna nombre
         UnidadPolicial u = new UnidadPolicial();
+        u.setId_unidad(rs.getInt("ID_UNIDAD"));
         u.setNombre(rs.getString("NOMBRE_UNIDAD"));
+        try {
+            String estadoUnidad = rs.getString("ESTADO_UNIDAD");
+            if (estadoUnidad != null) {
+                u.setEstado(EstadoUnidadPolicial.valueOf(estadoUnidad.toUpperCase()));
+            }
+        } catch (Exception ignored) {
+        }
+
+        Barrio b = new Barrio();
+        b.setNombre(rs.getString("BARRIO_UNIDAD"));
+        u.setBarrio(b);
         a.setUnidadpolicial(u);
 
         return a;

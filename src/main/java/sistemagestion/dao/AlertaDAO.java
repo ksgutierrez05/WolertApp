@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package sistemagestion.dao;
 
 import java.sql.CallableStatement;
@@ -11,22 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
-import sistemagestion.model.Alarma;
-import sistemagestion.model.Alerta;
-import sistemagestion.model.Barrio;
-import sistemagestion.model.Comuna;
-import sistemagestion.model.Direccion;
-import sistemagestion.model.EstadoAlarma;
-import sistemagestion.model.EstadoAlerta;
-import sistemagestion.model.MedioTransporte;
-import sistemagestion.model.TipoAlerta;
-import sistemagestion.model.TipoArma;
-import sistemagestion.model.Usuario;
+import sistemagestion.model.*;
 
-/**
- *
- * @author Lenovo
- */
 public class AlertaDAO {
 
     private Connection con() throws SQLException {
@@ -34,27 +16,18 @@ public class AlertaDAO {
     }
 
     public AlertaDAO() throws SQLException {
-       
     }
 
-    public boolean insertar(
-            String username,
-            String tipoAlerta,
-            String nombreBarrio,
-            String tipoArma,
-            String medioTransporte,
-            String etapa,
-            String sector,
-            String manzana,
-            String casa,
-            String calle,
-            String carrera,
-            String referencia,
-            Double latitud,
-            Double longitud,
-            String descripcion
+    public int insertar(
+            String username, String tipoAlerta, String nombreBarrio,
+            String tipoArma, String medioTransporte,
+            String etapa, String sector, String manzana, String casa,
+            String calle, String carrera, String referencia,
+            Double latitud, Double longitud, String descripcion
     ) {
-        String sql = "{call pkg_alertas.pr_insertar_alerta(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+        // Ahora con 16 parámetros: 15 IN + 1 OUT
+        String sql = "{call pkg_alertas.pr_insertar_alerta(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}";
+
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, username);
             cs.setString(2, tipoAlerta);
@@ -68,16 +41,36 @@ public class AlertaDAO {
             cs.setString(10, calle);
             cs.setString(11, carrera);
             cs.setString(12, referencia);
-            if (latitud != null) cs.setDouble(13, latitud);
-            else cs.setNull(13, java.sql.Types.NUMERIC);
-            if (longitud != null) cs.setDouble(14, longitud);
-            else cs.setNull(14, java.sql.Types.NUMERIC);
+
+            if (latitud != null) {
+                cs.setDouble(13, latitud);
+            } else {
+                cs.setNull(13, java.sql.Types.NUMERIC);
+            }
+            if (longitud != null) {
+                cs.setDouble(14, longitud);
+            } else {
+                cs.setNull(14, java.sql.Types.NUMERIC);
+            }
+
             cs.setString(15, descripcion);
+
+            // Registrar el parámetro OUT
+            cs.registerOutParameter(16, java.sql.Types.NUMERIC);
             cs.execute();
-            return true;
+
+            // Leer el ID directamente desde el OUT (ya no necesitas el SELECT MAX)
+            int idGenerado = cs.getInt(16);
+            System.out.println("wasNull: " + cs.wasNull());
+            System.out.println("idGenerado raw: " + idGenerado);
+            return cs.wasNull() ? -1 : idGenerado;
+
         } catch (SQLException e) {
             System.out.println("Error insertar alerta: " + e.getMessage());
-            return false;
+            System.out.println("SQLState: " + e.getSQLState());
+            System.out.println("ErrorCode: " + e.getErrorCode());
+            e.printStackTrace(); // ← esto muestra el error completo de Oracle
+            return -1;
         }
     }
 
@@ -88,7 +81,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            if (rs.next()) return mapear(rs);
+            if (rs.next()) {
+                return mapear(rs);
+            }
         } catch (SQLException e) {
             System.out.println("Error buscar alerta: " + e.getMessage());
         }
@@ -102,9 +97,28 @@ public class AlertaDAO {
             cs.registerOutParameter(1, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(1);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error listar alertas: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    public List<Alerta> listarPorUnidad(String nombreUnidad) {
+        List<Alerta> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_alertas_por_unidad(?, ?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.setString(1, nombreUnidad);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error listar alertas por unidad: " + e.getMessage());
         }
         return lista;
     }
@@ -117,7 +131,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error listar alertas por usuario: " + e.getMessage());
         }
@@ -132,7 +148,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error listar alertas por barrio: " + e.getMessage());
         }
@@ -147,7 +165,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error buscar alerta por tipo: " + e.getMessage());
         }
@@ -162,7 +182,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error buscar alerta por tipo exacto: " + e.getMessage());
         }
@@ -177,7 +199,9 @@ public class AlertaDAO {
             cs.registerOutParameter(2, OracleTypes.CURSOR);
             cs.execute();
             ResultSet rs = (ResultSet) cs.getObject(2);
-            while (rs.next()) lista.add(mapear(rs));
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
         } catch (SQLException e) {
             System.out.println("Error buscar alerta por descripcion: " + e.getMessage());
         }
@@ -209,21 +233,13 @@ public class AlertaDAO {
         }
     }
 
-    // vw_alertas_completa retorna:
-    // ID_ALERTA, FECHA, ESTADO, DESCRIPCION, ETAPA, SECTOR, MANZANA, CASA,
-    // CALLE, CARRERA, REFERENCIA, LATITUD, LONGITUD,
-    // NOMBRE_USUARIO, CEDULA, TELEFONO, USERNAME,
-    // TIPO_ALERTA, BARRIO, COMUNA, TIPO_ARMA, MEDIO_TRANSPORTE,
-    // ID_ALARMA, NOMBRE_ALARMA, ESTADO_ALARMA
     private Alerta mapear(ResultSet rs) throws SQLException {
         Alerta a = new Alerta();
-
         a.setId_alerta(rs.getInt("ID_ALERTA"));
         a.setDescripcion(rs.getString("DESCRIPCION"));
         a.setFechaHora(rs.getTimestamp("FECHA").toLocalDateTime());
         a.setEstado(EstadoAlerta.valueOf(rs.getString("ESTADO")));
 
-        // usuario
         Usuario u = new Usuario();
         u.setPrimer_nombre(rs.getString("NOMBRE_USUARIO"));
         u.setUsername(rs.getString("USERNAME"));
@@ -231,12 +247,11 @@ public class AlertaDAO {
         u.setTelefono(rs.getString("TELEFONO"));
         a.setUsuario(u);
 
-        // tipo alerta
         TipoAlerta ta = new TipoAlerta();
         ta.setNombre(rs.getString("TIPO_ALERTA"));
+        ta.setPrioridad(rs.getString("PRIORIDAD"));
         a.setTipoalerta(ta);
-
-        // barrio y comuna
+        
         Comuna c = new Comuna();
         c.setNombre(rs.getString("COMUNA"));
         Barrio b = new Barrio();
@@ -244,7 +259,6 @@ public class AlertaDAO {
         b.setComuna(c);
         a.setBarrio(b);
 
-        // tipo arma 
         String tipoArma = rs.getString("TIPO_ARMA");
         if (tipoArma != null) {
             TipoArma ar = new TipoArma();
@@ -252,7 +266,6 @@ public class AlertaDAO {
             a.setTipoarma(ar);
         }
 
-        // medio transporte
         String medio = rs.getString("MEDIO_TRANSPORTE");
         if (medio != null) {
             MedioTransporte m = new MedioTransporte();
@@ -260,7 +273,6 @@ public class AlertaDAO {
             a.setMediotransporte(m);
         }
 
-        // alarma más cercana asignada 
         int idAlarma = rs.getInt("ID_ALARMA");
         if (!rs.wasNull()) {
             Alarma al = new Alarma();
@@ -270,7 +282,6 @@ public class AlertaDAO {
             a.setAlarma(al);
         }
 
-        // dirección
         Direccion d = new Direccion();
         d.setEtapa(rs.getString("ETAPA"));
         d.setSector(rs.getString("SECTOR"));
@@ -279,8 +290,8 @@ public class AlertaDAO {
         d.setCalle(rs.getString("CALLE"));
         d.setCarrera(rs.getString("CARRERA"));
         d.setReferencia(rs.getString("REFERENCIA"));
-        d.setLatitud(rs.getDouble("LATITUD"));
-        d.setLongitud(rs.getDouble("LONGITUD"));
+        a.setLatitud(rs.getDouble("LATITUD"));
+        a.setLongitud(rs.getDouble("LONGITUD"));
         a.setDireccion(d);
 
         return a;

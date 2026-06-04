@@ -53,16 +53,20 @@ public class UnidadPolicialDAO {
             String nombreActual,
             String nombreNuevo,
             String estado,
-            String nombreBarrio
+            String nombreBarrio,
+            double latitud,
+            double longitud
     ) {
-        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?)}";
-        try (CallableStatement cs = con().prepareCall(sql)) {
-            cs.setString(1, nombreActual);
-            cs.setString(2, nombreNuevo);
-            cs.setString(3, estado);
-            cs.setString(4, nombreBarrio);
-            cs.execute();
-            return true;
+        String sql = "{call pkg_alertas.pr_actualizar_unidad(?, ?, ?, ?, ?, ?)}";
+  try (CallableStatement cs = con().prepareCall(sql)) {
+        cs.setString(1, nombreActual);
+        cs.setString(2, nombreNuevo);
+        cs.setString(3, estado);
+        cs.setString(4, nombreBarrio);
+        cs.setDouble(5, latitud);               
+        cs.setDouble(6, longitud);                  
+        cs.execute();
+        return true;
         } catch (SQLException e) {
             System.out.println("Error actualizar unidad: " + e.getMessage());
             return false;
@@ -136,21 +140,19 @@ public class UnidadPolicialDAO {
     }
 
     // cursor retorna: NOMBRE, ESTADO, BARRIO, COMUNA
-    private UnidadPolicial mapear(ResultSet rs) throws SQLException {
-        UnidadPolicial u = new UnidadPolicial();
-        u.setNombre(rs.getString("NOMBRE"));
-        u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
-        u.setLatitud(rs.getDouble("LATITUD"));
-        u.setLongitud(rs.getDouble("LONGITUD"));
-
-        Comuna c = new Comuna();
-        c.setNombre(rs.getString("COMUNA"));
-
-        Barrio b = new Barrio();
-        b.setNombre(rs.getString("BARRIO"));
-        b.setComuna(c);
-
-        u.setBarrio(b);
-        return u;
-    }
+private UnidadPolicial mapear(ResultSet rs) throws SQLException {
+    UnidadPolicial u = new UnidadPolicial();
+    u.setId_unidad(rs.getInt("ID_UNIDAD"));
+    u.setNombre(rs.getString("NOMBRE"));
+    u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
+    u.setLatitud(rs.getDouble("LATITUD"));
+    u.setLongitud(rs.getDouble("LONGITUD"));
+    Comuna c = new Comuna();
+    c.setNombre(rs.getString("COMUNA"));
+    Barrio b = new Barrio();
+    b.setNombre(rs.getString("BARRIO"));
+    b.setComuna(c);
+    u.setBarrio(b);
+    return u;
+}
 }
