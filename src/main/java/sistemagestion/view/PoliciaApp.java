@@ -48,6 +48,7 @@ public class PoliciaApp {
     private final Usuario usuarioActual;
     private Policia policiaActual;
     private BorderPane root;
+    private VBox nav;
 
     public PoliciaApp(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
@@ -58,9 +59,12 @@ public class PoliciaApp {
             notificacionService = new NotificacionService();
             asignacionService = new AsignacionUnidadService();
             policiaService = new PoliciaService();
+<<<<<<< HEAD
             unidadService = new UnidadPolicialService();
             tipoArmaService= new TipoArmaService();
             medioTransporteService=new MedioTransporteService();
+=======
+>>>>>>> 9c76a9debf73156318495b57769d819b427127ab
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -139,6 +143,7 @@ public class PoliciaApp {
                 navItem("\uf1da", "Historial"),
                 navItem("\uf279", "Mapas"),
                 navItem("\uf0e0", "Notificaciones"),
+                navItem("\uf080", "Reportes"),
                 navItem("\uf007", "Mi perfil")
         );
 
@@ -210,19 +215,48 @@ public class PoliciaApp {
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
         item.setStyle("-fx-background-radius: 8;");
-        item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
 
         Label iconLbl = new Label(icon);
         iconLbl.setStyle(
                 "-fx-font-family: 'Font Awesome 6 Free Solid';"
                 + "-fx-font-size: 14px;"
                 + "-fx-text-fill: #8899bb;");
+        Label textLbl = label(text, 13, "#f8fafc", false);
 
-        item.getChildren().addAll(iconLbl, label(text, 13, "#f8fafc", true));
+        item.getChildren().addAll(iconLbl, textLbl);
+
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
+        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
 
         item.setOnMouseClicked(e -> {
+            // Resetear todos los ítems
+            nav.getChildren().forEach(node -> {
+                if (node instanceof HBox hbox) {
+                    hbox.setStyle("-fx-background-radius: 8;");
+                    hbox.getChildren().forEach(child -> {
+                        if (child instanceof Label lbl) {
+                            if (lbl.getStyle().contains("Font Awesome")) {
+                                lbl.setStyle(
+                                        "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                                        + "-fx-font-size: 14px;"
+                                        + "-fx-text-fill: #8899bb;");
+                            } else {
+                                lbl.setTextFill(Color.web("#f8fafc"));
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Activar ítem clickeado
+            item.setStyle("-fx-background-color: rgba(255,255,255,0.20); -fx-background-radius: 8;");
+            iconLbl.setStyle(
+                    "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size: 14px;"
+                    + "-fx-text-fill: white;");
+            textLbl.setTextFill(Color.WHITE);
+
             switch (text) {
                 case "Centro de operaciones" ->
                     root.setCenter(new CentroOperacionesPoliciaView(
@@ -247,7 +281,23 @@ public class PoliciaApp {
                     root.setCenter(new MapaOperaciones(asignacionService, unidadService).build());
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesPoliciaView(
+<<<<<<< HEAD
                             usuarioActual,policiaActual, notificacionService).build());
+=======
+                            usuarioActual, notificacionService).build());
+                case "Reportes" -> {
+                    try {
+                        root.setCenter(
+                                new ReportesAdminView(
+                                        new sistemagestion.service.UsuarioService(),
+                                        new sistemagestion.service.AlertaService()
+                                ).build()
+                        );
+                    } catch (Exception ex) {
+                        mostrarAlerta("Error en Reportes", ex.getMessage());
+                    }
+                }
+>>>>>>> 9c76a9debf73156318495b57769d819b427127ab
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
                             usuarioActual, policiaActual).build());

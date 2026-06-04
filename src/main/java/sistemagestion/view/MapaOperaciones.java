@@ -4,6 +4,8 @@
  */
 package sistemagestion.view;
 
+
+
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -56,11 +58,16 @@ public class MapaOperaciones {
     private static final String GRAY_TEXT = "#6b7280";
 
     // Colores de capa
+<<<<<<< HEAD
     private static final Color FX_ALARMA = Color.web("#ffc107");
     private static final Color FX_UNIDAD = Color.web("#2f568a");
+=======
+    private static final Color FX_ALARMA = Color.web("#fb8c00");
+    private static final Color FX_UNIDAD = Color.web("#1565c0");
+>>>>>>> 9c76a9debf73156318495b57769d819b427127ab
     private static final Color FX_ALERTA = Color.web("#e53935");
 
-    private static final java.awt.Color AWT_ALARMA = new java.awt.Color(255, 193, 7);
+    private static final java.awt.Color AWT_ALARMA = new java.awt.Color(251, 140, 0);
     private static final java.awt.Color AWT_ALERTA = new java.awt.Color(229, 57, 53);
 
     // ── Servicios ─────────────────────────────────────────────────
@@ -574,11 +581,11 @@ public class MapaOperaciones {
     private VBox buildLeyendaFlotante() {
         String[][] items = {
             {"#fb8c00", "PENDIENTE"},
-            {"#2196f3", "RECIBIDA"},
-            {"#9c27b0", "EN_ATENCION"},
-            {"#009688", "UNID_ASIGNADA"},
-            {"#4caf50", "RESUELTA"},
-            {"#757575", "CANCELADA"}
+            {"#1565c0", "RECIBIDA"},
+            {"#7b1fa2", "EN_ATENCION"},
+            {"#0288d1", "UNID_ASIGNADA"},
+            {"#43a047", "RESUELTA"},
+            {"#9e9e9e", "CANCELADA"}
         };
 
         VBox lista = new VBox(4);
@@ -1009,7 +1016,7 @@ public class MapaOperaciones {
                     Platform.runLater(() -> mostrarDetalleEn(
                             a.getNombre(), "Alarma",
                             "Estado: " + est + "\nBarrio: " + bar + "\nRadio: " + (int) a.getRadio_cobertura() + " m",
-                            "#ffc107", _px, _py, _lat, _lng));
+                            "#fb8c00", _px, _py, _lat, _lng));
                     repintarMapa();
                     return;
                 }
@@ -1100,9 +1107,9 @@ public class MapaOperaciones {
                 if (a.getRadio_cobertura() > 0) {
                     double mpp = mpp(map, a.getLatitud());
                     int rp = (int) (a.getRadio_cobertura() / mpp);
-                    g.setColor(new java.awt.Color(255, 193, 7, 30));
+                    g.setColor(new java.awt.Color(251, 140, 0, 30));
                     g.fill(new Ellipse2D.Double(cx - rp, cy - rp, rp * 2, rp * 2));
-                    g.setColor(new java.awt.Color(255, 193, 7, 140));
+                    g.setColor(new java.awt.Color(251, 140, 0, 140));
                     g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND,
                             BasicStroke.JOIN_ROUND, 0, new float[]{6, 4}, 0));
                     g.draw(new Ellipse2D.Double(cx - rp, cy - rp, rp * 2, rp * 2));
@@ -1370,11 +1377,11 @@ public class MapaOperaciones {
         }
         return switch (e) {
             case OPERATIVA ->
-                Color.web("#198754");
+                Color.web("#43a047");
             case ACTIVA ->
                 Color.web("#fb8c00");
             case INACTIVA ->
-                Color.web("#6c757d");
+                Color.web("#9e9e9e");
         };
     }
 
@@ -1386,30 +1393,30 @@ public class MapaOperaciones {
             case PENDIENTE ->
                 Color.web("#fb8c00");
             case RECIBIDA ->
-                Color.web("#2196f3");
+                Color.web("#1565c0");
             case EN_ATENCION ->
-                Color.web("#9c27b0");
+                Color.web("#7b1fa2");
             case UNIDAD_ASIGNADA ->
-                Color.web("#009688");
+                Color.web("#0288d1");
             case RESUELTA ->
-                Color.web("#4caf50");
+                Color.web("#43a047");
             case CANCELADA ->
-                Color.web("#757575");
+                Color.web("#9e9e9e");
         };
     }
 
     // Colores AWT
     private java.awt.Color awtColorUnidad(EstadoUnidadPolicial e) {
         if (e == null) {
-            return new java.awt.Color(25, 135, 84);
+            return new java.awt.Color(21, 101, 192);
         }
         return switch (e) {
             case OPERATIVA ->
-                new java.awt.Color(25, 135, 84);
+                new java.awt.Color(67, 160, 71);
             case ACTIVA ->
                 new java.awt.Color(251, 140, 0);
             case INACTIVA ->
-                new java.awt.Color(108, 117, 125);
+                new java.awt.Color(158, 158, 158);
         };
     }
 
@@ -1421,15 +1428,15 @@ public class MapaOperaciones {
             case PENDIENTE ->
                 new java.awt.Color(251, 140, 0);
             case RECIBIDA ->
-                new java.awt.Color(33, 150, 243);
+                new java.awt.Color(21, 101, 192);
             case EN_ATENCION ->
-                new java.awt.Color(156, 39, 176);
+                new java.awt.Color(123, 31, 162);
             case UNIDAD_ASIGNADA ->
-                new java.awt.Color(0, 150, 136);
+                new java.awt.Color(2, 136, 209);
             case RESUELTA ->
-                new java.awt.Color(76, 175, 80);
+                new java.awt.Color(67, 160, 71);
             case CANCELADA ->
-                new java.awt.Color(120, 120, 120);
+                new java.awt.Color(158, 158, 158);
         };
     }
 

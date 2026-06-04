@@ -379,4 +379,27 @@ public class EstadisticasAdminPoliciaView {
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
+<<<<<<< HEAD
 }
+=======
+
+    private ScrollPane wrapScroll(VBox content) {
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
+        return scroll;
+    }
+
+    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage image) {
+        int minX = image.getWidth(), minY = image.getHeight(), maxX = 0, maxY = 0;
+        for (int y = 0; y < image.getHeight(); y++)
+            for (int x = 0; x < image.getWidth(); x++) {
+                int alpha = (image.getRGB(x, y) >> 24) & 0xff;
+                if (alpha > 0) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+            }
+        return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
+}
+  
+>>>>>>> 9c76a9debf73156318495b57769d819b427127ab

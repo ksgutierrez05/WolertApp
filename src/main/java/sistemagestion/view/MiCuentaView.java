@@ -183,7 +183,7 @@ public class MiCuentaView {
     // PANEL: INFORMACIÓN PERSONAL
     // =========================================================================
     private VBox buildPerfilPanel() {
-        
+
         VBox panel = createPanel("Información personal");
         if (usuarioActual == null) {
             panel.getChildren().add(label("No hay información disponible.", 13, GRAY_TEXT, false));
@@ -347,16 +347,15 @@ public class MiCuentaView {
 
     // =========================================================================
     // PANEL: INFORMACIÓN ÚTIL
-    // =========================================================================
     private VBox buildInfoUtilPanel() {
         VBox panel = createPanel("Información útil");
         panel.getChildren().addAll(
-                infoRow("Línea de emergencias", "123"), sep(),
-                infoRow("Policía Nacional", "112"), sep(),
-                infoRow("Bomberos", "119"), sep(),
-                infoRow("Cruz Roja", "132"), sep(),
-                infoRow("Línea de denuncia", "018000910600"), sep(),
-                infoRow("Soporte WolertApp", "wolertapp.notificaciones@gmail.com")
+                infoRowFA("\uf46a", "#e53935", "Línea de emergencias", "123"), sep(),
+                infoRowFA("\uf505", "#1565c0", "Policía Nacional", "112"), sep(),
+                infoRowFA("\uf46a", "#fb8c00", "Bomberos", "119"), sep(),
+                infoRowFA("\uf0f1", "#43a047", "Cruz Roja", "132"), sep(),
+                infoRowFA("\uf4a4", "#7b1fa2", "Línea de denuncia", "018000910600"), sep(),
+                infoRowFA("\uf086", "#0288d1", "Soporte WolertApp", "wolertapp.notificaciones@gmail.com")
         );
         return panel;
     }
@@ -709,9 +708,8 @@ public class MiCuentaView {
                     usuarioService.actualizar(usuarioActual);
                     System.out.println("✅ Usuario actualizado correctamente.");
 
-                    
                     if (root != null) {
-                        
+
                         javafx.application.Platform.runLater(() -> root.setCenter(getView()));
                     }
                 }
@@ -728,6 +726,37 @@ public class MiCuentaView {
     // =========================================================================
     // HELPERS UI
     // =========================================================================
+    private HBox infoRowFA(String faIcon, String iconColor, String campo, String valor) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(10, 0, 10, 0));
+
+        // Icono FA en círculo de color
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(34, 34);
+        iconWrap.setMinSize(34, 34);
+        iconWrap.setMaxSize(34, 34);
+        Region iconBg = new Region();
+        iconBg.setPrefSize(34, 34);
+        iconBg.setStyle("-fx-background-color:" + iconColor + "22;-fx-background-radius:50%;");
+        Label iconLbl = new Label(faIcon);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: " + iconColor + ";");
+        iconWrap.getChildren().addAll(iconBg, iconLbl);
+
+        // Texto
+        VBox texto = new VBox(2);
+        HBox.setHgrow(texto, Priority.ALWAYS);
+        Label campoLbl = label(campo, 11, GRAY_TEXT, false);
+        Label valorLbl = label(valor, 13, "#111827", true);
+        texto.getChildren().addAll(campoLbl, valorLbl);
+
+        row.getChildren().addAll(iconWrap, texto);
+        return row;
+    }
+
     private VBox createPanel(String title) {
         VBox panel = new VBox(10);
         panel.setPadding(new Insets(16));

@@ -30,6 +30,8 @@ sistemagestion\view\MapaAdminPoliciaView.class
 sistemagestion\view\MapaAlarmasRegistada$5.class
 sistemagestion\view\AsignacionesAdminPoliciaView$4.class
 sistemagestion\view\MapaAlarmas$2.class
+sistemagestion\view\ReportesAdminView$1.class
+sistemagestion\view\ReportesPoliciaView.class
 sistemagestion\service\EmailService$1.class
 sistemagestion\model\Comuna.class
 sistemagestion\view\AlertasView.class
@@ -167,6 +169,7 @@ sistemagestion\view\AsignacionesAdminPoliciaView$1.class
 sistemagestion\view\PoliciaApp.class
 sistemagestion\view\AlarmasAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmas$5.class
+sistemagestion\view\PerfilPoliciaView.class
 sistemagestion\model\Direccion.class
 sistemagestion\service\EmailService.class
 sistemagestion\view\LoginApp.class
@@ -175,6 +178,7 @@ sistemagestion\view\MapaAlarmasRegistada.class
 sistemagestion\dao\AlertaDAO.class
 sistemagestion\model\Alerta.class
 sistemagestion\view\MapaAlarmas$4.class
+sistemagestion\view\ReportesAdminView.class
 sistemagestion\view\MapaAlerta$5.class
 sistemagestion\service\UsuarioService.class
 sistemagestion\view\MapaAlarmasRegistradas$2.class
