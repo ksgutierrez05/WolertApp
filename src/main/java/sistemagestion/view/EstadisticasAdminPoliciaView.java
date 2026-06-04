@@ -215,3 +215,4 @@ public class EstadisticasAdminPoliciaView {
         return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 }
+  

@@ -161,20 +161,19 @@ public class AdministradorPoliciaApp {
         nav.setPadding(new Insets(12, 8, 12, 8));
 
         HBox mapaItem = buildMapaNavItem();
-
         nav.getChildren().addAll(
-                navItem("🏠", "Centro de operaciones"),
-                navItem("🚨", "Alertas"),
-                navItem("🔔", "Alarmas"),
-                navItem("📌", "Asignaciones"),
-                navItem("👮", "Policías"),
-                navItem("🚓", "Unidades"),
-                navItem("📜", "Historial"),
+                navItem("\uf015", "Centro de operaciones"),
+                navItem("\uf0f3", "Alertas"),
+                navItem("\uf0f3", "Alarmas"),
+                navItem("\uf14a", "Asignaciones"),
+                navItem("\uf505", "Policías"),
+                navItem("\uf1b9", "Unidades"),
+                navItem("\uf1da", "Historial"),
                 mapaItem,
-                navItem("📊", "Estadísticas"),
-                navItem("📈", "Reportes"),
-                navItem("🔔", "Notificaciones"),
-                navItem("⚙", "Configuración")
+                navItem("\uf080", "Estadísticas"),
+                navItem("\uf201", "Reportes"),
+                navItem("\uf1f6", "Notificaciones"),
+                navItem("\uf013", "Configuración")
         );
 
         // Espaciador
@@ -285,42 +284,74 @@ public class AdministradorPoliciaApp {
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
         item.setStyle("-fx-background-radius: 8;");
-        item.setOnMouseEntered(e -> item.setStyle("-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
-        item.getChildren().addAll(label(icon, 14, WHITE, false), label(text, 13, "#f8fafc", true));
 
-        // ── Delegación a las clases View ─────────────────────────
-        item.setOnMouseClicked(e -> root.setCenter(switch (text) {
-            case "Centro de operaciones" ->
-                buildMainContent();
-            case "Alertas" ->
-                new AlertasAdminPoliciaView(alertaService).build();
-            case "Alarmas" ->
-                new AlarmasAdminPoliciaView(alarmaService).build();
-            case "Asignaciones" ->
-                new AsignacionesAdminPoliciaView(
-                asignacionService, unidadService, alarmaService).build();
-            case "Historial" ->
-                new HistorialAdminPoliciaView(atencionService).build();
-            case "Policías" ->
-                new PoliciasAdminPoliciaView(policiaService, unidadService).build();
-            case "Unidades" ->
-                new UnidadesAdminPoliciaView(unidadService).build();
-            case "Estadísticas" ->
-                new EstadisticasAdminPoliciaView(
-                alertaService, asignacionService, unidadService,
-                policiaService, alarmaService, notificacionService).build();
-            case "Reportes" ->
-                new ReportesAdminPoliciaView(
-                alertaService, asignacionService, unidadService,
-                policiaService, alarmaService, notificacionService, atencionService).build();
-            case "Notificaciones" ->
-                new NotificacionesAdminPoliciaView(notificacionService).build();
-            case "Configuración" ->
-                new ConfiguracionAdminPoliciaView(usuarioActual).build();
-            default ->
-                buildMainContent();
-        }));
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: #8899bb;");
+        Label textLbl = label(text, 13, "#f8fafc", false);
+
+        item.getChildren().addAll(iconLbl, textLbl);
+
+        item.setOnMouseEntered(e -> item.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
+        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
+
+        item.setOnMouseClicked(e -> {
+            // Resetear todos
+            nav.getChildren().forEach(node -> {
+                if (node instanceof HBox hbox) {
+                    hbox.setStyle("-fx-background-radius: 8;");
+                    hbox.getChildren().forEach(child -> {
+                        if (child instanceof Label lbl) {
+                            if (lbl.getStyle().contains("Font Awesome")) {
+                                lbl.setStyle(
+                                        "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                                        + "-fx-font-size: 14px;"
+                                        + "-fx-text-fill: #8899bb;");
+                            } else {
+                                lbl.setTextFill(Color.web("#f8fafc"));
+                            }
+                        }
+                    });
+                }
+            });
+            // Activar
+            item.setStyle("-fx-background-color: rgba(255,255,255,0.20); -fx-background-radius: 8;");
+            iconLbl.setStyle(
+                    "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size: 14px;"
+                    + "-fx-text-fill: white;");
+            textLbl.setTextFill(Color.WHITE);
+
+            root.setCenter(switch (text) {
+                case "Centro de operaciones" ->
+                    buildMainContent();
+                case "Alertas" ->
+                    new AlertasAdminPoliciaView(alertaService).build();
+                case "Alarmas" ->
+                    new AlarmasAdminPoliciaView(alarmaService).build();
+                case "Asignaciones" ->
+                    new AsignacionesAdminPoliciaView(asignacionService, unidadService, alarmaService).build();
+                case "Historial" ->
+                    new HistorialAdminPoliciaView(atencionService).build();
+                case "Policías" ->
+                    new PoliciasAdminPoliciaView(policiaService, unidadService).build();
+                case "Unidades" ->
+                    new UnidadesAdminPoliciaView(unidadService).build();
+                case "Estadísticas" ->
+                    new EstadisticasAdminPoliciaView(alertaService, asignacionService, unidadService, policiaService, alarmaService, notificacionService).build();
+                case "Reportes" ->
+                    new ReportesAdminPoliciaView(alertaService, asignacionService, unidadService, policiaService, alarmaService, notificacionService, atencionService).build();
+                case "Notificaciones" ->
+                    new NotificacionesAdminPoliciaView(notificacionService).build();
+                case "Configuración" ->
+                    new ConfiguracionAdminPoliciaView(usuarioActual).build();
+                default ->
+                    buildMainContent();
+            });
+        });
         return item;
     }
 

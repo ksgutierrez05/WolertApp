@@ -191,16 +191,18 @@ public class AdministradorApp {
         nav = new VBox(2);
         nav.setPadding(new Insets(16, 8, 16, 8));
         nav.getChildren().addAll(
-                navItem("🏠", "Dashboard"),
-                navItem("👥", "Usuarios"),
-                navItem("🚨", "Alertas"),
-                navItem("🔔", "Alarmas"),
-                navItem("📍", "Comunas"),
-                navItem("🏘", "Barrios"),
-                navItem("📋", "Tipos"),
-                navItem("🔕", "Notificaciones"),
-                navItem("📈", "Estadísticas"),
-                navItem("⚙", "Configuración")
+                navItem("\uf3fd", "Dashboard"), // house-chimney
+                navItem("\uf0c0", "Usuarios"), // users
+                navItem("\uf0f3", "Alertas"), // bell
+                navItem("\uf0f3", "Alarmas"), // bell (con badge)
+                navItem("\uf041", "Comunas"), // map-marker
+                navItem("\uf015", "Barrios"), // home
+                navItem("\uf0cb", "Tipos"), // list-ol
+                navItem("\uf1f6", "Notificaciones"), // bell-slash
+                navItem("\uf080", "Reportes"), // bar-chart
+                navItem("\uf201", "Estadísticas"), // line-chart
+                navItem("\uf013", "Configuración") // cog
+
         );
 
         // Cerrar sesión
@@ -221,9 +223,13 @@ public class AdministradorApp {
             stage.close();
         });
 
-        logout.getChildren().addAll(
-                label("🚪", 14, WHITE, false),
-                label("Cerrar sesión", 13, WHITE, true));
+        Label logoutIcon = new Label("\uf2f5");  // fa-right-from-bracket
+        logoutIcon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 14px;"
+                + "-fx-text-fill: " + RED + ";");
+
+        logout.getChildren().addAll(logoutIcon, label("Cerrar sesión", 13, WHITE, true));
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -245,14 +251,41 @@ public class AdministradorApp {
                 "-fx-background-color: " + SIDEBAR_HOVER + "; -fx-background-radius: 8;"));
         item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
 
-        Label iconLbl = label(icon, 14, SIDEBAR_NAV_TEXT, false);
+        // Variables nombradas para poder referenciarlas en el click
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 15px;"
+                + "-fx-text-fill: " + SIDEBAR_NAV_TEXT + ";");
         Label textLbl = label(text, 13, SIDEBAR_NAV_TEXT, false);
         item.getChildren().addAll(iconLbl, textLbl);
 
         item.setOnMouseClicked(e -> {
-            nav.getChildren().forEach(node -> node.setStyle("-fx-background-radius: 8;"));
-            item.setStyle("-fx-background-color: " + SIDEBAR_ACTIVE + "; -fx-background-radius: 8;");
-            iconLbl.setTextFill(Color.WHITE);
+            // Resetear todos los ítems
+            nav.getChildren().forEach(node -> {
+                if (node instanceof HBox hbox) {
+                    hbox.setStyle("-fx-background-radius: 8;");
+                    hbox.getChildren().forEach(child -> {
+                        if (child instanceof Label lbl) {
+                            if (lbl.getStyle().contains("Font Awesome")) {
+                                lbl.setStyle(
+                                        "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                                        + "-fx-font-size: 15px;"
+                                        + "-fx-text-fill: " + SIDEBAR_NAV_TEXT + ";");
+                            } else {
+                                lbl.setTextFill(Color.web(SIDEBAR_NAV_TEXT));
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Activar ítem clickeado
+            item.setStyle("-fx-background-color: rgba(255,255,255,0.20); -fx-background-radius: 8;");
+            iconLbl.setStyle(
+                    "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size: 15px;"
+                    + "-fx-text-fill: white;");
             textLbl.setTextFill(Color.WHITE);
 
             switch (text) {
@@ -273,6 +306,18 @@ public class AdministradorApp {
                     root.setCenter(new TiposAdminView().getView());
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesAdminView(notificacionService).getView());
+                case "Reportes" -> {
+                    try {
+                        root.setCenter(
+                                new ReportesAdminView(
+                                        new sistemagestion.service.UsuarioService(),
+                                        new sistemagestion.service.AlertaService()
+                                ).build()
+                        );
+                    } catch (Exception ex) {
+                        root.setCenter(buildPlaceholderView("Reportes — Error: " + ex.getMessage()));
+                    }
+                }
                 case "Estadísticas" ->
                     root.setCenter(new EstadisticasAdminView().getView());
                 case "Configuración" ->
@@ -309,7 +354,6 @@ public class AdministradorApp {
     }
 
     // ── Top bar ───────────────────────────────────────────────────
-    // ── Top bar ───────────────────────────────────────────────────
     private HBox buildTopBar() {
         HBox bar = new HBox();
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -332,20 +376,40 @@ public class AdministradorApp {
                 "hh:mm:ss a", new Locale("es", "CO"));
 
         LocalDateTime now0 = LocalDateTime.now(ZoneId.of("America/Bogota"));
-        Label dateLbl = label("📅  " + now0.format(dateFmt), 13, TEXT_SECONDARY, false);
+
+        // Icono calendario FA
+        Label calIco = new Label("\uf073");
+        calIco.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:13px;-fx-text-fill:" + BLUE + ";");
+        Label dateLbl = label(now0.format(dateFmt), 13, TEXT_SECONDARY, false);
+
+        // Icono reloj FA
+        Label clockIco = new Label("\uf017");
+        clockIco.setStyle(
+                "-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:13px;-fx-text-fill:" + GRAY_TEXT + ";");
         Label timeLbl = label(now0.format(timeFmt), 13, GRAY_TEXT, false);
 
         Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Bogota"));
-            dateLbl.setText("📅  " + now.format(dateFmt));
+            dateLbl.setText(now.format(dateFmt));
             timeLbl.setText(now.format(timeFmt));
         }));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
 
-        VBox dateBox = new VBox(2);
+        HBox dateRow = new HBox(6);
+        dateRow.setAlignment(Pos.CENTER_RIGHT);
+        dateRow.getChildren().addAll(calIco, dateLbl);
+
+        HBox timeRow = new HBox(6);
+        timeRow.setAlignment(Pos.CENTER_RIGHT);
+        timeRow.getChildren().addAll(clockIco, timeLbl);
+
+        VBox dateBox = new VBox(4);
         dateBox.setAlignment(Pos.CENTER_RIGHT);
-        dateBox.getChildren().addAll(dateLbl, timeLbl);
+        dateBox.getChildren().addAll(dateRow, timeRow);
 
         // ── Campanita ─────────────────────────────────────────────────
         List<Alerta> alertasActivas = cargarAlertas().stream()
@@ -454,13 +518,20 @@ public class AdministradorApp {
 
         // Sección alertas activas
         if (!alertasActivas.isEmpty()) {
-            Label secLabel = new Label("  🚨  Alertas activas");
-            secLabel.setFont(Font.font("System", FontWeight.BOLD, 11));
-            secLabel.setTextFill(Color.web(GRAY_TEXT));
-            secLabel.setPadding(new Insets(8, 16, 6, 16));
-            secLabel.setMaxWidth(Double.MAX_VALUE);
-            secLabel.setStyle("-fx-background-color:#f9fafb;");
-            popupBox.getChildren().add(secLabel);
+            HBox secAlertasBox = new HBox(6);
+            secAlertasBox.setPadding(new Insets(8, 16, 6, 16));
+            secAlertasBox.setAlignment(Pos.CENTER_LEFT);
+            secAlertasBox.setMaxWidth(Double.MAX_VALUE);
+            secAlertasBox.setStyle("-fx-background-color:#f9fafb;");
+            Label secAlertaIco = new Label("\uf0f3");
+            secAlertaIco.setStyle(
+                    "-fx-font-family:'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size:11px;-fx-text-fill:" + RED + ";");
+            Label secAlertaTxt = new Label("Alertas activas");
+            secAlertaTxt.setFont(Font.font("System", FontWeight.BOLD, 11));
+            secAlertaTxt.setTextFill(Color.web(GRAY_TEXT));
+            secAlertasBox.getChildren().addAll(secAlertaIco, secAlertaTxt);
+            popupBox.getChildren().add(secAlertasBox);
 
             for (Alerta a : alertasActivas) {
                 String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
@@ -510,13 +581,20 @@ public class AdministradorApp {
         // Sección notificaciones de usuarios
         final List<sistemagestion.model.Notificacion> ultimasNotifsF = ultimasNotifs;
         if (!ultimasNotifsF.isEmpty()) {
-            Label secNotif = new Label("  🔔  Notificaciones de usuarios");
-            secNotif.setFont(Font.font("System", FontWeight.BOLD, 11));
-            secNotif.setTextFill(Color.web(GRAY_TEXT));
-            secNotif.setPadding(new Insets(8, 16, 6, 16));
-            secNotif.setMaxWidth(Double.MAX_VALUE);
-            secNotif.setStyle("-fx-background-color:#f9fafb;");
-            popupBox.getChildren().add(secNotif);
+            HBox secNotifBox = new HBox(6);
+            secNotifBox.setPadding(new Insets(8, 16, 6, 16));
+            secNotifBox.setAlignment(Pos.CENTER_LEFT);
+            secNotifBox.setMaxWidth(Double.MAX_VALUE);
+            secNotifBox.setStyle("-fx-background-color:#f9fafb;");
+            Label secNotifIco = new Label("\uf1f6");
+            secNotifIco.setStyle(
+                    "-fx-font-family:'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size:11px;-fx-text-fill:" + BLUE + ";");
+            Label secNotifTxt = new Label("Notificaciones de usuarios");
+            secNotifTxt.setFont(Font.font("System", FontWeight.BOLD, 11));
+            secNotifTxt.setTextFill(Color.web(GRAY_TEXT));
+            secNotifBox.getChildren().addAll(secNotifIco, secNotifTxt);
+            popupBox.getChildren().add(secNotifBox);
 
             for (sistemagestion.model.Notificacion n : ultimasNotifsF) {
                 String mensaje = n.getMensaje() != null
@@ -567,11 +645,21 @@ public class AdministradorApp {
             VBox vacio = new VBox(8);
             vacio.setAlignment(Pos.CENTER);
             vacio.setPadding(new Insets(28));
-            Label icoVacio = new Label("🔕");
-            icoVacio.setFont(Font.font(36));
+
+            StackPane icoVacioWrap = new StackPane();
+            icoVacioWrap.setPrefSize(56, 56);
+            Region icoVacioBg = new Region();
+            icoVacioBg.setPrefSize(56, 56);
+            icoVacioBg.setStyle("-fx-background-color:#f1f5f9;-fx-background-radius:50%;");
+            Label icoVacio = new Label("\uf1f6");
+            icoVacio.setStyle(
+                    "-fx-font-family:'Font Awesome 6 Free Solid';"
+                    + "-fx-font-size:24px;-fx-text-fill:#94a3b8;");
+            icoVacioWrap.getChildren().addAll(icoVacioBg, icoVacio);
+
             Label msgVacio = new Label("Sin notificaciones nuevas");
             msgVacio.setStyle("-fx-font-size:13px;-fx-text-fill:" + GRAY_TEXT + ";");
-            vacio.getChildren().addAll(icoVacio, msgVacio);
+            vacio.getChildren().addAll(icoVacioWrap, msgVacio);
             popupBox.getChildren().add(vacio);
         }
 
