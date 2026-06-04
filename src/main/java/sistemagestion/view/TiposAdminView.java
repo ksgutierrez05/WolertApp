@@ -579,12 +579,34 @@ public class TiposAdminView {
 
         TextField txtNombre = dlgField("Ej: Robo / Asalto, Incendio...",
                 esEdicion ? existente.getNombre() : "");
+
+        // ← NUEVO: ComboBox de prioridad
+        ComboBox<String> cmbPrioridad = new ComboBox<>();
+        cmbPrioridad.setItems(javafx.collections.FXCollections.observableArrayList(
+                "ALTA", "MEDIA", "BAJA"
+        ));
+        cmbPrioridad.setPromptText("Seleccione prioridad");
+        cmbPrioridad.setMaxWidth(Double.MAX_VALUE);
+        cmbPrioridad.setPrefHeight(40);
+        cmbPrioridad.setStyle(
+                "-fx-background-color: #f5f7fb; -fx-background-radius: 8;"
+                + "-fx-border-radius: 8; -fx-border-color: transparent;"
+                + "-fx-font-size: 13px;");
+
+        // Si es edición, cargar la prioridad actual
+        if (esEdicion && existente.getPrioridad() != null) {
+            cmbPrioridad.setValue(existente.getPrioridad());
+        }
+
         Label lblError = label("", 12, RED, false);
         lblError.setWrapText(true);
 
         form.getChildren().addAll(
                 label("Nombre del tipo de alerta *", 12, GRAY_TEXT, false),
-                txtNombre, lblError);
+                txtNombre,
+                label("Prioridad *", 12, GRAY_TEXT, false),
+                cmbPrioridad,
+                lblError);
 
         dlg.getDialogPane().setContent(form);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -599,13 +621,20 @@ public class TiposAdminView {
                 ev.consume();
                 return;
             }
+            if (cmbPrioridad.getValue() == null) {
+                lblError.setText("Seleccione la prioridad.");
+                ev.consume();
+                return;
+            }
             try {
                 if (esEdicion) {
                     existente.setNombre(nombre);
+                    existente.setPrioridad(cmbPrioridad.getValue());
                     tipoAlertaService.actualizar(existente);
                 } else {
                     TipoAlerta n = new TipoAlerta();
                     n.setNombre(nombre);
+                    n.setPrioridad(cmbPrioridad.getValue());
                     tipoAlertaService.insertar(n);
                 }
                 renderTablaAlerta(cargarTiposAlerta());

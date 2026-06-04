@@ -140,11 +140,11 @@ public class MapaZonasPeligrosas {
         titulo.setTextFill(Color.web("#6b7280"));
 
         HBox leyenda = new HBox(16,
-                puntito("#22c55e", "Bajo"),
-                puntito("#facc15", "Moderado"),
-                puntito("#f97316", "Alto"),
-                puntito("#ef4444", "Crítico"),
-                puntito("#7f1d1d", "Extremo"));
+                puntito("#4caf50", "Bajo"),
+                puntito("#ffca28", "Moderado"),
+                puntito("#ff7043", "Alto"),
+                puntito("#f44336", "Crítico"),
+                puntito("#b71c1c", "Extremo"));
         leyenda.setAlignment(Pos.CENTER_LEFT);
 
         Region spacer = new Region();
@@ -251,16 +251,14 @@ public class MapaZonasPeligrosas {
         SwingUtilities.invokeLater(mapa::repaint);
     }
 
-    // ── Overlay minimalista ───────────────────────────────────────────────────
+    // ── Overlay ───────────────────────────────────────────────────────────────
     private void pintarOverlay(Graphics2D g, JXMapViewer map, int w, int h) {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,    RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,       RenderingHints.VALUE_RENDER_QUALITY);
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         for (ZonaBarrio zona : zonas) {
-            if (!zona.tieneCoordenadas()) {
-                continue;
-            }
+            if (!zona.tieneCoordenadas()) continue;
 
             Point2D pt = map.getTileFactory().geoToPixel(
                     new GeoPosition(zona.centroideLat, zona.centroideLng), map.getZoom());
@@ -268,63 +266,90 @@ public class MapaZonasPeligrosas {
             int cy = (int) pt.getY() - map.getViewportBounds().y;
 
             float ratio = Math.min(1f, (float) zona.totalAlertas / maxAlertas);
+            if (ratio < 0.25f) {
+                // Punto verde pequeño para zonas BAJO
+                java.awt.Color verde = new java.awt.Color(76, 175, 80);
+                g.setColor(new java.awt.Color(255, 255, 255, 180));
+                g.fill(new Ellipse2D.Double(cx - 7, cy - 7, 14, 14));
+                g.setColor(verde);
+                g.fill(new Ellipse2D.Double(cx - 5, cy - 5, 10, 10));
+                continue;
+            }
             java.awt.Color col = colorPeligro(ratio);
             int radio = radioVisual(zona.totalAlertas);
             boolean sel = zona == zonaSeleccionada;
 
-            // ── 1. Relleno translúcido
-            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), sel ? 70 : 50));
+            // ── 1. Halo exterior cuando está seleccionado
+            if (sel) {
+                g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), 28));
+                int hr = radio + 14;
+                g.fill(new Ellipse2D.Double(cx - hr, cy - hr, hr * 2, hr * 2));
+            }
+
+            // ── 2. Relleno exterior suave
+            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), sel ? 55 : 38));
             g.fill(new Ellipse2D.Double(cx - radio, cy - radio, radio * 2, radio * 2));
 
-            // ── 2. Borde del círculo
-            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), sel ? 255 : 210));
+            // ── 3. Relleno interior más intenso (efecto de profundidad)
+            int innerR = (int) (radio * 0.58);
+            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), sel ? 85 : 62));
+            g.fill(new Ellipse2D.Double(cx - innerR, cy - innerR, innerR * 2, innerR * 2));
+
+            // ── 4. Borde del círculo
+            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), sel ? 255 : 200));
             g.setStroke(new BasicStroke(sel ? 3f : 2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g.draw(new Ellipse2D.Double(cx - radio, cy - radio, radio * 2, radio * 2));
 
-            // ── 3. Punto central: aro blanco + relleno color
-            int pr = 6;
+            // ── 5. Punto central: sombra + aro blanco + relleno + highlight
+            int pr = sel ? 10 : 7;
+            g.setColor(new java.awt.Color(0, 0, 0, 55));
+            g.fill(new Ellipse2D.Double(cx - pr + 1, cy - pr + 1, pr * 2, pr * 2));
             g.setColor(java.awt.Color.WHITE);
             g.fill(new Ellipse2D.Double(cx - pr - 2, cy - pr - 2, (pr + 2) * 2, (pr + 2) * 2));
-            g.setColor(new java.awt.Color(col.getRed(), col.getGreen(), col.getBlue(), 230));
+            g.setColor(col);
             g.fill(new Ellipse2D.Double(cx - pr, cy - pr, pr * 2, pr * 2));
+            // Highlight blanco interior
+            int hl = pr / 3;
+            g.setColor(new java.awt.Color(255, 255, 255, 130));
+            g.fill(new Ellipse2D.Double(cx - hl - 1, cy - pr + 2, hl * 2, hl * 2));
 
-            // ── 4. Textos dentro del círculo
-            java.awt.Font fntNombre = new java.awt.Font("Arial", java.awt.Font.BOLD, sel ? 13 : 11);
-            java.awt.Font fntRiesgo = new java.awt.Font("Arial", java.awt.Font.BOLD, sel ? 12 : 10);
+            // ── 6. Texto sobre píldora semitransparente
+            java.awt.Font fntNombre = new java.awt.Font("Arial", java.awt.Font.BOLD, sel ? 12 : 10);
+            java.awt.Font fntCount  = new java.awt.Font("Arial", java.awt.Font.PLAIN, sel ? 10 : 9);
 
             g.setFont(fntNombre);
             java.awt.FontMetrics fmN = g.getFontMetrics();
-            String nombre = zona.nombre.length() > 14
-                    ? zona.nombre.substring(0, 13) + "…" : zona.nombre;
+            String nombre = zona.nombre.length() > 15
+                    ? zona.nombre.substring(0, 14) + "…" : zona.nombre;
 
-            g.setFont(fntRiesgo);
-            java.awt.FontMetrics fmR = g.getFontMetrics();
-            String riesgoTxt = "Riesgo: " + zona.totalAlertas;
+            g.setFont(fntCount);
+            java.awt.FontMetrics fmC = g.getFontMetrics();
+            String cntTxt = zona.totalAlertas + " alerta" + (zona.totalAlertas != 1 ? "s" : "");
 
-            // Posición centrada verticalmente: nombre arriba del punto, riesgo debajo
             int lineGap = 3;
-            int totalTextH = fmN.getHeight() + lineGap + fmR.getHeight();
-            int startY = cy - totalTextH / 2;
+            int totalH  = fmN.getHeight() + lineGap + fmC.getHeight();
+            int startY  = cy - totalH / 2;
 
-            // Sombra del nombre
+            // Nombre: sombra + blanco
             g.setFont(fntNombre);
             int tx1 = cx - fmN.stringWidth(nombre) / 2;
             int ty1 = startY + fmN.getAscent();
-            g.setColor(new java.awt.Color(0, 0, 0, 80));
+            g.setColor(new java.awt.Color(0, 0, 0, 130));
             g.drawString(nombre, tx1 + 1, ty1 + 1);
-            // Nombre en blanco
             g.setColor(java.awt.Color.BLACK);
             g.drawString(nombre, tx1, ty1);
 
-            // Sombra del riesgo
-            g.setFont(fntRiesgo);
-            int tx2 = cx - fmR.stringWidth(riesgoTxt) / 2;
-            int ty2 = ty1 + fmN.getDescent() + lineGap + fmR.getAscent();
-            g.setColor(new java.awt.Color(0, 0, 0, 80));
-            g.drawString(riesgoTxt, tx2 + 1, ty2 + 1);
-            // "Riesgo: X" en blanco
-            g.setColor(java.awt.Color.BLACK);
-            g.drawString(riesgoTxt, tx2, ty2);
+            // Conteo: sombra + color claro del nivel
+            g.setFont(fntCount);
+            int tx2 = cx - fmC.stringWidth(cntTxt) / 2;
+            int ty2 = ty1 + fmN.getDescent() + lineGap + fmC.getAscent();
+            g.setColor(new java.awt.Color(0, 0, 0, 110));
+            g.drawString(cntTxt, tx2 + 1, ty2 + 1);
+            g.setColor(new java.awt.Color(
+                    Math.min(255, col.getRed()   + 55),
+                    Math.min(255, col.getGreen() + 55),
+                    Math.min(255, col.getBlue()  + 55)));
+            g.drawString(cntTxt, tx2, ty2);
         }
     }
 
@@ -519,19 +544,19 @@ public class MapaZonasPeligrosas {
         String colorNivel;
         if (ratio < 0.25f) {
             nivel = "● BAJO";
-            colorNivel = "#16a34a";
+            colorNivel = "#4caf50";
         } else if (ratio < 0.5f) {
             nivel = "● MODERADO";
-            colorNivel = "#ca8a04";
+            colorNivel = "#ffca28";
         } else if (ratio < 0.75f) {
             nivel = "● ALTO";
-            colorNivel = "#ea580c";
+            colorNivel = "#ff7043";
         } else if (ratio < 0.9f) {
             nivel = "● CRÍTICO";
-            colorNivel = "#dc2626";
+            colorNivel = "#f44336";
         } else {
             nivel = "● EXTREMO";
-            colorNivel = "#7f1d1d";
+            colorNivel = "#b71c1c";
         }
         lblDetallePeligro.setText(nivel);
         lblDetallePeligro.setTextFill(Color.web(colorNivel));
@@ -547,15 +572,15 @@ public class MapaZonasPeligrosas {
     // ── Helpers ───────────────────────────────────────────────────────────────
     private java.awt.Color colorPeligro(float ratio) {
         if (ratio < 0.25f) {
-            return blend(new java.awt.Color(34, 197, 94), new java.awt.Color(250, 204, 21), ratio / 0.25f);
+            return blend(new java.awt.Color(76, 175, 80), new java.awt.Color(255, 202, 40), ratio / 0.25f);
         }
         if (ratio < 0.5f) {
-            return blend(new java.awt.Color(250, 204, 21), new java.awt.Color(249, 115, 22), (ratio - 0.25f) / 0.25f);
+            return blend(new java.awt.Color(255, 202, 40), new java.awt.Color(255, 112, 67), (ratio - 0.25f) / 0.25f);
         }
         if (ratio < 0.75f) {
-            return blend(new java.awt.Color(249, 115, 22), new java.awt.Color(239, 68, 68), (ratio - 0.5f) / 0.25f);
+            return blend(new java.awt.Color(255, 112, 67), new java.awt.Color(244, 67, 54), (ratio - 0.5f) / 0.25f);
         }
-        return blend(new java.awt.Color(239, 68, 68), new java.awt.Color(127, 29, 29), (ratio - 0.75f) / 0.25f);
+        return blend(new java.awt.Color(244, 67, 54), new java.awt.Color(183, 28, 28), (ratio - 0.75f) / 0.25f);
     }
 
     private java.awt.Color blend(java.awt.Color a, java.awt.Color b, float t) {

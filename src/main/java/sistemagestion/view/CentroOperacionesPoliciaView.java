@@ -23,43 +23,48 @@ import sistemagestion.service.*;
 
 public class CentroOperacionesPoliciaView {
 
-    private static final String WHITE    = "#ffffff";
-    private static final String BG       = "#f4f6fb";
-    private static final String RED      = "#e53935";
-    private static final String RED_LIGHT   = "#fff0f0";
-    private static final String ORANGE   = "#fb8c00";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
+    private static final String RED_LIGHT = "#fff0f0";
+    private static final String ORANGE = "#fb8c00";
     private static final String ORANGE_LIGHT = "#fff3e0";
-    private static final String GREEN    = "#43a047";
-    private static final String GREEN_LIGHT  = "#e8f5e9";
-    private static final String BLUE     = "#1565c0";
-    private static final String BLUE_LIGHT   = "#e8f0fe";
+    private static final String GREEN = "#43a047";
+    private static final String GREEN_LIGHT = "#e8f5e9";
+    private static final String BLUE = "#1565c0";
+    private static final String BLUE_LIGHT = "#e8f0fe";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER   = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
-    private final Usuario              usuarioActual;
-    private final Policia              policiaActual;
-    private final AlertaService        alertaService;
+    private final Usuario usuarioActual;
+    private final Policia policiaActual;
+    private final AlertaService alertaService;
     private final AtencionAlertaService atencionService;
-    private final AlarmaService        alarmaService;
-    private final NotificacionService  notificacionService;
-    private final BorderPane           root;
+    private final AlarmaService alarmaService;
+    private final NotificacionService notificacionService;
+    private final TipoArmaService tipoArmaService;
+    private final MedioTransporteService medioTransporteService;
+    private final BorderPane root;
 
     public CentroOperacionesPoliciaView(Usuario usuarioActual, Policia policiaActual,
             AlertaService alertaService, AtencionAlertaService atencionService,
-            AlarmaService alarmaService, NotificacionService notificacionService,
+            AlarmaService alarmaService, NotificacionService notificacionService, TipoArmaService tipoArmaService,
+            MedioTransporteService medioTransporteService,
             BorderPane root) {
-        this.usuarioActual      = usuarioActual;
-        this.policiaActual      = policiaActual;
-        this.alertaService      = alertaService;
-        this.atencionService    = atencionService;
-        this.alarmaService      = alarmaService;
+        this.usuarioActual = usuarioActual;
+        this.policiaActual = policiaActual;
+        this.alertaService = alertaService;
+        this.atencionService = atencionService;
+        this.alarmaService = alarmaService;
         this.notificacionService = notificacionService;
-        this.root               = root;
+        this.tipoArmaService = tipoArmaService;
+        this.medioTransporteService = medioTransporteService;
+        this.root = root;
     }
 
     public ScrollPane build() {
         VBox content = new VBox(28);
-        content.setPadding(new Insets(36,22,22,22));
+        content.setPadding(new Insets(36, 22, 22, 22));
         content.setStyle("-fx-background-color: " + BG + ";");
         content.getChildren().addAll(
                 buildTopBar(),
@@ -82,28 +87,39 @@ public class CentroOperacionesPoliciaView {
         String saludo = usuarioActual != null && usuarioActual.getPrimer_nombre() != null
                 ? "¡Bienvenido, " + usuarioActual.getPrimer_nombre() + "!"
                 : "¡Bienvenido!";
+
         VBox greeting = new VBox(6);
         Label hello = new Label(saludo);
         hello.setFont(Font.font("System", FontWeight.BOLD, 24));
         hello.setTextFill(Color.web("#111827"));
+
         String rangoSub = policiaActual != null
                 ? (policiaActual.getRango() != null ? policiaActual.getRango() : "Policía")
-                  + (policiaActual.getUnidadpolicial() != null
-                     ? " — " + policiaActual.getUnidadpolicial().getNombre() : "")
+                + (policiaActual.getUnidadpolicial() != null
+                ? " — " + policiaActual.getUnidadpolicial().getNombre() : "")
                 : "Portal policial — WolertApp";
-        greeting.getChildren().addAll(hello, label(rangoSub, 12, GRAY_TEXT, false));
+
+        greeting.getChildren().addAll(
+                hello,
+                label(rangoSub, 12, GRAY_TEXT, false)
+        );
 
         HBox rightBox = new HBox(16);
         rightBox.setAlignment(Pos.CENTER_RIGHT);
         HBox.setHgrow(rightBox, Priority.ALWAYS);
 
+        // ── FECHA ───────────────────────────────
         VBox dateBox = new VBox(2);
         dateBox.setAlignment(Pos.CENTER_RIGHT);
+
         DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "CO"));
         DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern("hh:mm:ss a", new Locale("es", "CO"));
+
         LocalDateTime now0 = LocalDateTime.now(ZoneId.of("America/Bogota"));
+
         Label dateLbl = label("📅  " + now0.format(dateFmt), 12, "#374151", false);
         Label timeLbl = label(now0.format(timeFmt), 12, GRAY_TEXT, false);
+
         Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
             LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Bogota"));
             dateLbl.setText("📅  " + now.format(dateFmt));
@@ -111,36 +127,95 @@ public class CentroOperacionesPoliciaView {
         }));
         clock.setCycleCount(Timeline.INDEFINITE);
         clock.play();
+
         dateBox.getChildren().addAll(dateLbl, timeLbl);
 
+        // ── CAMPANA ───────────────────────────────
         int notiCount = contarNotificaciones();
+
         StackPane bell = new StackPane();
+        bell.setCursor(javafx.scene.Cursor.HAND);
+
         Label bellIcon = label("🔔", 18, "#374151", false);
+
         if (notiCount > 0) {
             Circle badge = new Circle(7, Color.web(RED));
             badge.setTranslateX(9);
             badge.setTranslateY(-9);
+
             Label badgeNum = label(String.valueOf(notiCount), 8, WHITE, true);
             badgeNum.setTranslateX(9);
             badgeNum.setTranslateY(-9);
+
             bell.getChildren().addAll(bellIcon, badge, badgeNum);
         } else {
             bell.getChildren().add(bellIcon);
         }
 
+        // ⚠️ CLICK EVENT CORRECTO
+        bell.setOnMouseClicked(e -> abrirNotificacionesPopup(bell));
+
+        // ✔️ ESTO FALTABA
         rightBox.getChildren().addAll(dateBox, bell);
+
         bar.getChildren().addAll(greeting, rightBox);
+
         return bar;
+    }
+
+    private void abrirNotificacionesPopup(StackPane bell) {
+
+        javafx.stage.Popup popup = new javafx.stage.Popup();
+        popup.setAutoHide(true);
+
+        VBox box = new VBox(8);
+        box.setPrefWidth(320);
+        box.setStyle(
+                "-fx-background-color:white;"
+                + "-fx-background-radius:12;"
+                + "-fx-border-color:#e5e7eb;"
+                + "-fx-border-radius:12;"
+                + "-fx-padding:10;"
+        );
+
+        Label title = new Label("Notificaciones");
+        title.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
+        box.getChildren().add(title);
+
+        try {
+            List<sistemagestion.model.Notificacion> list
+                    = notificacionService != null ? notificacionService.listar() : List.of();
+
+            if (list.isEmpty()) {
+                box.getChildren().add(label("Sin notificaciones", 12, GRAY_TEXT, false));
+            } else {
+                list.stream()
+                        .limit(5)
+                        .forEach(n -> {
+                            Label item = label("• " + n.getMensaje(), 11, "#374151", false);
+                            item.setWrapText(true);
+                            box.getChildren().add(item);
+                        });
+            }
+
+        } catch (Exception e) {
+            box.getChildren().add(label("Error cargando notificaciones", 11, RED, false));
+        }
+
+        popup.getContent().add(box);
+
+        javafx.geometry.Bounds b = bell.localToScreen(bell.getBoundsInLocal());
+        popup.show(bell, b.getMaxX() - 320, b.getMaxY() + 8);
     }
 
     // ── Stats ────────────────────────────────────────────────────
     private HBox buildStats() {
         HBox row = new HBox(16);
         row.getChildren().addAll(
-                statCard(RED_LIGHT,    RED,    "\uf0f3", "Mis alertas activas",  contarMisAlertasActivas(), "PENDIENTE / EN ATENCIÓN"),
-                statCard(ORANGE_LIGHT, ORANGE, "\uf046", "Mis atenciones",       contarMisAtenciones(),     "Total registradas"),
-                statCard(GREEN_LIGHT,  GREEN,  "\uf0f3", "Alarmas activas",      contarAlarmasActivas(),    "ACTIVA / EN MANTENIMIENTO"),
-                statCard(BLUE_LIGHT,   BLUE,   "\uf0e0", "Notificaciones",       contarNotificaciones(),    "Total recibidas")
+                statCard(RED_LIGHT, RED, "\uf0f3", "Mis alertas activas", contarMisAlertasActivas(), "PENDIENTE / EN ATENCIÓN"),
+                statCard(ORANGE_LIGHT, ORANGE, "\uf046", "Mis atenciones", contarMisAtenciones(), "Total registradas"),
+                statCard(GREEN_LIGHT, GREEN, "\uf0f3", "Alarmas activas", contarAlarmasActivas(), "ACTIVA / EN MANTENIMIENTO"),
+                statCard(BLUE_LIGHT, BLUE, "\uf0e0", "Notificaciones", contarNotificaciones(), "Total recibidas")
         );
         return row;
     }
@@ -178,11 +253,11 @@ public class CentroOperacionesPoliciaView {
         Label verTodasBtn = label("Ver todas  ›", 11, "#1565c0", true);
         verTodasBtn.setCursor(javafx.scene.Cursor.HAND);
         verTodasBtn.setOnMouseEntered(e -> verTodasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #0d47a1; -fx-underline: true;"));
-        verTodasBtn.setOnMouseExited(e  -> verTodasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #1565c0; -fx-underline: false;"));
-        verTodasBtn.setOnMouseClicked(e ->
-                root.setCenter(new MisAlertasPoliciaView(
+        verTodasBtn.setOnMouseExited(e -> verTodasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #1565c0; -fx-underline: false;"));
+        verTodasBtn.setOnMouseClicked(e
+                -> root.setCenter(new MisAlertasPoliciaView(
                         usuarioActual, policiaActual,
-                        alertaService, atencionService, root).build()));
+                        alertaService, atencionService, tipoArmaService, medioTransporteService, root).build()));
         hAlerta.getChildren().addAll(iconAlertaBox, tituloAlertas, verTodasBtn);
         alertas.getChildren().addAll(hAlerta, separator());
 
@@ -196,17 +271,17 @@ public class CentroOperacionesPoliciaView {
                         .sorted((a, b) -> b.getFechaHora().compareTo(a.getFechaHora()))
                         .limit(5)
                         .forEach(a -> {
-                            String tipo  = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-                            String barr  = a.getBarrio()    != null ? " — " + a.getBarrio().getNombre() : "";
-                            String sub   = formatFecha(a.getFechaHora());
-                            String dot   = estadoColor(a.getEstado());
+                            String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
+                            String barr = a.getBarrio() != null ? " — " + a.getBarrio().getNombre() : "";
+                            String sub = formatFecha(a.getFechaHora());
+                            String dot = estadoColor(a.getEstado());
                             String estadoNombre = a.getEstado() != null
                                     ? a.getEstado().name().replace("_", " ") : "—";
                             HBox fila = alertItemMejorado(iconoTipoAlerta(a), tipo + barr, sub, estadoNombre, dot);
-                            fila.setOnMouseClicked(e ->
-                                    root.setCenter(new MisAlertasPoliciaView(
+                            fila.setOnMouseClicked(e
+                                    -> root.setCenter(new MisAlertasPoliciaView(
                                             usuarioActual, policiaActual,
-                                            alertaService, atencionService, root).build()));
+                                            alertaService, atencionService, tipoArmaService, medioTransporteService, root).build()));
                             alertas.getChildren().addAll(fila, separator());
                         });
             }
@@ -248,22 +323,30 @@ public class CentroOperacionesPoliciaView {
                             ? a.getEstado().name().replace("_", " ") : "—";
                     String desc = a.getDescripcion() != null
                             ? (a.getDescripcion().length() > 45
-                               ? a.getDescripcion().substring(0, 45) + "…"
-                               : a.getDescripcion())
+                            ? a.getDescripcion().substring(0, 45) + "…"
+                            : a.getDescripcion())
                             : "Sin descripción";
                     String colorEstado = switch (a.getEstado() != null
                             ? a.getEstado() : EstadoAtencionAlerta.PENDIENTE) {
-                        case FINALIZADA  -> GREEN;
-                        case EN_PROCESO  -> ORANGE;
-                        case CANCELADA   -> GRAY_TEXT;
-                        default          -> RED;
+                        case FINALIZADA ->
+                            GREEN;
+                        case EN_PROCESO ->
+                            ORANGE;
+                        case CANCELADA ->
+                            GRAY_TEXT;
+                        default ->
+                            RED;
                     };
                     String iconFA = switch (a.getEstado() != null
                             ? a.getEstado() : EstadoAtencionAlerta.PENDIENTE) {
-                        case FINALIZADA  -> "\uf058";
-                        case EN_PROCESO  -> "\uf017";
-                        case CANCELADA   -> "\uf057";
-                        default          -> "\uf071";
+                        case FINALIZADA ->
+                            "\uf058";
+                        case EN_PROCESO ->
+                            "\uf017";
+                        case CANCELADA ->
+                            "\uf057";
+                        default ->
+                            "\uf071";
                     };
                     atenciones.getChildren().addAll(
                             atencionItemMejorado(iconFA, colorEstado, estadoStr, desc),
@@ -301,9 +384,9 @@ public class CentroOperacionesPoliciaView {
         Label verAlarmasBtn = label("Ver todas  ›", 11, "#1565c0", true);
         verAlarmasBtn.setCursor(javafx.scene.Cursor.HAND);
         verAlarmasBtn.setOnMouseEntered(e -> verAlarmasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #0d47a1; -fx-underline: true;"));
-        verAlarmasBtn.setOnMouseExited(e  -> verAlarmasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #1565c0; -fx-underline: false;"));
-        verAlarmasBtn.setOnMouseClicked(e ->
-                root.setCenter(new AlarmasPoliciaView(alarmaService, policiaActual).build()));
+        verAlarmasBtn.setOnMouseExited(e -> verAlarmasBtn.setStyle("-fx-font-size: 11px; -fx-text-fill: #1565c0; -fx-underline: false;"));
+        verAlarmasBtn.setOnMouseClicked(e
+                -> root.setCenter(new AlarmasPoliciaView(alarmaService, policiaActual).build()));
         hAlarma.getChildren().addAll(iconAlarmBox, tituloAlarmas, verAlarmasBtn);
         alarmas.getChildren().addAll(hAlarma, separator());
 
@@ -313,14 +396,14 @@ public class CentroOperacionesPoliciaView {
                 alarmas.getChildren().add(placeholderVacio("Sin alarmas registradas", "\uf0f3", "#43a047"));
             } else {
                 lista.stream().limit(5).forEach(a -> {
-                    String estadoStr   = a.getEstado() != null
+                    String estadoStr = a.getEstado() != null
                             ? a.getEstado().name().replace("_", " ") : "—";
-                    String colorEstado = a.getEstado() == EstadoAlarma.ACTIVA         ? GREEN
-                                       : a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO ? ORANGE
-                                       : GRAY_TEXT;
-                    String iconFA      = a.getEstado() == EstadoAlarma.ACTIVA         ? "\uf0f3"
-                                       : a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO ? "\uf7d9"
-                                       : "\uf1e6";
+                    String colorEstado = a.getEstado() == EstadoAlarma.ACTIVA ? GREEN
+                            : a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO ? ORANGE
+                            : GRAY_TEXT;
+                    String iconFA = a.getEstado() == EstadoAlarma.ACTIVA ? "\uf0f3"
+                            : a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO ? "\uf7d9"
+                            : "\uf1e6";
                     alarmas.getChildren().addAll(
                             alarmaItemMejorado(iconFA, colorEstado, a.getNombre(), estadoStr),
                             separator());
@@ -405,54 +488,74 @@ public class CentroOperacionesPoliciaView {
         try {
             return obtenerMisAlertas().stream()
                     .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                              || a.getEstado() == EstadoAlerta.EN_ATENCION
-                              || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA
-                              || a.getEstado() == EstadoAlerta.RECIBIDA)
+                    || a.getEstado() == EstadoAlerta.EN_ATENCION
+                    || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA
+                    || a.getEstado() == EstadoAlerta.RECIBIDA)
                     .count();
-        } catch (Exception e) { return 0; }
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private long contarMisAtenciones() {
-        try { return obtenerMisAtenciones().size(); }
-        catch (Exception e) { return 0; }
+        try {
+            return obtenerMisAtenciones().size();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private long contarAlarmasActivas() {
         try {
-            if (alarmaService == null) return 0;
+            if (alarmaService == null) {
+                return 0;
+            }
             return alarmaService.listar().stream()
                     .filter(a -> a.getEstado() == EstadoAlarma.ACTIVA
-                              || a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO)
+                    || a.getEstado() == EstadoAlarma.EN_MANTENIMIENTO)
                     .count();
-        } catch (Exception e) { return 0; }
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private int contarNotificaciones() {
-        try { return notificacionService != null ? notificacionService.listar().size() : 0; }
-        catch (Exception e) { return 0; }
+        try {
+            return notificacionService != null ? notificacionService.listar().size() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     // ── Datos ────────────────────────────────────────────────────
     private List<Alerta> obtenerMisAlertas() throws Exception {
-        if (alertaService == null) return List.of();
+        if (alertaService == null) {
+            return List.of();
+        }
         List<Alerta> todas = alertaService.listar();
-        if (usuarioActual == null) return todas;
+        if (usuarioActual == null) {
+            return todas;
+        }
         List<Alerta> mias = todas.stream()
                 .filter(a -> a.getUsuario() != null
-                          && usuarioActual.getUsername() != null
-                          && usuarioActual.getUsername().equals(a.getUsuario().getUsername()))
+                && usuarioActual.getUsername() != null
+                && usuarioActual.getUsername().equals(a.getUsuario().getUsername()))
                 .collect(java.util.stream.Collectors.toList());
         return mias.isEmpty() ? todas : mias;
     }
 
     private List<AtencionAlerta> obtenerMisAtenciones() throws Exception {
-        if (atencionService == null) return List.of();
+        if (atencionService == null) {
+            return List.of();
+        }
         List<AtencionAlerta> todas = atencionService.listar();
-        if (policiaActual == null || policiaActual.getUnidadpolicial() == null) return todas;
+        if (policiaActual == null || policiaActual.getUnidadpolicial() == null) {
+            return todas;
+        }
         String miUnidad = policiaActual.getUnidadpolicial().getNombre();
         List<AtencionAlerta> mias = todas.stream()
                 .filter(at -> at.getUnidad() != null
-                           && miUnidad.equalsIgnoreCase(at.getUnidad().getNombre()))
+                && miUnidad.equalsIgnoreCase(at.getUnidad().getNombre()))
                 .collect(java.util.stream.Collectors.toList());
         return mias.isEmpty() ? todas : mias;
     }
@@ -472,7 +575,8 @@ public class CentroOperacionesPoliciaView {
         iconWrap.setMinSize(52, 52);
         iconWrap.setMaxSize(52, 52);
         Rectangle iconBg = new Rectangle(52, 52);
-        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
         Label iconLbl = new Label(iconFA);
         iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 22px; -fx-text-fill: " + accentColor + ";");
@@ -489,7 +593,7 @@ public class CentroOperacionesPoliciaView {
         topRow.setAlignment(Pos.CENTER_LEFT);
         card.getChildren().add(topRow);
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -500,12 +604,14 @@ public class CentroOperacionesPoliciaView {
         row.setPadding(new Insets(10, 0, 10, 0));
         row.setCursor(javafx.scene.Cursor.HAND);
         row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 8;"));
-        row.setOnMouseExited(e  -> row.setStyle("-fx-background-color: transparent;"));
+        row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent;"));
 
         Circle dot = new Circle(5, Color.web(colorEstado));
 
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(36, 36); iconBox.setMinSize(36, 36); iconBox.setMaxSize(36, 36);
+        iconBox.setPrefSize(36, 36);
+        iconBox.setMinSize(36, 36);
+        iconBox.setMaxSize(36, 36);
         iconBox.setStyle("-fx-background-color: " + colorEstado + "22; -fx-background-radius: 9;");
         Label iconLbl = new Label(iconFA);
         iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 15px; -fx-text-fill: " + colorEstado + ";");
@@ -534,7 +640,9 @@ public class CentroOperacionesPoliciaView {
         row.setPadding(new Insets(10, 0, 10, 0));
 
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(36, 36); iconBox.setMinSize(36, 36); iconBox.setMaxSize(36, 36);
+        iconBox.setPrefSize(36, 36);
+        iconBox.setMinSize(36, 36);
+        iconBox.setMaxSize(36, 36);
         iconBox.setStyle("-fx-background-color: " + color + "22; -fx-background-radius: 9;");
         Label iconLbl = new Label(iconFA);
         iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 15px; -fx-text-fill: " + color + ";");
@@ -559,7 +667,9 @@ public class CentroOperacionesPoliciaView {
         row.setPadding(new Insets(10, 0, 10, 0));
 
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(36, 36); iconBox.setMinSize(36, 36); iconBox.setMaxSize(36, 36);
+        iconBox.setPrefSize(36, 36);
+        iconBox.setMinSize(36, 36);
+        iconBox.setMaxSize(36, 36);
         iconBox.setStyle("-fx-background-color: " + color + "22; -fx-background-radius: 9;");
         Label iconLbl = new Label(iconFA);
         iconLbl.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 15px; -fx-text-fill: " + color + ";");
@@ -587,7 +697,9 @@ public class CentroOperacionesPoliciaView {
         return row;
     }
 
-    private String iconoTipoAlerta(Alerta a) { return "\uf071"; }
+    private String iconoTipoAlerta(Alerta a) {
+        return "\uf071";
+    }
 
     private Region separator() {
         Region sep = new Region();
@@ -608,21 +720,35 @@ public class CentroOperacionesPoliciaView {
     }
 
     private String estadoColor(EstadoAlerta estado) {
-        if (estado == null) return GRAY_TEXT;
+        if (estado == null) {
+            return GRAY_TEXT;
+        }
         return switch (estado) {
-            case PENDIENTE, EN_ATENCION -> RED;
-            case UNIDAD_ASIGNADA        -> ORANGE;
-            case RESUELTA               -> GREEN;
-            default                     -> GRAY_TEXT;
+            case PENDIENTE, EN_ATENCION ->
+                RED;
+            case UNIDAD_ASIGNADA ->
+                ORANGE;
+            case RESUELTA ->
+                GREEN;
+            default ->
+                GRAY_TEXT;
         };
     }
 
     private String formatFecha(LocalDateTime dt) {
-        if (dt == null) return "—";
+        if (dt == null) {
+            return "—";
+        }
         long mins = java.time.Duration.between(dt, LocalDateTime.now()).toMinutes();
-        if (mins < 1)    return "Hace un momento";
-        if (mins < 60)   return "Hace " + mins + " min";
-        if (mins < 1440) return "Hace " + (mins / 60) + " h";
+        if (mins < 1) {
+            return "Hace un momento";
+        }
+        if (mins < 60) {
+            return "Hace " + mins + " min";
+        }
+        if (mins < 1440) {
+            return "Hace " + (mins / 60) + " h";
+        }
         return dt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 }

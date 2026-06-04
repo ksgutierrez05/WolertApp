@@ -41,21 +41,21 @@ import sistemagestion.service.SuscripcionService;
 public class MapaAlerta {
 
     // ── Paleta ─────────────────────────────────────────────────────────────
-    private static final String BG          = "white";
-    private static final String BORDER      = "#e5e7eb";
-    private static final String DARK_GRAD   = "linear-gradient(to bottom right,#16283d,#1f3a56)";
-    private static final String RED         = "#e53935";
-    private static final String RED_DARK    = "#c62828";
-    private static final String FIELD_BG    = "#f8fafc";
-    private static final String FIELD_BDR   = "#e2e8f0";
+    private static final String BG = "white";
+    private static final String BORDER = "#e5e7eb";
+    private static final String DARK_GRAD = "linear-gradient(to bottom right,#16283d,#1f3a56)";
+    private static final String RED = "#e53935";
+    private static final String RED_DARK = "#c62828";
+    private static final String FIELD_BG = "#f8fafc";
+    private static final String FIELD_BDR = "#e2e8f0";
     private static final String FIELD_FOCUS = "#93c5fd";
-    private static final String TEXT_MAIN   = "#111827";
-    private static final String TEXT_SUB    = "#6b7280";
-    private static final String TEXT_FIELD  = "#374151";
-    private static final String BLUE_LIGHT  = "#eff6ff";
-    private static final String BLUE_BDR    = "#bfdbfe";
-    private static final String GREEN       = "#16a34a";
-    private static final String DARK        = "#16283d";
+    private static final String TEXT_MAIN = "#111827";
+    private static final String TEXT_SUB = "#6b7280";
+    private static final String TEXT_FIELD = "#374151";
+    private static final String BLUE_LIGHT = "#eff6ff";
+    private static final String BLUE_BDR = "#bfdbfe";
+    private static final String GREEN = "#16a34a";
+    private static final String DARK = "#16283d";
 
     // ── Tipos hardcodeados (no se duplican desde la BD) ───────────────────
     private static final Set<String> TIPOS_FIJOS = Set.of(
@@ -77,41 +77,41 @@ public class MapaAlerta {
     );
 
     // ── Dependencias ────────────────────────────────────────────────────────
-    private final Stage              owner;
-    private final Usuario            usuario;
-    private final AlertaService      alertaService;
-    private final BarrioService      barrioService;
-    private final TipoAlertaService  tipoAlertaService;
-    private final TipoArmaService    tipoArmaService;
+    private final Stage owner;
+    private final Usuario usuario;
+    private final AlertaService alertaService;
+    private final BarrioService barrioService;
+    private final TipoAlertaService tipoAlertaService;
+    private final TipoArmaService tipoArmaService;
     private final MedioTransporteService medioService;
 
     // ── Mapa ────────────────────────────────────────────────────────────────
-    private JXMapViewer        mapa;
-    private GeoPosition        posicionSeleccionada;
-    private Label              lblCoordFooter;
-    private Label              lblInstruccion;
+    private JXMapViewer mapa;
+    private GeoPosition posicionSeleccionada;
+    private Label lblCoordFooter;
+    private Label lblInstruccion;
     private SimpleStringProperty coordProp;
 
     // ── Estado formulario ───────────────────────────────────────────────────
-    private String tipoAlertaSel  = null;
-    private String tipoArmaSel    = null;
+    private String tipoAlertaSel = null;
+    private String tipoArmaSel = null;
     private String medioTranspSel = null;
-    private HBox   tarjetaActiva  = null;
+    private HBox tarjetaActiva = null;
 
     // ── Subpaneles fijos ────────────────────────────────────────────────────
     private VBox subRobo, subHomicidio, subSospechoso,
-                 subIncendio, subRuido, subMedica, subAccidente;
+            subIncendio, subRuido, subMedica, subAccidente;
     private List<VBox> todosSubpaneles;
 
     // ── Controles formulario ────────────────────────────────────────────────
-    private TextArea       txtDescripcion;
+    private TextArea txtDescripcion;
     private ComboBox<Barrio> cmbBarrio;
-    private Label          lblFeedback;
+    private Label lblFeedback;
 
     // ── Grid dinámico ───────────────────────────────────────────────────────
     private GridPane gridAlertas;
-    private int      gridCol = 0;
-    private int      gridRow = 0;
+    private int gridCol = 0;
+    private int gridRow = 0;
 
     // ── Subpanel de armas/medios extra ──────────────────────────────────────
     private VBox subExtra;           // subpanel genérico para tipo extra
@@ -120,44 +120,64 @@ public class MapaAlerta {
 
     // ── Animación pánico ─────────────────────────────────────────────────────
     private List<ScaleTransition> scaleAnims = new ArrayList<>();
-    private List<FadeTransition>  fadeAnims  = new ArrayList<>();
-    private List<Circle>          waves      = new ArrayList<>();
+    private List<FadeTransition> fadeAnims = new ArrayList<>();
+    private List<Circle> waves = new ArrayList<>();
     private boolean panicActive = false;
 
     // ─────────────────────────────────────────────────────────────────────────
     public MapaAlerta(Stage owner, Usuario usuario,
-                      AlertaService alertaService, BarrioService barrioService) {
-        this.owner        = owner;
-        this.usuario      = usuario;
+            AlertaService alertaService, BarrioService barrioService) {
+        this.owner = owner;
+        this.usuario = usuario;
         this.alertaService = alertaService;
         this.barrioService = barrioService;
         this.tipoAlertaService = crearTipoAlertaService();
-        this.tipoArmaService   = crearTipoArmaService();
-        this.medioService      = crearMedioService();
+        this.tipoArmaService = crearTipoArmaService();
+        this.medioService = crearMedioService();
     }
 
     public MapaAlerta() {
-        this.owner        = null;
-        this.usuario      = null;
-        AlertaService as  = null;
-        BarrioService bs  = null;
-        try { as = new AlertaService(); }  catch (SQLException ignored) {}
-        try { bs = new BarrioService(); }  catch (SQLException ignored) {}
-        this.alertaService     = as;
-        this.barrioService     = bs;
+        this.owner = null;
+        this.usuario = null;
+        AlertaService as = null;
+        BarrioService bs = null;
+        try {
+            as = new AlertaService();
+        } catch (SQLException ignored) {
+        }
+        try {
+            bs = new BarrioService();
+        } catch (SQLException ignored) {
+        }
+        this.alertaService = as;
+        this.barrioService = bs;
         this.tipoAlertaService = crearTipoAlertaService();
-        this.tipoArmaService   = crearTipoArmaService();
-        this.medioService      = crearMedioService();
+        this.tipoArmaService = crearTipoArmaService();
+        this.medioService = crearMedioService();
     }
 
     private TipoAlertaService crearTipoAlertaService() {
-        try { return new TipoAlertaService(); } catch (Exception e) { return null; }
+        try {
+            return new TipoAlertaService();
+        } catch (Exception e) {
+            return null;
+        }
     }
+
     private TipoArmaService crearTipoArmaService() {
-        try { return new TipoArmaService(); } catch (Exception e) { return null; }
+        try {
+            return new TipoArmaService();
+        } catch (Exception e) {
+            return null;
+        }
     }
+
     private MedioTransporteService crearMedioService() {
-        try { return new MedioTransporteService(); } catch (Exception e) { return null; }
+        try {
+            return new MedioTransporteService();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -177,7 +197,7 @@ public class MapaAlerta {
         root.setStyle("-fx-background-color:" + BG + ";");
 
         StackPane mapaPane = buildMapaPane();
-        VBox      formPane = buildFormPane();
+        VBox formPane = buildFormPane();
         HBox.setHgrow(mapaPane, Priority.ALWAYS);
 
         HBox body = new HBox(mapaPane, formPane);
@@ -212,8 +232,11 @@ public class MapaAlerta {
                     getClass().getResourceAsStream("/LogoWolertApp.png"));
             logoImg.setImage(javafx.embed.swing.SwingFXUtils.toFXImage(
                     recortarTransparencia(raw), null));
-        } catch (Exception ignored) {}
-        logoImg.setFitHeight(22); logoImg.setFitWidth(22); logoImg.setPreserveRatio(true);
+        } catch (Exception ignored) {
+        }
+        logoImg.setFitHeight(22);
+        logoImg.setFitWidth(22);
+        logoImg.setPreserveRatio(true);
 
         StackPane logoBox = new StackPane(logoImg);
         logoBox.setStyle("-fx-background-color:" + DARK_GRAD + ";-fx-background-radius:8;-fx-padding:6;");
@@ -263,10 +286,12 @@ public class MapaAlerta {
                 + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.10),8,0,0,2);");
 
         coordProp.addListener((obs, o, n) -> {
-            if (!n.equals("—")) Platform.runLater(() -> {
-                chipAviso.setVisible(false);
-                chipAviso.setManaged(false);
-            });
+            if (!n.equals("—")) {
+                Platform.runLater(() -> {
+                    chipAviso.setVisible(false);
+                    chipAviso.setManaged(false);
+                });
+            }
         });
 
         StackPane stack = new StackPane(swingNode, lblCoordFooter, chipAviso);
@@ -281,7 +306,8 @@ public class MapaAlerta {
         mapa = new JXMapViewer();
         TileFactoryInfo info = new TileFactoryInfo(1, 15, 17, 256, true, true,
                 "https://tile.openstreetmap.org", "x", "y", "z") {
-            @Override public String getTileUrl(int x, int y, int zoom) {
+            @Override
+            public String getTileUrl(int x, int y, int zoom) {
                 return baseURL + "/" + (17 - zoom) + "/" + x + "/" + y + ".png";
             }
         };
@@ -293,7 +319,10 @@ public class MapaAlerta {
         mapa.addMouseMotionListener(pan);
         mapa.addMouseWheelListener(new ZoomMouseWheelListenerCenter(mapa));
         mapa.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onMapaClick(e); }
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                onMapaClick(e);
+            }
         });
         mapa.setOverlayPainter(this::pintarPin);
         sn.setContent(mapa);
@@ -313,7 +342,9 @@ public class MapaAlerta {
     }
 
     private void pintarPin(Graphics2D g, JXMapViewer map, int w, int h) {
-        if (posicionSeleccionada == null) return;
+        if (posicionSeleccionada == null) {
+            return;
+        }
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         Point2D pt = map.getTileFactory().geoToPixel(posicionSeleccionada, map.getZoom());
         int x = (int) pt.getX() - map.getViewportBounds().x;
@@ -327,7 +358,6 @@ public class MapaAlerta {
         int[] ys = {y - 12, y - 12, y + 5};
         g.fillPolygon(xs, ys, 3);
 
-
         g.setColor(java.awt.Color.WHITE);
         g.fillOval(x - 5, y - 23, 10, 10);
     }
@@ -336,7 +366,7 @@ public class MapaAlerta {
     // PANEL FORMULARIO
     // ════════════════════════════════════════════════════════════════════════
     private VBox buildFormPane() {
-        HBox header   = buildFormHeader();
+        HBox header = buildFormHeader();
         VBox contenido = buildContenido();
         contenido.setPadding(new Insets(20, 22, 24, 22));
         contenido.setStyle("-fx-background-color:" + BG + ";");
@@ -349,7 +379,9 @@ public class MapaAlerta {
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
         VBox panel = new VBox(header, scroll);
-        panel.setPrefWidth(410); panel.setMinWidth(370); panel.setMaxWidth(440);
+        panel.setPrefWidth(410);
+        panel.setMinWidth(370);
+        panel.setMaxWidth(440);
         panel.setStyle("-fx-background-color:" + BG
                 + ";-fx-border-color:" + BORDER + ";-fx-border-width:0 0 0 1;");
         return panel;
@@ -391,29 +423,29 @@ public class MapaAlerta {
         panicBlock.setPadding(new Insets(4, 0, 6, 0));
 
         // ── Tarjetas fijas ───────────────────────────────────────────────────
-        HBox c_robo        = categoryCard("\uf6de", "#E67E22", "Robo / Asalto");
-        HBox c_homicidio   = categoryCard("\uf714", "#1A2332", "Homicidio");
-        HBox c_sospechoso  = categoryCard("\uf21b", "#0EA5E9", "Sospechoso");
-        HBox c_incendio    = categoryCard("\uf06d", "#E53935", "Incendio");
-        HBox c_medica      = categoryCard("\uf0f9", "#1D4ED8", "Emergencia médica");
-        HBox c_accidente   = categoryCard("\uf071", "#7C3AED", "Accidente");
-        HBox c_ruido       = categoryCard("\uf028", "#16A34A", "Ruido / Alteración");
+        HBox c_robo = categoryCard("\uf6de", "#E67E22", "Robo / Asalto");
+        HBox c_homicidio = categoryCard("\uf714", "#1A2332", "Homicidio");
+        HBox c_sospechoso = categoryCard("\uf21b", "#0EA5E9", "Sospechoso");
+        HBox c_incendio = categoryCard("\uf06d", "#E53935", "Incendio");
+        HBox c_medica = categoryCard("\uf0f9", "#1D4ED8", "Emergencia médica");
+        HBox c_accidente = categoryCard("\uf071", "#7C3AED", "Accidente");
+        HBox c_ruido = categoryCard("\uf028", "#16A34A", "Ruido / Alteración");
 
         // ── Subpaneles fijos ─────────────────────────────────────────────────
         // Cargar armas y medios extras de la BD
-        List<Opc> armasExtra  = cargarArmasExtras();
+        List<Opc> armasExtra = cargarArmasExtras();
         List<Opc> mediosExtra = cargarMediosExtras();
 
         VBox secArma = buildSeccion("Tipo de arma", List.of(
                 new Opc("\uf05b", "#E53935", "Arma de fuego", "ARMA"),
-                new Opc("\ue08f", "#F97316", "Arma blanca",   "ARMA"),
-                new Opc("\uf255", "#7C3AED", "Sin arma",      "ARMA"),
-                new Opc("\uf1e2", "#1A2332", "Explosivo",     "ARMA")
+                new Opc("\ue08f", "#F97316", "Arma blanca", "ARMA"),
+                new Opc("\uf255", "#7C3AED", "Sin arma", "ARMA"),
+                new Opc("\uf1e2", "#1A2332", "Explosivo", "ARMA")
         ));
         VBox secTransp = buildSeccion("Medio de transporte", List.of(
-                new Opc("\uf21c", "#1D4ED8", "Motocicleta",   "TRANSPORTE"),
-                new Opc("\uf1b9", "#0EA5E9", "Automóvil",     "TRANSPORTE"),
-                new Opc("\uf554", "#16A34A", "A pie",         "TRANSPORTE"),
+                new Opc("\uf21c", "#1D4ED8", "Motocicleta", "TRANSPORTE"),
+                new Opc("\uf1b9", "#0EA5E9", "Automóvil", "TRANSPORTE"),
+                new Opc("\uf554", "#16A34A", "A pie", "TRANSPORTE"),
                 new Opc("\uf207", "#D97706", "Bus/Colectivo", "TRANSPORTE")
         ));
 
@@ -431,10 +463,10 @@ public class MapaAlerta {
         }
 
         subHomicidio = buildSubpanelSimple("Tipo de arma", List.of(
-                new Opc("\uf05b", "#E53935", "Arma de fuego",  "ARMA"),
-                new Opc("\ue08f", "#F97316", "Arma blanca",    "ARMA"),
-                new Opc("\uf255", "#7C3AED", "Agresión física","ARMA"),
-                new Opc("\uf128", "#475569", "Desconocido",    "ARMA")
+                new Opc("\uf05b", "#E53935", "Arma de fuego", "ARMA"),
+                new Opc("\ue08f", "#F97316", "Arma blanca", "ARMA"),
+                new Opc("\uf255", "#7C3AED", "Agresión física", "ARMA"),
+                new Opc("\uf128", "#475569", "Desconocido", "ARMA")
         ));
 
         if (!armasExtra.isEmpty()) {
@@ -445,49 +477,54 @@ public class MapaAlerta {
         TextArea descSosp = styledTextArea("Ej: camiseta negra, gorra roja...", 3);
 
         descSosp.textProperty().addListener((obs, o, n) -> {
-            if (!n.isBlank() && txtDescripcion != null)
+            if (!n.isBlank() && txtDescripcion != null) {
                 txtDescripcion.setText("Persona sospechosa: " + n);
+            }
         });
         subSospechoso = buildSubpanelConNodo("Descripción del sospechoso", descSosp);
 
         subIncendio = buildSubpanelSimple("Tipo de incendio", List.of(
-                new Opc("\uf015", "#E53935", "Vivienda",        "TIPO"),
-                new Opc("\uf1b9", "#F97316", "Vehículo",        "TIPO"),
-                new Opc("\uf1bb", "#16A34A", "Zona verde",      "TIPO"),
+                new Opc("\uf015", "#E53935", "Vivienda", "TIPO"),
+                new Opc("\uf1b9", "#F97316", "Vehículo", "TIPO"),
+                new Opc("\uf1bb", "#16A34A", "Zona verde", "TIPO"),
                 new Opc("\uf54f", "#D97706", "Local comercial", "TIPO")
         ));
         subIncendio.getChildren().add(styledToggle("Hay personas atrapadas", activo -> {
-            if (activo && txtDescripcion != null) txtDescripcion.appendText(" · Personas atrapadas");
+            if (activo && txtDescripcion != null) {
+                txtDescripcion.appendText(" · Personas atrapadas");
+            }
         }));
 
         subRuido = buildSubpanelSimple("Tipo de alteración", List.of(
-                new Opc("\uf001", "#D97706", "Música / fiesta",   "TIPO"),
-                new Opc("\uf6de", "#E53935", "Riña / pelea",      "TIPO"),
-                new Opc("\uf6d3", "#F97316", "Animal agresivo",   "TIPO"),
+                new Opc("\uf001", "#D97706", "Música / fiesta", "TIPO"),
+                new Opc("\uf6de", "#E53935", "Riña / pelea", "TIPO"),
+                new Opc("\uf6d3", "#F97316", "Animal agresivo", "TIPO"),
                 new Opc("\uf0a1", "#7C3AED", "Escándalo público", "TIPO"),
-                new Opc("\uf1e2", "#1A2332", "Detonación",        "TIPO"),
+                new Opc("\uf1e2", "#1A2332", "Detonación", "TIPO"),
                 new Opc("\uf7d9", "#0EA5E9", "Obra/construcción", "TIPO")
         ));
 
         subMedica = buildSubpanelSimple("Tipo de emergencia médica", List.of(
-                new Opc("\uf21e", "#E53935", "Paro cardíaco",       "TIPO"),
+                new Opc("\uf21e", "#E53935", "Paro cardíaco", "TIPO"),
                 new Opc("\uf481", "#0EA5E9", "Dific. respiratoria", "TIPO"),
-                new Opc("\uf462", "#F97316", "Persona herida",      "TIPO"),
-                new Opc("\uf119", "#7C3AED", "Desmayo/convulsión",  "TIPO"),
-                new Opc("\uf77d", "#16A34A", "Parto emergencia",    "TIPO"),
-                new Opc("\uf490", "#D97706", "Intoxicación",        "TIPO")
+                new Opc("\uf462", "#F97316", "Persona herida", "TIPO"),
+                new Opc("\uf119", "#7C3AED", "Desmayo/convulsión", "TIPO"),
+                new Opc("\uf77d", "#16A34A", "Parto emergencia", "TIPO"),
+                new Opc("\uf490", "#D97706", "Intoxicación", "TIPO")
         ));
 
         subAccidente = buildSubpanelSimple("Tipo de accidente", List.of(
-                new Opc("\uf5e4", "#1D4ED8", "Choque vehículos",  "TIPO"),
-                new Opc("\uf554", "#E53935", "Atropello",         "TIPO"),
-                new Opc("\uf0e7", "#D97706", "Cable eléctrico",   "TIPO"),
-                new Opc("\uf773", "#0EA5E9", "Inundación",        "TIPO"),
-                new Opc("\uf6ff", "#475569", "Derrumbamiento",    "TIPO"),
-                new Opc("\uf018", "#16A34A", "Vía obstruida",     "TIPO")
+                new Opc("\uf5e4", "#1D4ED8", "Choque vehículos", "TIPO"),
+                new Opc("\uf554", "#E53935", "Atropello", "TIPO"),
+                new Opc("\uf0e7", "#D97706", "Cable eléctrico", "TIPO"),
+                new Opc("\uf773", "#0EA5E9", "Inundación", "TIPO"),
+                new Opc("\uf6ff", "#475569", "Derrumbamiento", "TIPO"),
+                new Opc("\uf018", "#16A34A", "Vía obstruida", "TIPO")
         ));
         subAccidente.getChildren().add(styledToggle("Hay personas heridas", activo -> {
-            if (activo && txtDescripcion != null) txtDescripcion.appendText(" · Personas heridas");
+            if (activo && txtDescripcion != null) {
+                txtDescripcion.appendText(" · Personas heridas");
+            }
         }));
 
         todosSubpaneles = new ArrayList<>(List.of(
@@ -495,31 +532,34 @@ public class MapaAlerta {
                 subIncendio, subRuido, subMedica, subAccidente));
 
         // ── Acciones tarjetas fijas ──────────────────────────────────────────
-        c_robo.setOnMouseClicked(e       -> activarCategoria(c_robo,       "ROBO",               subRobo,       "#E53935"));
-        c_homicidio.setOnMouseClicked(e  -> activarCategoria(c_homicidio,  "HOMICIDIO",          subHomicidio,  "#1E293B"));
+        c_robo.setOnMouseClicked(e -> activarCategoria(c_robo, "ROBO", subRobo, "#E53935"));
+        c_homicidio.setOnMouseClicked(e -> activarCategoria(c_homicidio, "HOMICIDIO", subHomicidio, "#1E293B"));
         c_sospechoso.setOnMouseClicked(e -> activarCategoria(c_sospechoso, "PERSONA_SOSPECHOSA", subSospechoso, "#0EA5E9"));
-        c_incendio.setOnMouseClicked(e   -> activarCategoria(c_incendio,   "INCENDIO",           subIncendio,   "#F97316"));
-        c_medica.setOnMouseClicked(e     -> activarCategoria(c_medica,     "EMERGENCIA_MEDICA",  subMedica,     "#1D4ED8"));
-        c_accidente.setOnMouseClicked(e  -> activarCategoria(c_accidente,  "ACCIDENTE",          subAccidente,  "#7C3AED"));
-        c_ruido.setOnMouseClicked(e      -> activarCategoria(c_ruido,      "RUIDO",              subRuido,      "#D97706"));
+        c_incendio.setOnMouseClicked(e -> activarCategoria(c_incendio, "INCENDIO", subIncendio, "#F97316"));
+        c_medica.setOnMouseClicked(e -> activarCategoria(c_medica, "EMERGENCIA_MEDICA", subMedica, "#1D4ED8"));
+        c_accidente.setOnMouseClicked(e -> activarCategoria(c_accidente, "ACCIDENTE", subAccidente, "#7C3AED"));
+        c_ruido.setOnMouseClicked(e -> activarCategoria(c_ruido, "RUIDO", subRuido, "#D97706"));
 
         // ── Grid: columnas fijas ─────────────────────────────────────────────
         gridAlertas = new GridPane();
         gridAlertas.setHgap(8);
         gridAlertas.setVgap(8);
-        ColumnConstraints cc1 = new ColumnConstraints(); cc1.setPercentWidth(50);
-        ColumnConstraints cc2 = new ColumnConstraints(); cc2.setPercentWidth(50);
+        ColumnConstraints cc1 = new ColumnConstraints();
+        cc1.setPercentWidth(50);
+        ColumnConstraints cc2 = new ColumnConstraints();
+        cc2.setPercentWidth(50);
         gridAlertas.getColumnConstraints().addAll(cc1, cc2);
 
         // Posición inicial después de los 7 fijos
-        gridAlertas.add(c_robo,       0, 0);
-        gridAlertas.add(c_homicidio,  1, 0);
+        gridAlertas.add(c_robo, 0, 0);
+        gridAlertas.add(c_homicidio, 1, 0);
         gridAlertas.add(c_sospechoso, 0, 1);
-        gridAlertas.add(c_incendio,   1, 1);
-        gridAlertas.add(c_medica,     0, 2);
-        gridAlertas.add(c_accidente,  1, 2);
-        gridAlertas.add(c_ruido,      0, 3);
-        gridCol = 1; gridRow = 3;   // siguiente posición libre
+        gridAlertas.add(c_incendio, 1, 1);
+        gridAlertas.add(c_medica, 0, 2);
+        gridAlertas.add(c_accidente, 1, 2);
+        gridAlertas.add(c_ruido, 0, 3);
+        gridCol = 1;
+        gridRow = 3;   // siguiente posición libre
 
         // ── Agregar tipos extras de alerta desde la BD ───────────────────────
         agregarTiposAlertaExtras();
@@ -530,9 +570,9 @@ public class MapaAlerta {
         sep.setStyle("-fx-background-color:" + BORDER + ";");
 
         txtDescripcion = styledTextArea("Describe brevemente la emergencia...", 4);
-        cmbBarrio      = buildComboBarrio();
+        cmbBarrio = buildComboBarrio();
         VBox coordChip = buildCoordChip();
-        lblFeedback    = new Label();
+        lblFeedback = new Label();
         lblFeedback.setWrapText(true);
         lblFeedback.setMaxWidth(Double.MAX_VALUE);
         lblFeedback.setFont(Font.font("Arial", 12));
@@ -551,23 +591,28 @@ public class MapaAlerta {
     // ════════════════════════════════════════════════════════════════════════
     // CARGA DINÁMICA DESDE BD
     // ════════════════════════════════════════════════════════════════════════
-
     /**
-     * Agrega al grid los tipos de alerta que vienen de la BD
-     * y no están en los fijos hardcodeados.
+     * Agrega al grid los tipos de alerta que vienen de la BD y no están en los
+     * fijos hardcodeados.
      */
     private void agregarTiposAlertaExtras() {
-        if (tipoAlertaService == null) return;
+        if (tipoAlertaService == null) {
+            return;
+        }
         try {
             List<TipoAlerta> todos = tipoAlertaService.listar();
             for (TipoAlerta ta : todos) {
                 String nombre = ta.getNombre();
-                if (nombre == null) continue;
+                if (nombre == null) {
+                    continue;
+                }
                 // Verificar si ya está en los fijos (comparación flexible)
                 boolean esFijo = TIPOS_FIJOS.stream()
                         .anyMatch(f -> f.equalsIgnoreCase(nombre)
-                                || nombre.toUpperCase().contains(f.toUpperCase()));
-                if (esFijo) continue;
+                        || nombre.toUpperCase().contains(f.toUpperCase()));
+                if (esFijo) {
+                    continue;
+                }
 
                 // Crear subpanel genérico para este tipo
                 VBox subGenerico = containerSubpanel(
@@ -579,54 +624,70 @@ public class MapaAlerta {
                 // Tarjeta genérica
                 HBox tarjeta = categoryCard("\uf0a0", "#64748b", nombre);
                 final String tipoKey = nombre.toUpperCase().replace(" ", "_");
-                tarjeta.setOnMouseClicked(e ->
-                        activarCategoria(tarjeta, tipoKey, subGenerico, "#64748b"));
+                tarjeta.setOnMouseClicked(e
+                        -> activarCategoria(tarjeta, tipoKey, subGenerico, "#64748b"));
 
                 // Agregar al grid
                 gridAlertas.add(tarjeta, gridCol, gridRow);
                 gridCol++;
-                if (gridCol == 2) { gridCol = 0; gridRow++; }
+                if (gridCol == 2) {
+                    gridCol = 0;
+                    gridRow++;
+                }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     /**
-     * Retorna lista de Opc con armas que vienen de la BD y no están en las fijas.
+     * Retorna lista de Opc con armas que vienen de la BD y no están en las
+     * fijas.
      */
     private List<Opc> cargarArmasExtras() {
-        if (tipoArmaService == null) return List.of();
+        if (tipoArmaService == null) {
+            return List.of();
+        }
         List<Opc> extras = new ArrayList<>();
         try {
             for (TipoArma ta : tipoArmaService.listar()) {
                 String nombre = ta.getNombre();
-                if (nombre == null) continue;
+                if (nombre == null) {
+                    continue;
+                }
                 boolean esFijo = ARMAS_FIJAS.stream()
                         .anyMatch(f -> f.equalsIgnoreCase(nombre));
                 if (!esFijo) {
                     extras.add(new Opc("\uf6ff", "#475569", nombre, "ARMA"));
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return extras;
     }
 
     /**
-     * Retorna lista de Opc con medios que vienen de la BD y no están en los fijos.
+     * Retorna lista de Opc con medios que vienen de la BD y no están en los
+     * fijos.
      */
     private List<Opc> cargarMediosExtras() {
-        if (medioService == null) return List.of();
+        if (medioService == null) {
+            return List.of();
+        }
         List<Opc> extras = new ArrayList<>();
         try {
             for (MedioTransporte mt : medioService.listar()) {
                 String nombre = mt.getNombre();
-                if (nombre == null) continue;
+                if (nombre == null) {
+                    continue;
+                }
                 boolean esFijo = MEDIOS_FIJOS.stream()
                         .anyMatch(f -> f.equalsIgnoreCase(nombre));
                 if (!esFijo) {
                     extras.add(new Opc("\uf1b9", "#64748b", nombre, "TRANSPORTE"));
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return extras;
     }
 
@@ -645,35 +706,54 @@ public class MapaAlerta {
             waves.add(wave);
             stack.getChildren().add(0, wave);
             ScaleTransition sc = new ScaleTransition(Duration.seconds(2.2), wave);
-            sc.setFromX(1); sc.setFromY(1); sc.setToX(2.0); sc.setToY(2.0);
+            sc.setFromX(1);
+            sc.setFromY(1);
+            sc.setToX(2.0);
+            sc.setToY(2.0);
             sc.setCycleCount(Animation.INDEFINITE);
             sc.setDelay(Duration.seconds(i * 0.7));
-            sc.play(); scaleAnims.add(sc);
+            sc.play();
+            scaleAnims.add(sc);
             FadeTransition ft = new FadeTransition(Duration.seconds(2.2), wave);
-            ft.setFromValue(0.7); ft.setToValue(0);
+            ft.setFromValue(0.7);
+            ft.setToValue(0);
             ft.setCycleCount(Animation.INDEFINITE);
             ft.setDelay(Duration.seconds(i * 0.7));
-            ft.play(); fadeAnims.add(ft);
+            ft.play();
+            fadeAnims.add(ft);
         }
 
         Button panicBtn = new Button();
-        panicBtn.setPrefSize(120, 120); panicBtn.setMinSize(120, 120); panicBtn.setMaxSize(120, 120);
+        panicBtn.setPrefSize(120, 120);
+        panicBtn.setMinSize(120, 120);
+        panicBtn.setMaxSize(120, 120);
         panicBtn.setStyle(estiloBotonPanico(false));
 
         try {
             javafx.scene.image.ImageView shield = new javafx.scene.image.ImageView(
                     new javafx.scene.image.Image(
                             getClass().getResource("/shield-Photoroom.png").toExternalForm()));
-            shield.setFitWidth(58); shield.setFitHeight(58); shield.setPreserveRatio(true);
+            shield.setFitWidth(58);
+            shield.setFitHeight(58);
+            shield.setPreserveRatio(true);
             panicBtn.setGraphic(shield);
         } catch (Exception ignored) {
-            Label lbl = new Label("🛡"); lbl.setFont(Font.font(36));
+            Label lbl = new Label("🛡");
+            lbl.setFont(Font.font(36));
             panicBtn.setGraphic(lbl);
         }
 
         panicBtn.setOnMouseEntered(e -> panicBtn.setStyle(estiloBotonPanico(true)));
-        panicBtn.setOnMouseExited(e -> { if (!panicActive) panicBtn.setStyle(estiloBotonPanico(false)); });
-        panicBtn.setOnAction(e -> { panicActive = true; panicBtn.setStyle(estiloBotonPanico(true)); enviarAlerta(panicBtn); });
+        panicBtn.setOnMouseExited(e -> {
+            if (!panicActive) {
+                panicBtn.setStyle(estiloBotonPanico(false));
+            }
+        });
+        panicBtn.setOnAction(e -> {
+            panicActive = true;
+            panicBtn.setStyle(estiloBotonPanico(true));
+            enviarAlerta(panicBtn);
+        });
 
         stack.getChildren().add(panicBtn);
         return stack;
@@ -690,11 +770,16 @@ public class MapaAlerta {
     // NORMALIZAR
     // ════════════════════════════════════════════════════════════════════════
     private String normalizarNombre(String nombre) {
-        if (nombre == null) return null;
+        if (nombre == null) {
+            return null;
+        }
         return switch (nombre) {
-            case "Agresión física" -> "Agresion fisica";
-            case "Automóvil"      -> "Automovil";
-            default               -> nombre;
+            case "Agresión física" ->
+                "Agresion fisica";
+            case "Automóvil" ->
+                "Automovil";
+            default ->
+                nombre;
 
         };
     }
@@ -702,24 +787,56 @@ public class MapaAlerta {
     // ════════════════════════════════════════════════════════════════════════
     // LÓGICA DE NEGOCIO
     // ════════════════════════════════════════════════════════════════════════
-
     private void enviarAlerta(Button panicBtn) {
         lblFeedback.setText("");
 
-        if (tipoAlertaSel == null) { error("Selecciona el tipo de emergencia antes de enviar."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
-        if (cmbBarrio.getValue() == null) { error("Selecciona el barrio del incidente."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
-        if (posicionSeleccionada == null) { error("Marca la ubicación en el mapa."); panicActive=false; panicBtn.setStyle(estiloBotonPanico(false)); return; }
-        if (usuario == null || usuario.getUsername() == null) { error("Usuario no identificado."); panicActive=false; return; }
-        if (alertaService == null) { error("Sin conexión al servicio de alertas."); panicActive=false; return; }
+        if (tipoAlertaSel == null) {
+            error("Selecciona el tipo de emergencia antes de enviar.");
+            panicActive = false;
+            panicBtn.setStyle(estiloBotonPanico(false));
+            return;
+        }
+        if (cmbBarrio.getValue() == null) {
+            error("Selecciona el barrio del incidente.");
+            panicActive = false;
+            panicBtn.setStyle(estiloBotonPanico(false));
+            return;
+        }
+        if (posicionSeleccionada == null) {
+            error("Marca la ubicación en el mapa.");
+            panicActive = false;
+            panicBtn.setStyle(estiloBotonPanico(false));
+            return;
+        }
+        if (usuario == null || usuario.getUsername() == null) {
+            error("Usuario no identificado.");
+            panicActive = false;
+            return;
+        }
+        if (alertaService == null) {
+            error("Sin conexión al servicio de alertas.");
+            panicActive = false;
+            return;
+        }
 
         try {
             Alerta alerta = new Alerta();
             alerta.setDescripcion(txtDescripcion.getText().isBlank() ? null : txtDescripcion.getText().trim());
             alerta.setUsuario(usuario);
-            TipoAlerta ta = new TipoAlerta(); ta.setNombre(tipoAlertaSel); alerta.setTipoalerta(ta);
+            TipoAlerta ta = new TipoAlerta();
+            ta.setNombre(tipoAlertaSel);
+            alerta.setTipoalerta(ta);
             alerta.setBarrio(cmbBarrio.getValue());
-            if (tipoArmaSel != null) { TipoArma arma = new TipoArma(); arma.setNombre(normalizarNombre(tipoArmaSel)); alerta.setTipoarma(arma); }
-            if (medioTranspSel != null) { MedioTransporte medio = new MedioTransporte(); medio.setNombre(normalizarNombre(medioTranspSel)); alerta.setMediotransporte(medio); }
+            if (tipoArmaSel != null) {
+                TipoArma arma = new TipoArma();
+                arma.setNombre(normalizarNombre(tipoArmaSel));
+                alerta.setTipoarma(arma);
+            }
+            if (medioTranspSel != null) {
+                MedioTransporte medio = new MedioTransporte();
+                medio.setNombre(normalizarNombre(medioTranspSel));
+                alerta.setMediotransporte(medio);
+            }
             alerta.setLatitud(posicionSeleccionada.getLatitude());
             alerta.setLongitud(posicionSeleccionada.getLongitude());
             Direccion dir = usuario.getDireccion() != null ? usuario.getDireccion() : new Direccion();
@@ -730,71 +847,153 @@ public class MapaAlerta {
             int idGenerado = alertaService.insertar(alerta);
             if (idGenerado > 0) {
                 alerta.setId_alerta(idGenerado);
-                panicBtn.setStyle("-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(22,163,74,0.45),20,0,0,6);");
-
-                lblFeedback.setStyle("-fx-text-fill:#16a34a;");
-                lblFeedback.setText("✅ Alerta enviada. Las autoridades han sido notificadas.");
+                panicBtn.setStyle("-fx-background-color:#16a34a;-fx-background-radius:100;-fx-cursor:hand;");
                 panicBtn.setDisable(true);
 
                 final Alerta alertaFinal = alerta;
+                final String tipoFinal = tipoAlertaSel;
 
-                final String tipoFinal   = tipoAlertaSel;
-
+                // Hilo: consultar estado + notificar + mostrar ventana
                 new Thread(() -> {
                     try {
-                        SuscripcionService suscSvc = new SuscripcionService();
-                        NotificacionService notiSvc = new NotificacionService();
+                        Thread.sleep(700);
 
-                        String barrioNom = alertaFinal.getBarrio().getNombre();
-                        String comunaNom = alertaFinal.getBarrio().getComuna() != null ? alertaFinal.getBarrio().getComuna().getNombre() : null;
-                        List<Suscripcion> aNotificar = new ArrayList<>(suscSvc.listarPorBarrio(barrioNom));
-                        if (comunaNom != null) {
-                            for (Suscripcion s : suscSvc.listarPorComuna(comunaNom)) {
-                                if (aNotificar.stream().noneMatch(x -> x.getUsuario().getIdentificacion().equals(s.getUsuario().getIdentificacion()))) aNotificar.add(s);
+                        // Consultar estado y prioridad reales desde BD
+                        Alerta actualizada = alertaService.buscarPorId(idGenerado);
+
+                        String estado = (actualizada != null && actualizada.getEstado() != null)
+                                ? actualizada.getEstado().name() : "PENDIENTE";
+
+                        // Prioridad viene del TipoAlerta
+                        String prioridad = "NORMAL";
+                        if (actualizada != null
+                                && actualizada.getTipoalerta() != null
+                                && actualizada.getTipoalerta().getPrioridad() != null) {
+                            prioridad = actualizada.getTipoalerta().getPrioridad();
+                        }
+
+                        
+                        System.out.println(">>> ESTADO: " + estado + " | PRIORIDAD: " + prioridad);
+                        // Prioridad viene del TipoAlerta
+                        String emoji, titulo, mensaje, color;
+
+                        switch (estado) {
+                            case "UNIDAD_ASIGNADA" -> {
+                                if ("BAJA".equalsIgnoreCase(prioridad)) {
+                                    // Prioridad baja: discreta, sin mencionar alarmas
+                                    emoji = "🚔";
+                                    titulo = "Unidad en camino";
+                                    mensaje = "Una unidad se dirige hacia la ubicación reportada. "
+                                            + "Mantente en un lugar seguro.";
+                                    color = "#0EA5E9";   // azul
+                                } else {
+                                    // Prioridad ALTA o MEDIA: respuesta completa
+                                    emoji = "🚨";
+                                    titulo = "¡Unidad asignada!";
+                                    mensaje = "Una unidad policial fue asignada y se dirige al lugar. "
+                                            + "Las alarmas del área han sido activadas.";
+                                    color = "#16a34a";   // verde
+                                }
+                            }
+                            case "PENDIENTE" -> {
+                                // Sin unidades disponibles en este momento
+                                emoji = "⏳";
+                                titulo = "No hay unidades disponibles";
+                                mensaje = "Tu alerta fue registrada correctamente. "
+                                        + "Tan pronto una unidad quede libre será despachada. "
+                                        + "Mantente en un lugar seguro.";
+                                color = "#d97706";   // ámbar
+                            }
+                            default -> {
+                                emoji = "✅";
+                                titulo = "Alerta registrada";
+                                mensaje = "Las autoridades han sido notificadas "
+                                        + "y están al tanto de la situación.";
+                                color = "#16a34a";
                             }
                         }
-                        for (Suscripcion s : suscSvc.listarGenerales()) {
-                            if (aNotificar.stream().noneMatch(x -> x.getUsuario().getIdentificacion().equals(s.getUsuario().getIdentificacion()))) aNotificar.add(s);
+
+                        final String emojiFinal = emoji;
+                        final String tituloFinal = titulo;
+                        final String mensajeFinal = mensaje;
+                        final String colorFinal = color;
+
+                        // Notificar suscriptores
+                        try {
+                            SuscripcionService suscSvc = new SuscripcionService();
+                            NotificacionService notiSvc = new NotificacionService();
+                            String barrioNom = alertaFinal.getBarrio().getNombre();
+                            String comunaNom = alertaFinal.getBarrio().getComuna() != null
+                                    ? alertaFinal.getBarrio().getComuna().getNombre() : null;
+                            List<Suscripcion> aNotificar = new ArrayList<>(suscSvc.listarPorBarrio(barrioNom));
+                            if (comunaNom != null) {
+                                for (Suscripcion s : suscSvc.listarPorComuna(comunaNom)) {
+                                    if (aNotificar.stream().noneMatch(x -> x.getUsuario().getIdentificacion()
+                                            .equals(s.getUsuario().getIdentificacion()))) {
+                                        aNotificar.add(s);
+                                    }
+                                }
+                            }
+                            for (Suscripcion s : suscSvc.listarGenerales()) {
+                                if (aNotificar.stream().noneMatch(x -> x.getUsuario().getIdentificacion()
+                                        .equals(s.getUsuario().getIdentificacion()))) {
+                                    aNotificar.add(s);
+                                }
+                            }
+                            for (Suscripcion s : aNotificar) {
+                                try {
+                                    String alcance = s.getBarrio() != null
+                                            ? "en el barrio " + s.getBarrio().getNombre()
+                                            : s.getComuna() != null
+                                            ? "en la comuna " + s.getComuna().getNombre()
+                                            : "en tu ciudad";
+                                    Notificacion n = new Notificacion();
+                                    n.setUsuario(s.getUsuario());
+                                    n.setAlerta(alertaFinal);
+                                    n.setMensaje("🚨 Nueva alerta de " + tipoFinal.replace("_", " ")
+                                            + " reportada " + alcance + "."
+                                            + (alertaFinal.getDescripcion() != null
+                                            ? "\n" + alertaFinal.getDescripcion() : ""));
+                                    n.setCorreodestinatario(s.getUsuario().getCorreo());
+                                    notiSvc.insertar(n);
+                                } catch (Exception ex) {
+                                    System.err.println("Error notificando: " + ex.getMessage());
+                                }
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
                         }
-                        for (Suscripcion s : aNotificar) {
-                            try {
-                                String alcance = s.getBarrio() != null ? "en el barrio " + s.getBarrio().getNombre()
-                                        : s.getComuna() != null ? "en la comuna " + s.getComuna().getNombre() : "en tu ciudad";
-                                Notificacion n = new Notificacion();
-                                n.setUsuario(s.getUsuario()); n.setAlerta(alertaFinal);
-                                n.setMensaje("🚨 Nueva alerta de " + tipoFinal.replace("_", " ") + " reportada " + alcance + "."
-                                        + (alertaFinal.getDescripcion() != null ? "\n" + alertaFinal.getDescripcion() : ""));
-                                n.setCorreodestinatario(s.getUsuario().getCorreo());
-                                notiSvc.insertar(n);
-                            } catch (Exception ex) { System.err.println("Error notificando: " + ex.getMessage()); }
-                        }
-                    } catch (Exception ex) { ex.printStackTrace(); }
 
-                }, "hilo-notificaciones").start();
+                        Platform.runLater(() -> mostrarVentanaExito(
+                                emojiFinal, tituloFinal, mensajeFinal, colorFinal, panicBtn));
 
-                new Timeline(new KeyFrame(Duration.seconds(2.5), ev -> {
-                    Stage s = (Stage) panicBtn.getScene().getWindow();
-
-                    if (owner != null && owner.getScene() != null) owner.getScene().getRoot().setEffect(null);
-
-                    s.close();
-                })).play();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Platform.runLater(() -> mostrarVentanaExito(
+                                "✅", "Alerta registrada",
+                                "Las autoridades han sido notificadas y están al tanto de la situación.",
+                                "#16a34a", panicBtn));
+                    }
+                }, "hilo-resultado").start();
 
             } else {
                 error("Error al enviar la alerta. Intenta nuevamente.");
-                panicActive = false; panicBtn.setStyle(estiloBotonPanico(false));
+                panicActive = false;
+                panicBtn.setStyle(estiloBotonPanico(false));
             }
 
         } catch (Exception ex) {
             error("Error inesperado: " + ex.getMessage());
-
-            ex.printStackTrace(); panicActive = false; panicBtn.setStyle(estiloBotonPanico(false));
+            ex.printStackTrace();
+            panicActive = false;
+            panicBtn.setStyle(estiloBotonPanico(false));
         }
     }
 
     private HBox categoryCard(String unicodeFA, String bg, String texto) {
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(44, 44); iconBox.setMinSize(44, 44);
+        iconBox.setPrefSize(44, 44);
+        iconBox.setMinSize(44, 44);
         iconBox.setStyle("-fx-background-radius:13;-fx-background-color:" + bg + ";");
         Label emo = new Label(unicodeFA);
         emo.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:20px;-fx-text-fill:white;");
@@ -802,23 +1001,38 @@ public class MapaAlerta {
         Label txt = new Label(texto);
         txt.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         txt.setTextFill(Color.web("#1E293B"));
-        txt.setWrapText(true); txt.setMaxWidth(118);
+        txt.setWrapText(true);
+        txt.setMaxWidth(118);
         HBox card = new HBox(10, iconBox, txt);
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPadding(new Insets(12, 10, 12, 12));
         card.setStyle(cardNormal());
-        card.setOnMouseEntered(e -> { if (!card.equals(tarjetaActiva)) card.setStyle(cardHover()); });
-        card.setOnMouseExited(e  -> { if (!card.equals(tarjetaActiva)) card.setStyle(cardNormal()); });
+        card.setOnMouseEntered(e -> {
+            if (!card.equals(tarjetaActiva)) {
+                card.setStyle(cardHover());
+            }
+        });
+        card.setOnMouseExited(e -> {
+            if (!card.equals(tarjetaActiva)) {
+                card.setStyle(cardNormal());
+            }
+        });
         return card;
     }
 
     private void activarCategoria(HBox tarjeta, String tipo, VBox subpanel, String colorActivo) {
         tipoAlertaSel = tipo;
-        if (tarjetaActiva != null) tarjetaActiva.setStyle(cardNormal());
+        if (tarjetaActiva != null) {
+            tarjetaActiva.setStyle(cardNormal());
+        }
         tarjeta.setStyle(cardActivo(colorActivo));
         tarjetaActiva = tarjeta;
-        for (VBox p : todosSubpaneles) { p.setVisible(false); p.setManaged(false); }
-        subpanel.setVisible(true); subpanel.setManaged(true);
+        for (VBox p : todosSubpaneles) {
+            p.setVisible(false);
+            p.setManaged(false);
+        }
+        subpanel.setVisible(true);
+        subpanel.setManaged(true);
     }
 
     private static String cardActivo(String color) {
@@ -828,7 +1042,8 @@ public class MapaAlerta {
 
     private VBox containerSubpanel(javafx.scene.Node... nodos) {
         VBox panel = new VBox(12);
-        panel.setVisible(false); panel.setManaged(false);
+        panel.setVisible(false);
+        panel.setManaged(false);
         panel.setStyle("-fx-background-color:#f8fafc;-fx-background-radius:14;"
                 + "-fx-border-color:#e2e8f0;-fx-border-radius:14;-fx-border-width:1;-fx-padding:14;");
         panel.getChildren().addAll(nodos);
@@ -844,7 +1059,8 @@ public class MapaAlerta {
 
     private VBox buildSubpanelSimple(String titulo, List<Opc> opciones) {
         VBox panel = new VBox(10);
-        panel.setVisible(false); panel.setManaged(false);
+        panel.setVisible(false);
+        panel.setManaged(false);
         panel.setStyle("-fx-background-color:#f8fafc;-fx-background-radius:14;"
                 + "-fx-border-color:#e2e8f0;-fx-border-radius:14;-fx-border-width:1;-fx-padding:14;");
         Label tit = new Label(titulo);
@@ -856,7 +1072,8 @@ public class MapaAlerta {
 
     private VBox buildSubpanelConNodo(String titulo, javafx.scene.Node extra) {
         VBox panel = new VBox(10);
-        panel.setVisible(false); panel.setManaged(false);
+        panel.setVisible(false);
+        panel.setManaged(false);
         panel.setStyle("-fx-background-color:#f8fafc;-fx-background-radius:14;"
                 + "-fx-border-color:#e2e8f0;-fx-border-radius:14;-fx-border-width:1;-fx-padding:14;");
         Label tit = new Label(titulo);
@@ -868,9 +1085,12 @@ public class MapaAlerta {
 
     private GridPane buildMiniGrid(List<Opc> opciones) {
         GridPane g = new GridPane();
-        g.setHgap(7); g.setVgap(7);
-        ColumnConstraints c1 = new ColumnConstraints(); c1.setPercentWidth(50);
-        ColumnConstraints c2 = new ColumnConstraints(); c2.setPercentWidth(50);
+        g.setHgap(7);
+        g.setVgap(7);
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setPercentWidth(50);
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setPercentWidth(50);
         g.getColumnConstraints().addAll(c1, c2);
         List<HBox> tarjetas = new ArrayList<>();
         int col = 0, row = 0;
@@ -880,37 +1100,56 @@ public class MapaAlerta {
             card.setOnMouseClicked(e -> {
                 tarjetas.forEach(h -> h.setStyle(miniNormal()));
                 card.setStyle(miniActivo());
-                if ("ARMA".equals(tipo))       tipoArmaSel    = val;
-                else if ("TRANSPORTE".equals(tipo)) medioTranspSel = val;
+                if ("ARMA".equals(tipo)) {
+                    tipoArmaSel = val;
+                } else if ("TRANSPORTE".equals(tipo)) {
+                    medioTranspSel = val;
+                }
             });
             tarjetas.add(card);
             g.add(card, col, row);
-            col++; if (col == 2) { col = 0; row++; }
+            col++;
+            if (col == 2) {
+                col = 0;
+                row++;
+            }
         }
         return g;
     }
 
     private HBox miniCard(String emoji, String bg, String texto) {
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(32, 32); iconBox.setMinSize(32, 32);
+        iconBox.setPrefSize(32, 32);
+        iconBox.setMinSize(32, 32);
         iconBox.setStyle("-fx-background-radius:9;-fx-background-color:" + bg + ";");
         Label emo = new Label(emoji);
         emo.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';-fx-font-size:14px;-fx-text-fill:white;");
         iconBox.getChildren().add(emo);
         Label txt = new Label(texto);
-        txt.setFont(Font.font("Arial", 12)); txt.setTextFill(Color.web(TEXT_MAIN));
-        txt.setWrapText(true); txt.setMaxWidth(108);
+        txt.setFont(Font.font("Arial", 12));
+        txt.setTextFill(Color.web(TEXT_MAIN));
+        txt.setWrapText(true);
+        txt.setMaxWidth(108);
         HBox card = new HBox(8, iconBox, txt);
         card.setAlignment(Pos.CENTER_LEFT);
         card.setPadding(new Insets(8, 10, 8, 10));
         card.setStyle(miniNormal());
-        card.setOnMouseEntered(e -> { if (!card.getStyle().contains("#2563eb")) card.setStyle(miniHover()); });
-        card.setOnMouseExited(e  -> { if (!card.getStyle().contains("#2563eb")) card.setStyle(miniNormal()); });
+        card.setOnMouseEntered(e -> {
+            if (!card.getStyle().contains("#2563eb")) {
+                card.setStyle(miniHover());
+            }
+        });
+        card.setOnMouseExited(e -> {
+            if (!card.getStyle().contains("#2563eb")) {
+                card.setStyle(miniNormal());
+            }
+        });
         return card;
     }
 
     private Region dividerLine() {
-        Region r = new Region(); r.setPrefHeight(1);
+        Region r = new Region();
+        r.setPrefHeight(1);
         r.setStyle("-fx-background-color:#e2e8f0;");
         return r;
     }
@@ -918,26 +1157,34 @@ public class MapaAlerta {
     private ComboBox<Barrio> buildComboBarrio() {
         ComboBox<Barrio> cb = new ComboBox<>();
         cb.setPromptText("Selecciona el barrio del incidente");
-        cb.setMaxWidth(Double.MAX_VALUE); cb.setPrefHeight(48);
+        cb.setMaxWidth(Double.MAX_VALUE);
+        cb.setPrefHeight(48);
         cb.setStyle("-fx-background-color:" + FIELD_BG + ";-fx-text-fill:" + TEXT_FIELD
                 + ";-fx-prompt-text-fill:#9ca3af;-fx-border-color:transparent;"
                 + "-fx-border-radius:30;-fx-background-radius:30;-fx-font-size:13px;");
         cb.setCellFactory(lv -> new ListCell<Barrio>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty || item == null ? null : item.getNombre());
                 if (!empty && item != null) {
                     setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;-fx-font-size:13px;-fx-padding:9 14 9 14;");
                     setOnMouseEntered(e -> setStyle("-fx-background-color:" + DARK_GRAD + ";-fx-background-radius:6;-fx-text-fill:white;-fx-font-size:13px;-fx-padding:9 14 9 14;"));
-                    setOnMouseExited(e  -> setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;-fx-font-size:13px;-fx-padding:9 14 9 14;"));
+                    setOnMouseExited(e -> setStyle("-fx-background-color:transparent;-fx-text-fill:#4b5563;-fx-font-size:13px;-fx-padding:9 14 9 14;"));
                 }
             }
         });
         cb.setButtonCell(new ListCell<Barrio>() {
-            @Override protected void updateItem(Barrio item, boolean empty) {
+            @Override
+            protected void updateItem(Barrio item, boolean empty) {
                 super.updateItem(item, empty);
-                if (item != null) { setText(item.getNombre()); setStyle("-fx-background-color:" + FIELD_BG + ";-fx-background-radius:30;-fx-text-fill:#111827;-fx-font-size:13px;-fx-padding:4 14 4 14;"); }
-                else { setText("Selecciona el barrio del incidente"); setStyle("-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:13px;"); }
+                if (item != null) {
+                    setText(item.getNombre());
+                    setStyle("-fx-background-color:" + FIELD_BG + ";-fx-background-radius:30;-fx-text-fill:#111827;-fx-font-size:13px;-fx-padding:4 14 4 14;");
+                } else {
+                    setText("Selecciona el barrio del incidente");
+                    setStyle("-fx-background-color:transparent;-fx-text-fill:#9ca3af;-fx-font-size:13px;");
+                }
             }
         });
         if (barrioService != null) {
@@ -948,7 +1195,8 @@ public class MapaAlerta {
                     String nombre = usuario.getDireccion().getBarrio().getNombre();
                     barrios.stream().filter(b -> b.getNombre().equalsIgnoreCase(nombre)).findFirst().ifPresent(cb::setValue);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         return cb;
     }
@@ -961,9 +1209,18 @@ public class MapaAlerta {
         valCoord.setFont(Font.font("Arial", FontWeight.BOLD, 13));
         valCoord.setTextFill(Color.web(TEXT_SUB));
         valCoord.textProperty().bind(coordProp);
-        coordProp.addListener((obs, o, n) -> { if (!n.equals("—")) { valCoord.setTextFill(Color.web(GREEN)); chipTitulo.setTextFill(Color.web(GREEN)); } });
+        coordProp.addListener((obs, o, n) -> {
+            if (!n.equals("—")) {
+                valCoord.setTextFill(Color.web(GREEN));
+                chipTitulo.setTextFill(Color.web(GREEN));
+            }
+        });
         HBox inner = new HBox(10,
-                new Label("📍") {{ setFont(Font.font(14)); }},
+                new Label("📍") {
+            {
+                setFont(Font.font(14));
+            }
+        },
                 new VBox(3, chipTitulo, valCoord));
         inner.setAlignment(Pos.CENTER_LEFT);
         inner.setPadding(new Insets(12, 16, 12, 16));
@@ -973,12 +1230,29 @@ public class MapaAlerta {
     }
 
     // ── Estilos ───────────────────────────────────────────────────────────────
-    private static String cardNormal() { return "-fx-background-color:white;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#E2E8F0;-fx-border-width:1.5;-fx-cursor:hand;"; }
-    private static String cardHover()  { return "-fx-background-color:#F8FAFC;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#94A3B8;-fx-border-width:1.5;-fx-cursor:hand;"; }
-    private static String cardActivo() { return "-fx-background-color:#EFF6FF;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#1D4ED8;-fx-border-width:2.5;-fx-cursor:hand;"; }
-    private static String miniNormal() { return "-fx-background-color:white;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#e2e8f0;-fx-border-width:1;-fx-cursor:hand;"; }
-    private static String miniHover()  { return "-fx-background-color:#f0f9ff;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#bae6fd;-fx-border-width:1;-fx-cursor:hand;"; }
-    private static String miniActivo() { return "-fx-background-color:#dbeafe;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#2563eb;-fx-border-width:2;-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(37,99,235,0.15),6,0,0,1);"; }
+    private static String cardNormal() {
+        return "-fx-background-color:white;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#E2E8F0;-fx-border-width:1.5;-fx-cursor:hand;";
+    }
+
+    private static String cardHover() {
+        return "-fx-background-color:#F8FAFC;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#94A3B8;-fx-border-width:1.5;-fx-cursor:hand;";
+    }
+
+    private static String cardActivo() {
+        return "-fx-background-color:#EFF6FF;-fx-background-radius:14;-fx-border-radius:14;-fx-border-color:#1D4ED8;-fx-border-width:2.5;-fx-cursor:hand;";
+    }
+
+    private static String miniNormal() {
+        return "-fx-background-color:white;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#e2e8f0;-fx-border-width:1;-fx-cursor:hand;";
+    }
+
+    private static String miniHover() {
+        return "-fx-background-color:#f0f9ff;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#bae6fd;-fx-border-width:1;-fx-cursor:hand;";
+    }
+
+    private static String miniActivo() {
+        return "-fx-background-color:#dbeafe;-fx-background-radius:10;-fx-border-radius:10;-fx-border-color:#2563eb;-fx-border-width:2;-fx-cursor:hand;-fx-effect:dropshadow(gaussian,rgba(37,99,235,0.15),6,0,0,1);";
+    }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     private Label sectionLabel(String text) {
@@ -990,7 +1264,9 @@ public class MapaAlerta {
 
     private TextArea styledTextArea(String prompt, int rows) {
         TextArea ta = new TextArea();
-        ta.setPromptText(prompt); ta.setWrapText(true); ta.setPrefRowCount(rows);
+        ta.setPromptText(prompt);
+        ta.setWrapText(true);
+        ta.setPrefRowCount(rows);
         String base = "-fx-background-color:white;-fx-background-insets:0;-fx-background-radius:12;-fx-border-radius:12;-fx-border-color:#CBD5E1;-fx-border-width:1.5;-fx-font-size:13px;-fx-font-family:'Arial';-fx-text-fill:#1E293B;-fx-prompt-text-fill:#94A3B8;-fx-padding:12 14 12 14;";
         String focused = "-fx-background-color:white;-fx-background-insets:0;-fx-background-radius:12;-fx-border-radius:12;-fx-border-color:#3B82F6;-fx-border-width:2;-fx-font-size:13px;-fx-font-family:'Arial';-fx-text-fill:#1E293B;-fx-prompt-text-fill:#94A3B8;-fx-padding:12 14 12 14;";
         ta.setStyle(base);
@@ -999,18 +1275,27 @@ public class MapaAlerta {
 
         ta.skinProperty().addListener((obs, oldSkin, newSkin) -> {
             if (newSkin != null) {
-                javafx.scene.Node sp = ta.lookup(".scroll-pane"); if (sp != null) sp.setStyle("-fx-background-color:white;-fx-background-insets:0;");
-                javafx.scene.Node vp = ta.lookup(".scroll-pane .viewport"); if (vp != null) vp.setStyle("-fx-background-color:white;");
-                javafx.scene.Node ct = ta.lookup(".content"); if (ct != null) ct.setStyle("-fx-background-color:white;");
+                javafx.scene.Node sp = ta.lookup(".scroll-pane");
+                if (sp != null) {
+                    sp.setStyle("-fx-background-color:white;-fx-background-insets:0;");
+                }
+                javafx.scene.Node vp = ta.lookup(".scroll-pane .viewport");
+                if (vp != null) {
+                    vp.setStyle("-fx-background-color:white;");
+                }
+                javafx.scene.Node ct = ta.lookup(".content");
+                if (ct != null) {
+                    ct.setStyle("-fx-background-color:white;");
+                }
             }
         });
         return ta;
     }
 
-
     private HBox styledToggle(String texto, java.util.function.Consumer<Boolean> onChange) {
         StackPane track = new StackPane();
-        track.setPrefSize(42, 24); track.setMinSize(42, 24);
+        track.setPrefSize(42, 24);
+        track.setMinSize(42, 24);
         track.setStyle("-fx-background-radius:20;-fx-background-color:#e2e8f0;-fx-cursor:hand;");
         javafx.scene.shape.Circle thumb = new javafx.scene.shape.Circle(9);
         thumb.setFill(Color.WHITE);
@@ -1028,8 +1313,17 @@ public class MapaAlerta {
         final boolean[] activo = {false};
         track.setOnMouseClicked(e -> {
             activo[0] = !activo[0];
-            if (activo[0]) { track.setStyle("-fx-background-radius:20;-fx-background-color:#16a34a;-fx-cursor:hand;"); StackPane.setAlignment(thumb, Pos.CENTER_RIGHT); StackPane.setMargin(thumb, new Insets(0,3,0,0)); lbl.setTextFill(Color.web(GREEN)); }
-            else           { track.setStyle("-fx-background-radius:20;-fx-background-color:#e2e8f0;-fx-cursor:hand;"); StackPane.setAlignment(thumb, Pos.CENTER_LEFT);  StackPane.setMargin(thumb, new Insets(0,0,0,3)); lbl.setTextFill(Color.web(TEXT_SUB)); }
+            if (activo[0]) {
+                track.setStyle("-fx-background-radius:20;-fx-background-color:#16a34a;-fx-cursor:hand;");
+                StackPane.setAlignment(thumb, Pos.CENTER_RIGHT);
+                StackPane.setMargin(thumb, new Insets(0, 3, 0, 0));
+                lbl.setTextFill(Color.web(GREEN));
+            } else {
+                track.setStyle("-fx-background-radius:20;-fx-background-color:#e2e8f0;-fx-cursor:hand;");
+                StackPane.setAlignment(thumb, Pos.CENTER_LEFT);
+                StackPane.setMargin(thumb, new Insets(0, 0, 0, 3));
+                lbl.setTextFill(Color.web(TEXT_SUB));
+            }
             onChange.accept(activo[0]);
         });
         return box;
@@ -1054,17 +1348,199 @@ public class MapaAlerta {
         lblFeedback.setText(msg);
     }
 
+    private void mostrarVentanaExito(String emoji, String titulo, String mensaje, String color, Button panicBtn) {
+        Stage dialog = new Stage();
+        if (owner != null) {
+            dialog.initOwner(owner);
+        }
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.UNDECORATED);
+
+        // ── Franja superior de color ──────────────────────────────────────────
+        Region topBar = new Region();
+        topBar.setPrefHeight(6);
+        topBar.setStyle("-fx-background-color:" + color + ";-fx-background-radius:20 20 0 0;");
+
+        // ── Emoji ─────────────────────────────────────────────────────────────
+        Label icoLbl = new Label(emoji);
+        icoLbl.setFont(Font.font(54));
+
+        // ── Animación según estado ────────────────────────────────────────────
+        if (color.equals("#16a34a")) {
+            // UNIDAD ASIGNADA — rebote enérgico con overshoot
+            ScaleTransition bounce = new ScaleTransition(Duration.millis(420), icoLbl);
+            bounce.setFromX(0.1);
+            bounce.setFromY(0.1);
+            bounce.setToX(1.15);
+            bounce.setToY(1.15);
+            bounce.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+            bounce.setOnFinished(ev -> {
+                ScaleTransition settle = new ScaleTransition(Duration.millis(180), icoLbl);
+                settle.setFromX(1.15);
+                settle.setFromY(1.15);
+                settle.setToX(1.0);
+                settle.setToY(1.0);
+                settle.setInterpolator(javafx.animation.Interpolator.EASE_IN);
+                settle.play();
+            });
+            ScaleTransition pulse = new ScaleTransition(Duration.millis(900), icoLbl);
+            pulse.setFromX(1.0);
+            pulse.setFromY(1.0);
+            pulse.setToX(1.10);
+            pulse.setToY(1.10);
+            pulse.setCycleCount(Animation.INDEFINITE);
+            pulse.setAutoReverse(true);
+            pulse.setDelay(Duration.millis(620));
+            pulse.play();
+            bounce.play();
+
+        } else if (color.equals("#d97706")) {
+            // PENDIENTE — balanceo lateral como péndulo
+            icoLbl.setOpacity(0);
+            FadeTransition aparecer = new FadeTransition(Duration.millis(350), icoLbl);
+            aparecer.setFromValue(0);
+            aparecer.setToValue(1.0);
+            RotateTransition swing = new RotateTransition(Duration.millis(600), icoLbl);
+            swing.setFromAngle(-22);
+            swing.setToAngle(22);
+            swing.setCycleCount(Animation.INDEFINITE);
+            swing.setAutoReverse(true);
+            swing.setInterpolator(javafx.animation.Interpolator.EASE_BOTH);
+            aparecer.setOnFinished(ev -> swing.play());
+            aparecer.play();
+
+        } else {
+            // UNIDAD EN CAMINO — desliza desde abajo + fade + pulso suave
+            icoLbl.setTranslateY(30);
+            icoLbl.setOpacity(0);
+            TranslateTransition slide = new TranslateTransition(Duration.millis(450), icoLbl);
+            slide.setFromY(30);
+            slide.setToY(0);
+            slide.setInterpolator(javafx.animation.Interpolator.EASE_OUT);
+            FadeTransition fade = new FadeTransition(Duration.millis(450), icoLbl);
+            fade.setFromValue(0);
+            fade.setToValue(1.0);
+            ScaleTransition cruising = new ScaleTransition(Duration.millis(1100), icoLbl);
+            cruising.setFromX(1.0);
+            cruising.setFromY(1.0);
+            cruising.setToX(1.08);
+            cruising.setToY(1.08);
+            cruising.setCycleCount(Animation.INDEFINITE);
+            cruising.setAutoReverse(true);
+            cruising.setDelay(Duration.millis(460));
+            slide.play();
+            fade.play();
+            cruising.play();
+        }
+
+        // ── Títulos ───────────────────────────────────────────────────────────
+        Label tituloLbl = new Label(titulo);
+        tituloLbl.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        tituloLbl.setTextFill(Color.web(color));
+        tituloLbl.setWrapText(true);
+        tituloLbl.setMaxWidth(300);
+        tituloLbl.setAlignment(Pos.CENTER);
+        tituloLbl.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        Label msgLbl = new Label(mensaje);
+        msgLbl.setFont(Font.font("Arial", 13));
+        msgLbl.setTextFill(Color.web("#374151"));
+        msgLbl.setWrapText(true);
+        msgLbl.setMaxWidth(300);
+        msgLbl.setAlignment(Pos.CENTER);
+        msgLbl.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        // ── Chip informativo ──────────────────────────────────────────────────
+        Label chipInfo = new Label("Mantente en un lugar seguro · La policía fue notificada");
+        chipInfo.setFont(Font.font("Arial", 11));
+        chipInfo.setTextFill(Color.web("#6b7280"));
+        chipInfo.setStyle(
+                "-fx-background-color:#f8fafc;-fx-background-radius:20;"
+                + "-fx-border-color:#e2e8f0;-fx-border-radius:20;-fx-border-width:1;"
+                + "-fx-padding:6 14 6 14;");
+        chipInfo.setWrapText(true);
+        chipInfo.setMaxWidth(300);
+        chipInfo.setAlignment(Pos.CENTER);
+        chipInfo.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        // ── Botón ─────────────────────────────────────────────────────────────
+        Button btnOk = new Button("Entendido");
+        btnOk.setPrefWidth(180);
+        btnOk.setPrefHeight(44);
+        btnOk.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        btnOk.setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white;-fx-background-radius: 22;-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian,rgba(22,40,61,0.38),12,0,0,4);");
+        btnOk.setOnMouseEntered(e -> btnOk.setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #1f3a56, #2a4f72);"
+                + "-fx-text-fill: white;-fx-background-radius: 22;-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian,rgba(22,40,61,0.55),16,0,0,6);"));
+        btnOk.setOnMouseExited(e -> btnOk.setStyle(
+                "-fx-background-color: linear-gradient(to bottom right, #16283d, #1f3a56);"
+                + "-fx-text-fill: white;-fx-background-radius: 22;-fx-cursor: hand;"
+                + "-fx-effect: dropshadow(gaussian,rgba(22,40,61,0.38),12,0,0,4);"));
+        btnOk.setOnAction(e -> cerrarTodo(dialog, panicBtn));
+
+        // ── Layout ────────────────────────────────────────────────────────────
+        VBox contenido = new VBox(14, icoLbl, tituloLbl, msgLbl, chipInfo, btnOk);
+        contenido.setAlignment(Pos.CENTER);
+        contenido.setPadding(new Insets(28, 44, 32, 44));
+        contenido.setStyle("-fx-background-color:white;");
+
+        VBox wrapper = new VBox(topBar, contenido);
+        wrapper.setStyle(
+                "-fx-background-color:white;-fx-background-radius:20;"
+                + "-fx-effect:dropshadow(gaussian,rgba(0,0,0,0.22),30,0,0,10);");
+
+        Scene scene = new Scene(wrapper, 380, 350);
+        scene.setFill(Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.show();
+
+        // Auto-cerrar en 6 segundos
+        new Timeline(new KeyFrame(Duration.seconds(6), ev -> {
+            if (dialog.isShowing()) {
+                cerrarTodo(dialog, panicBtn);
+            }
+        })).play();
+    }
+
+    private void cerrarTodo(Stage dialog, Button panicBtn) {
+        dialog.close();
+        if (owner != null && owner.getScene() != null) {
+            owner.getScene().getRoot().setEffect(null);
+        }
+        try {
+            Stage stageAlerta = (Stage) panicBtn.getScene().getWindow();
+            if (stageAlerta.isShowing()) {
+                stageAlerta.close();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     private java.awt.Color getColorAlerta() {
-        if (tipoAlertaSel == null) return new java.awt.Color(229, 57, 53);
+        if (tipoAlertaSel == null) {
+            return new java.awt.Color(229, 57, 53);
+        }
         return switch (tipoAlertaSel) {
-            case "ROBO"              -> new java.awt.Color(230, 126,  34);
-            case "HOMICIDIO"         -> new java.awt.Color( 26,  35,  50);
-            case "PERSONA_SOSPECHOSA"-> new java.awt.Color( 14, 165, 233);
-            case "INCENDIO"          -> new java.awt.Color(229,  57,  53);
-            case "EMERGENCIA_MEDICA" -> new java.awt.Color( 29,  78, 216);
-            case "ACCIDENTE"         -> new java.awt.Color(124,  58, 237);
-            case "RUIDO"             -> new java.awt.Color( 22, 163,  74);
-            default                  -> new java.awt.Color(100, 116, 139); // gris para extras
+            case "ROBO" ->
+                new java.awt.Color(230, 126, 34);
+            case "HOMICIDIO" ->
+                new java.awt.Color(26, 35, 50);
+            case "PERSONA_SOSPECHOSA" ->
+                new java.awt.Color(14, 165, 233);
+            case "INCENDIO" ->
+                new java.awt.Color(229, 57, 53);
+            case "EMERGENCIA_MEDICA" ->
+                new java.awt.Color(29, 78, 216);
+            case "ACCIDENTE" ->
+                new java.awt.Color(124, 58, 237);
+            case "RUIDO" ->
+                new java.awt.Color(22, 163, 74);
+            default ->
+                new java.awt.Color(100, 116, 139); // gris para extras
         };
 
     }
@@ -1072,15 +1548,31 @@ public class MapaAlerta {
     private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage img) {
         int w = img.getWidth(), h = img.getHeight();
         int top = h, bottom = 0, left = w, right = 0;
-        for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
-            if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
-                if (y < top) top = y; if (y > bottom) bottom = y;
-                if (x < left) left = x; if (x > right) right = x;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (((img.getRGB(x, y) >> 24) & 0xff) > 10) {
+                    if (y < top) {
+                        top = y;
+                    }
+                    if (y > bottom) {
+                        bottom = y;
+                    }
+                    if (x < left) {
+                        left = x;
+                    }
+                    if (x > right) {
+                        right = x;
+                    }
+                }
             }
         }
-        if (top >= bottom || left >= right) return img;
+        if (top >= bottom || left >= right) {
+            return img;
+        }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
     }
 
-    private record Opc(String emoji, String bg, String label, String tipo) {}
+    private record Opc(String emoji, String bg, String label, String tipo) {
+
+    }
 }

@@ -14,7 +14,9 @@ import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import sistemagestion.model.*;
@@ -34,33 +36,30 @@ public class MisAlertasPoliciaView {
     private static final String TEAL = "#00796b";
     private static final String GRAY_TEXT = "#6b7280";
     private static final String BORDER = "#e5e7eb";
-    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
-
-    // ── Opciones de combos ─────────────────────────────────────────
-    private static final List<String> TIPOS_ARMA = List.of(
-            "— Sin arma —", "Pistola", "Revólver", "Escopeta", "Rifle",
-            "Cuchillo", "Machete", "Arma blanca", "Arma de fuego artesanal",
-            "Granada", "Explosivo", "Otro");
-
-    private static final List<String> MEDIOS_TRANSPORTE = List.of(
-            "— Sin transporte —", "A pie", "Motocicleta", "Automóvil",
-            "Camioneta", "Bicicleta", "Mototaxi", "Bus", "Camión", "Otro");
+    private static final String C_DARK_GRAD = "linear-gradient(from 0% 0% to 100% 0%, #16283d, #1f3a56)";
 
     private final Usuario usuarioActual;
     private final Policia policiaActual;
     private final AlertaService alertaService;
     private final AtencionAlertaService atencionService;
+    private final TipoArmaService tipoArmaService;
+    private final MedioTransporteService medioTransporteService;
     private final BorderPane root;
+    private boolean acordeonAbierto = false;
+    private VBox listaContainer;
 
     public MisAlertasPoliciaView(Usuario usuarioActual, Policia policiaActual,
             AlertaService alertaService, AtencionAlertaService atencionService,
-            BorderPane root) {
+            TipoArmaService tipoArmaService,
+            MedioTransporteService medioTransporteService, BorderPane root) {
         javafx.scene.text.Font.loadFont(
                 getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
         this.usuarioActual = usuarioActual;
         this.policiaActual = policiaActual;
         this.alertaService = alertaService;
         this.atencionService = atencionService;
+        this.tipoArmaService = tipoArmaService;
+        this.medioTransporteService = medioTransporteService;
         this.root = root;
     }
 
@@ -75,7 +74,7 @@ public class MisAlertasPoliciaView {
         List<Alerta> todasAlertas = cargarAlertas();
 
         // Contenedor dinámico de la lista (se repinta al filtrar)
-        VBox listaContainer = new VBox(16);
+        listaContainer = new VBox(16);
         renderAlertas(listaContainer, todasAlertas, null, "");
 
         content.getChildren().addAll(
@@ -86,6 +85,9 @@ public class MisAlertasPoliciaView {
         );
         Timeline autoRefresh = new Timeline(
                 new KeyFrame(Duration.seconds(30), e -> {
+                    if (acordeonAbierto) {
+                        return;
+                    }
                     try {
                         List<Alerta> nuevasAlertas = cargarAlertas();
 
@@ -570,9 +572,15 @@ public class MisAlertasPoliciaView {
 
         Label editFA = new Label("\uf303");
         editFA.setStyle("-fx-font-family: 'Font Awesome 6 Free Solid'; -fx-font-size: 13px; -fx-text-fill: " + BLUE + ";");
-        Label headerTxt = new Label("Registrar atención");
+        boolean tieneAtencion = false;
+        try {
+            tieneAtencion = !atencionService.listarPorAlerta(a.getId_alerta()).isEmpty();
+        } catch (Exception ignored) {
+        }
+
+        Label headerTxt = new Label(tieneAtencion ? "Ver / Actualizar atención" : "Registrar atención");
         headerTxt.setFont(Font.font("System", FontWeight.BOLD, 13));
-        headerTxt.setTextFill(Color.web(BLUE));
+        headerTxt.setTextFill(Color.web(tieneAtencion ? ORANGE : BLUE));
 
         // Mini-chips resumen del ciudadano (arma / transporte)
         HBox resumenChips = new HBox(8);
@@ -608,6 +616,7 @@ public class MisAlertasPoliciaView {
         final boolean[] abierto = {false};
         header.setOnMouseClicked(e -> {
             abierto[0] = !abierto[0];
+            acordeonAbierto = abierto[0];
             formBody.setVisible(abierto[0]);
             formBody.setManaged(abierto[0]);
             // Rotar flecha
@@ -633,6 +642,17 @@ public class MisAlertasPoliciaView {
     // FORMULARIO DE ATENCIÓN (dentro del acordeón)
     // ═══════════════════════════════════════════════════════════════
     private VBox buildAtencionFormBody(Alerta a) {
+
+        AtencionAlerta atencionExistente = null;
+        try {
+            List<AtencionAlerta> atenciones = atencionService.listarPorAlerta(a.getId_alerta());
+            if (!atenciones.isEmpty()) {
+                atencionExistente = atenciones.get(0);
+            }
+        } catch (Exception ignored) {
+        }
+
+        final AtencionAlerta atenExistente = atencionExistente;
         VBox box = new VBox(16);
         box.setPadding(new Insets(18, 20, 24, 20));
         box.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 0 0 18 18;");
@@ -671,8 +691,12 @@ public class MisAlertasPoliciaView {
                         a.getEstado() != null ? a.getEstado().name() : "PENDIENTE"));
 
         VBox estadoAtencionBox = new VBox(6);
+
         ComboBox<String> estadoAtencionCombo = styledCombo(
-                List.of("PENDIENTE", "EN_PROCESO", "FINALIZADA", "CANCELADA"), "EN_PROCESO");
+                List.of("PENDIENTE", "EN_PROCESO", "FINALIZADA", "CANCELADA"),
+                atenExistente != null && atenExistente.getEstado() != null
+                ? atenExistente.getEstado().name()
+                : "EN_PROCESO");
         estadoAtencionBox.getChildren().addAll(
                 labelCampo("\uf46d", "Estado de la atención"),
                 estadoAtencionCombo);
@@ -686,6 +710,9 @@ public class MisAlertasPoliciaView {
         VBox situacionBox = new VBox(6);
         TextArea situacion = new TextArea();
         situacion.setPromptText("Describe la situación, acciones tomadas y resultado...");
+        if (atenExistente != null && atenExistente.getDescripcion() != null) {
+            situacion.setText(atenExistente.getDescripcion()); // ← precarga
+        }
         situacion.setPrefRowCount(3);
         situacion.setWrapText(true);
         applyTextAreaStyle(situacion);
@@ -696,17 +723,32 @@ public class MisAlertasPoliciaView {
         extrasRow.setAlignment(Pos.CENTER_LEFT);
 
         // Tipo de arma — combo con valor precargado del ciudadano
+// ✅ Después
+        String armaPrevia = null;
+        String transPrevia = null;
+
+        if (atenExistente != null) {
+            armaPrevia = atenExistente.getTipoarma() != null
+                    ? atenExistente.getTipoarma().getNombre() : null;
+            transPrevia = atenExistente.getMediotransporte() != null
+                    ? atenExistente.getMediotransporte().getNombre() : null;
+        } else {
+            armaPrevia = armaOriginal;
+            transPrevia = transOriginal;
+        }
+
         VBox armaBox = new VBox(6);
         HBox.setHgrow(armaBox, Priority.ALWAYS);
-        ComboBox<String> armaCombo = styledComboFull(TIPOS_ARMA,
-                resolverValorCombo(armaOriginal, TIPOS_ARMA));
+        List<String> armasDisponibles = obtenerArmas();  // ← CARGAR DE BD
+        ComboBox<String> armaCombo = styledComboFull(armasDisponibles,
+                resolverValorCombo(armaPrevia, armasDisponibles));
         armaBox.getChildren().addAll(labelCampo("\uf6de", "Tipo de arma"), armaCombo);
 
-        // Medio de transporte — combo con valor precargado del ciudadano
         VBox transBox = new VBox(6);
         HBox.setHgrow(transBox, Priority.ALWAYS);
-        ComboBox<String> transCombo = styledComboFull(MEDIOS_TRANSPORTE,
-                resolverValorCombo(transOriginal, MEDIOS_TRANSPORTE));
+        List<String> mediosDisponibles = obtenerMedios();  // ← CARGAR DE BD
+        ComboBox<String> transCombo = styledComboFull(mediosDisponibles,
+                resolverValorCombo(transPrevia, mediosDisponibles));
         transBox.getChildren().addAll(labelCampo("\uf1b9", "Medio de transporte"), transCombo);
 
         extrasRow.getChildren().addAll(armaBox, transBox);
@@ -714,6 +756,9 @@ public class MisAlertasPoliciaView {
         // ── Observación ────────────────────────────────────────────
         VBox obsBox = new VBox(6);
         TextArea obsArea = new TextArea();
+        if (atenExistente != null && atenExistente.getObservacion() != null) {
+            obsArea.setText(atenExistente.getObservacion());
+        }
         obsArea.setPromptText("Notas adicionales, testigos, coordenadas...");
         obsArea.setPrefRowCount(2);
         obsArea.setWrapText(true);
@@ -797,27 +842,28 @@ public class MisAlertasPoliciaView {
                         at.setMediotransporte(a.getMediotransporte());
                     }
 
-                    boolean ok = atencionService.insertar(at);
+                    int idPolicia = 0;
+                    if (policiaActual != null) {
+                        idPolicia = policiaActual.getId_policia();
+                    }
+                    System.out.println("=== DEBUG ATENCION ===");
+                    System.out.println("ID Alerta: " + a.getId_alerta());
+                    System.out.println("Unidad nombre: [" + at.getUnidad().getNombre() + "]");
+                    System.out.println("ID Policia: " + idPolicia);
+                    System.out.println("Descripcion: [" + at.getDescripcion() + "]");
+                    System.out.println("Estado: [" + estAtencion + "]");
+                    System.out.println("=====================");
+
+                    boolean ok = atencionService.insertar(at, idPolicia);
                     if (ok) {
                         feedback.setTextFill(Color.web(GREEN));
                         feedback.setText("Atención registrada correctamente.");
                         situacion.clear();
-                        Timeline autoRefresh = new Timeline(
-                                new KeyFrame(Duration.seconds(30), e -> {
-                                    root.setCenter(
-                                            new MisAlertasPoliciaView(
-                                                    usuarioActual,
-                                                    policiaActual,
-                                                    alertaService,
-                                                    atencionService,
-                                                    root
-                                            ).build()
-                                    );
-                                })
-                        );
+                        acordeonAbierto = false;
+                        List<Alerta> nuevasAlertas = cargarAlertas();
+                        listaContainer.getChildren().clear();
+                        renderAlertas(listaContainer, nuevasAlertas, null, "");
 
-                        autoRefresh.setCycleCount(Timeline.INDEFINITE);
-                        autoRefresh.play();
                     } else {
                         feedback.setTextFill(Color.web(RED));
                         feedback.setText("No se pudo registrar la atención.");
@@ -1095,25 +1141,45 @@ public class MisAlertasPoliciaView {
     // ═══════════════════════════════════════════════════════════════
     // DATOS
     // ═══════════════════════════════════════════════════════════════
-    private List<Alerta> cargarAlertas() {
-        if (alertaService == null) {
-            return List.of();
-        }
-        try {
-            List<Alerta> todas = alertaService.listar();
-            if (usuarioActual == null) {
-                return todas;
-            }
-            List<Alerta> mias = todas.stream()
-                    .filter(a -> a.getUsuario() != null
-                    && usuarioActual.getUsername() != null
-                    && usuarioActual.getUsername().equals(a.getUsuario().getUsername()))
-                    .collect(java.util.stream.Collectors.toList());
-            return mias.isEmpty() ? todas : mias;
-        } catch (Exception e) {
-            return List.of();
-        }
+    // ═══════════════════════════════════════════════════════════════
+// DATOS — filtra por barrio de la unidad (PENDIENTES) +
+//         alertas que ya atiende la unidad (cualquier estado)
+// ═══════════════════════════════════════════════════════════════
+   private List<Alerta> cargarAlertas() {
+    if (alertaService == null) {
+        return List.of();
     }
+
+    try {
+        if (policiaActual != null
+                && policiaActual.getUnidadpolicial() != null
+                && policiaActual.getUnidadpolicial().getNombre() != null) {
+
+            List<Alerta> listaAlertas =
+                    alertaService.listarPorUnidad(
+                            policiaActual.getUnidadpolicial().getNombre());
+
+            System.out.println("===== ALERTAS RECIBIDAS =====");
+
+            for (Alerta a : listaAlertas) {
+                System.out.println(
+                        "ID: " + a.getId_alerta()
+                        + " Estado: " + a.getEstado()
+                );
+            }
+
+            System.out.println("============================");
+
+            return listaAlertas;
+        }
+
+        return alertaService.listar();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return List.of();
+    }
+}
 
     // ═══════════════════════════════════════════════════════════════
     // FORMATEO
@@ -1183,6 +1249,28 @@ public class MisAlertasPoliciaView {
             return img;
         }
         return img.getSubimage(left, top, right - left + 1, bottom - top + 1);
+    }
+
+    private List<String> obtenerArmas() {
+        List<String> armas = new ArrayList<>();
+        armas.add("— Sin arma —");
+
+        for (TipoArma arma : tipoArmaService.listar()) {
+            armas.add(arma.getNombre());
+        }
+
+        return armas;
+    }
+
+    private List<String> obtenerMedios() {
+        List<String> medios = new ArrayList<>();
+        medios.add("— Sin transporte —");
+
+        for (MedioTransporte medio : medioTransporteService.listar()) {
+            medios.add(medio.getNombre());
+        }
+
+        return medios;
     }
 
 }

@@ -150,7 +150,7 @@ public class MisAtencionesPoliciaView {
                 statCard("#fff8e1", ORANGE, "\uf0e7", "En proceso", boldNum(String.valueOf(enProceso), ORANGE), "En ejecución"),
                 statCard("#e8f5e9", GREEN, "\uf058", "Finalizadas", boldNum(String.valueOf(finalizadas), GREEN), "Completadas"),
                 statCard("#e3f2fd", BLUE, "\uf46d", "Total", boldNum(String.valueOf(total), BLUE), "Atenciones registradas"),
-                statCard("#e3f2fd", BLUE, "\uf007", "Mis atenciones", boldNum(String.valueOf(mias), BLUE), "Registradas por ti")       
+                statCard("#e3f2fd", BLUE, "\uf007", "Mis atenciones", boldNum(String.valueOf(mias), BLUE), "Registradas por ti")
         );
         return row;
     }
@@ -705,16 +705,31 @@ public class MisAtencionesPoliciaView {
     // ═══════════════════════════════════════════════════════════════
     // DATOS
     // ═══════════════════════════════════════════════════════════════
-    private List<AtencionAlerta> cargarAtenciones() {
-        if (atencionService == null) {
-            return List.of();
+   private List<AtencionAlerta> cargarAtenciones() {
+    try {
+        List<AtencionAlerta> lista = atencionService.listar();
+
+        System.out.println("POLICIA ACTUAL: "
+                + (policiaActual != null ? policiaActual.getId_policia() : "NULL"));
+
+        for (AtencionAlerta a : lista) {
+            System.out.println("ATENCION: " + a.getId_atencion());
+
+            if (a.getPolicia() != null) {
+                System.out.println("POLICIA ATENCION: "
+                        + a.getPolicia().getId_policia());
+            } else {
+                System.out.println("POLICIA ATENCION: NULL");
+            }
         }
-        try {
-            return atencionService.listar();
-        } catch (Exception e) {
-            return List.of();
-        }
+
+        return lista;
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return List.of();
     }
+}
 
     // ═══════════════════════════════════════════════════════════════
     // FORMATEO
@@ -752,9 +767,11 @@ public class MisAtencionesPoliciaView {
         }
         return sb.isEmpty() ? "—" : sb.toString().trim();
     }
-    
+
     private boolean esMia(AtencionAlerta at) {
-        if (usuarioActual == null || usuarioActual.getUsername() == null) return false;
+        if (usuarioActual == null || usuarioActual.getUsername() == null) {
+            return false;
+        }
         String miUser = usuarioActual.getUsername().toLowerCase().trim();
         String regPor = extraerRegistradoPor(at).toLowerCase().trim();
         return regPor.equals(miUser);

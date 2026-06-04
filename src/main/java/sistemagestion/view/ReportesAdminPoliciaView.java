@@ -454,7 +454,6 @@ public class ReportesAdminPoliciaView {
                 "-fx-font-size: 12px;"
         );
 
-       
         dp.setOnMouseEntered(e
                 -> dp.setStyle(style + "-fx-border-color: #1565c0;")
         );
@@ -592,6 +591,9 @@ public class ReportesAdminPoliciaView {
         int total = alertasFiltradas.size();
         int desde = (paginaActual - 1) * FILAS_POR_PAGINA;
         int hasta = Math.min(desde + FILAS_POR_PAGINA, total);
+        
+        List<sistemagestion.model.AsignacionUnidad> asignaciones =
+            asignacionService != null ? asignacionService.listar() : List.of();
 
         if (total == 0) {
             VBox vacio = new VBox(10);
@@ -611,17 +613,30 @@ public class ReportesAdminPoliciaView {
             boolean par = i % 2 == 0;
 
             final int idAlerta = al.getId_alerta();
+            // ✅ Después
             AtencionAlerta aten = atencionesCached.stream()
                     .filter(a -> a.getAlerta() != null && a.getAlerta().getId_alerta() == idAlerta)
                     .findFirst().orElse(null);
 
-            String unidad = aten != null && aten.getUnidad() != null ? aten.getUnidad().getNombre() : "—";
-            String policia = "—";
-            if (aten != null && aten.getUnidad() != null
-                    && aten.getUnidad().getPolicias() != null
-                    && !aten.getUnidad().getPolicias().isEmpty()) {
-                Policia p = aten.getUnidad().getPolicias().get(0);
-                policia = p.getPrimer_nombre() + " " + p.getPrimer_apellido();
+            String[] unidad = {"—"};
+            String[] policia = {"—"};
+
+            if (aten != null && aten.getUnidad() != null) {
+                unidad[0] = aten.getUnidad().getNombre();
+                if (aten.getUnidad().getPolicias() != null
+                        && !aten.getUnidad().getPolicias().isEmpty()) {
+                    Policia p = aten.getUnidad().getPolicias().get(0);
+                    policia[0] = p.getPrimer_nombre() + " " + p.getPrimer_apellido();
+                }
+            } else {
+            
+                       
+                asignaciones.stream()
+                        .filter(asig -> asig.getAlerta() != null
+                        && asig.getAlerta().getId_alerta() == idAlerta
+                        && asig.getUnidadpolicial() != null)
+                        .findFirst()
+                        .ifPresent(asig -> unidad[0] = asig.getUnidadpolicial().getNombre());
             }
 
             String tipo = al.getTipoalerta() != null ? al.getTipoalerta().getNombre() : "—";
@@ -687,9 +702,8 @@ public class ReportesAdminPoliciaView {
 
             // Cols 6–8
             Label descLbl = celdaFija(desc, widths[5]);
-            Label unidadLbl = celdaFija(unidad, widths[6]);
-            Label polLbl = celdaFija(policia, widths[7]);
-
+            Label unidadLbl = celdaFija(unidad[0], widths[6]);
+            Label polLbl = celdaFija(policia[0], widths[7]);
             fila.getChildren().addAll(idBox, tipoBox, barrioLbl, estadoBox,
                     fechaBox, descLbl, unidadLbl, polLbl);
             tbodyRef.getChildren().add(fila);

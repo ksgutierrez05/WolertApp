@@ -8,9 +8,6 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
-
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -22,7 +19,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 import java.sql.SQLException;
 import java.util.List;
 import javafx.scene.image.Image;
@@ -32,11 +28,11 @@ import sistemagestion.service.*;
 
 public class PoliciaApp {
 
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String RED       = "#e53935";
-    private static final String GREEN     = "#43a047";
-    private static final String BLUE      = "#1565c0";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
+    private static final String GREEN = "#43a047";
+    private static final String BLUE = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
 
     private AlertaService alertaService;
@@ -45,6 +41,9 @@ public class PoliciaApp {
     private NotificacionService notificacionService;
     private AsignacionUnidadService asignacionService;
     private PoliciaService policiaService;
+    private UnidadPolicialService unidadService;
+    private TipoArmaService tipoArmaService;
+    private  MedioTransporteService medioTransporteService;
 
     private final Usuario usuarioActual;
     private Policia policiaActual;
@@ -53,12 +52,15 @@ public class PoliciaApp {
     public PoliciaApp(Usuario usuarioActual) {
         this.usuarioActual = usuarioActual;
         try {
-            alertaService      = new AlertaService();
-            atencionService    = new AtencionAlertaService();
-            alarmaService      = new AlarmaService();
+            alertaService = new AlertaService();
+            atencionService = new AtencionAlertaService();
+            alarmaService = new AlarmaService();
             notificacionService = new NotificacionService();
-            asignacionService  = new AsignacionUnidadService();
-            policiaService     = new PoliciaService();
+            asignacionService = new AsignacionUnidadService();
+            policiaService = new PoliciaService();
+            unidadService = new UnidadPolicialService();
+            tipoArmaService= new TipoArmaService();
+            medioTransporteService=new MedioTransporteService();
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -85,7 +87,7 @@ public class PoliciaApp {
         root.setCenter(new CentroOperacionesPoliciaView(
                 usuarioActual, policiaActual,
                 alertaService, atencionService,
-                alarmaService, notificacionService, root).build());
+                alarmaService, notificacionService,tipoArmaService,medioTransporteService, root).build());
         root.setStyle("-fx-background-color: " + BG + ";");
         Scene scene = new Scene(root, 1100, 650);
         stage.setTitle("WolertApp – Policía");
@@ -226,26 +228,26 @@ public class PoliciaApp {
                     root.setCenter(new CentroOperacionesPoliciaView(
                             usuarioActual, policiaActual,
                             alertaService, atencionService,
-                            alarmaService, notificacionService, root).build());
+                            alarmaService, notificacionService,tipoArmaService,medioTransporteService, root).build());
                 case "Mis alertas" ->
                     root.setCenter(new MisAlertasPoliciaView(
                             usuarioActual, policiaActual,
-                            alertaService, atencionService, root).build());
+                            alertaService, atencionService, tipoArmaService,medioTransporteService, root).build());
                 case "Mis atenciones" ->
                     root.setCenter(new MisAtencionesPoliciaView(
                             usuarioActual, policiaActual,
                             atencionService, root).build());
                 case "Alarmas" ->
-                    root.setCenter(new AlarmasPoliciaView(alarmaService,policiaActual).build());
+                    root.setCenter(new AlarmasPoliciaView(alarmaService, policiaActual).build());
                 case "Historial" ->
                     root.setCenter(new HistorialPoliciaView(
                             usuarioActual, policiaActual,
                             policiaService, root).build());
                 case "Mapas" ->
-                    root.setCenter(pantallaEnConstruccion("\uf279", "Mapas"));
+                    root.setCenter(new MapaOperaciones(asignacionService, unidadService).build());
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesPoliciaView(
-                            usuarioActual, notificacionService).build());
+                            usuarioActual,policiaActual, notificacionService).build());
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
                             usuarioActual, policiaActual).build());
@@ -290,16 +292,7 @@ public class PoliciaApp {
     // CERRAR SESIÓN
     // =========================================================================
     private void cerrarSesion() {
-        VBox bye = new VBox(20);
-        bye.setAlignment(Pos.CENTER);
-        bye.setStyle("-fx-background-color: " + BG + ";");
-        bye.getChildren().addAll(
-                label("👋", 70, "#111827", false),
-                label("Sesión cerrada", 30, "#111827", true),
-                label("Cerrando aplicación...", 13, GRAY_TEXT, false));
-        root.setCenter(bye);
-        new Timeline(new KeyFrame(Duration.seconds(2),
-                ev -> ((Stage) root.getScene().getWindow()).close())).play();
+        ((Stage) root.getScene().getWindow()).close();
     }
 
     // ── Helpers ──────────────────────────────────────────────────

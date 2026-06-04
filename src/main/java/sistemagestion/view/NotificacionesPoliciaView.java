@@ -46,9 +46,11 @@ public class NotificacionesPoliciaView {
 
     private final Usuario usuarioActual;
     private final NotificacionService notificacionService;
+    private final Policia policiaActual;
 
-    public NotificacionesPoliciaView(Usuario usuarioActual, NotificacionService notificacionService) {
+    public NotificacionesPoliciaView(Usuario usuarioActual, Policia policiaActual, NotificacionService notificacionService) {
         this.usuarioActual = usuarioActual;
+        this.policiaActual = policiaActual;
         this.notificacionService = notificacionService;
     }
 
@@ -70,8 +72,8 @@ public class NotificacionesPoliciaView {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(20, 24, 20, 24));
         header.setStyle(
-               "-fx-background-color: linear-gradient(to right, #e8f3fa, #e6f4fc);" +
-                "-fx-background-radius: 14;"
+                "-fx-background-color: linear-gradient(to right, #e8f3fa, #e6f4fc);"
+                + "-fx-background-radius: 14;"
         );
 
         StackPane icoWrap = new StackPane();
@@ -137,41 +139,42 @@ public class NotificacionesPoliciaView {
         listBox.setPadding(new Insets(6, 0, 6, 0));
 
         try {
-            List<Notificacion> lista = notificacionService.listar();
+            System.out.println("=== DEBUG NOTIFICACIONES ===");
+            System.out.println("policiaActual: " + policiaActual);
 
-            // Filtrar por usuario actual
-            List<Notificacion> mias = lista.stream()
-                    .filter(n -> n.getUsuario() != null && usuarioActual != null
-                    && (usuarioActual.getUsername() != null
-                    && usuarioActual.getUsername().equals(n.getUsuario().getUsername())
-                    || usuarioActual.getCorreo() != null
-                    && usuarioActual.getCorreo().equals(n.getCorreodestinatario())))
-                    .collect(Collectors.toList());
+            if (policiaActual != null) {
+                UnidadPolicial u = policiaActual.getUnidadpolicial();
+                System.out.println("Unidad: " + u);
+                if (u != null) {
+                    System.out.println("ID unidad: " + u.getId_unidad());
+                    System.out.println("Nombre unidad: " + u.getNombre());
+                }
+            }
 
-            List<Notificacion> mostrar = mias.isEmpty()
-                    ? lista.subList(0, Math.min(lista.size(), 20))
-                    : mias;
+            List<Notificacion> mostrar = notificacionService.listarPorUnidad(
+                    policiaActual.getUnidadpolicial().getId_unidad()
+            );
+            System.out.println("Notificaciones encontradas: " + mostrar.size());
 
             if (mostrar.isEmpty()) {
                 listBox.getChildren().add(buildEmptyState());
             } else {
-                boolean propias = !mias.isEmpty();
                 for (int i = 0; i < mostrar.size(); i++) {
-                    listBox.getChildren().add(buildRow(mostrar.get(i), propias));
+                    listBox.getChildren().add(buildRow(mostrar.get(i), true));
                     if (i < mostrar.size() - 1) {
                         listBox.getChildren().add(separator());
                     }
                 }
             }
         } catch (Exception e) {
+            System.out.println("ERROR en notificaciones: " + e.getClass().getName() + " - " + e.getMessage());
+            e.printStackTrace();
             listBox.getChildren().add(buildErrorState(e.getMessage()));
         }
-
         card.getChildren().add(listBox);
         return card;
     }
-
-    // ── Fila individual ──────────────────────────────────────────
+        // ── Fila individual ──────────────────────────────────────────
     private HBox buildRow(Notificacion n, boolean propias) {
         String dest = n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "Sin destinatario";
         String msg = n.getMensaje() != null && !n.getMensaje().isBlank()
