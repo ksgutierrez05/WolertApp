@@ -140,21 +140,19 @@ public class UnidadPolicialDAO {
     }
 
     // cursor retorna: NOMBRE, ESTADO, BARRIO, COMUNA
-    private UnidadPolicial mapear(ResultSet rs) throws SQLException {
-        UnidadPolicial u = new UnidadPolicial();
-        u.setNombre(rs.getString("NOMBRE"));
-        u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
-        u.setLatitud(rs.getDouble("LATITUD"));
-        u.setLongitud(rs.getDouble("LONGITUD"));
-
-        Comuna c = new Comuna();
-        c.setNombre(rs.getString("COMUNA"));
-
-        Barrio b = new Barrio();
-        b.setNombre(rs.getString("BARRIO"));
-        b.setComuna(c);
-
-        u.setBarrio(b);
-        return u;
-    }
+private UnidadPolicial mapear(ResultSet rs) throws SQLException {
+    UnidadPolicial u = new UnidadPolicial();
+    u.setId_unidad(rs.getInt("ID_UNIDAD"));
+    u.setNombre(rs.getString("NOMBRE"));
+    u.setEstado(EstadoUnidadPolicial.valueOf(rs.getString("ESTADO")));
+    u.setLatitud(rs.getDouble("LATITUD"));
+    u.setLongitud(rs.getDouble("LONGITUD"));
+    Comuna c = new Comuna();
+    c.setNombre(rs.getString("COMUNA"));
+    Barrio b = new Barrio();
+    b.setNombre(rs.getString("BARRIO"));
+    b.setComuna(c);
+    u.setBarrio(b);
+    return u;
+}
 }

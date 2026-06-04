@@ -61,6 +61,8 @@ public class AlertaDAO {
 
             // Leer el ID directamente desde el OUT (ya no necesitas el SELECT MAX)
             int idGenerado = cs.getInt(16);
+            System.out.println("wasNull: " + cs.wasNull());
+            System.out.println("idGenerado raw: " + idGenerado);
             return cs.wasNull() ? -1 : idGenerado;
 
         } catch (SQLException e) {
@@ -100,6 +102,23 @@ public class AlertaDAO {
             }
         } catch (SQLException e) {
             System.out.println("Error listar alertas: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    public List<Alerta> listarPorUnidad(String nombreUnidad) {
+        List<Alerta> lista = new ArrayList<>();
+        String sql = "{call pkg_alertas.pr_listar_alertas_por_unidad(?, ?)}";
+        try (CallableStatement cs = con().prepareCall(sql)) {
+            cs.setString(1, nombreUnidad);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+            cs.execute();
+            ResultSet rs = (ResultSet) cs.getObject(2);
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error listar alertas por unidad: " + e.getMessage());
         }
         return lista;
     }
@@ -230,8 +249,9 @@ public class AlertaDAO {
 
         TipoAlerta ta = new TipoAlerta();
         ta.setNombre(rs.getString("TIPO_ALERTA"));
+        ta.setPrioridad(rs.getString("PRIORIDAD"));
         a.setTipoalerta(ta);
-
+        
         Comuna c = new Comuna();
         c.setNombre(rs.getString("COMUNA"));
         Barrio b = new Barrio();

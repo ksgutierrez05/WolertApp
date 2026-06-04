@@ -1,84 +1,89 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package sistemagestion.service;
-
-
 
 import java.sql.SQLException;
 import java.util.List;
 import sistemagestion.dao.AlertaDAO;
 import sistemagestion.model.Alerta;
+import sistemagestion.model.EstadoAlerta;
 import sistemagestion.util.Validador;
 
-  
+public class AlertaService {
 
-    public class AlertaService {
+    private final AlertaDAO alertaDAO;
+    private AsignacionUnidadService asignacionService;
 
-        private final AlertaDAO alertaDAO;
-        private AsignacionUnidadService asignacionService;
+    public AlertaService() throws SQLException {
+        alertaDAO = new AlertaDAO();
+        try {
+            asignacionService = new AsignacionUnidadService();
+        } catch (Exception e) {
+            System.out.println("AsignacionUnidadService no disponible: " + e.getMessage());
+        }
+    }
 
-        public AlertaService() throws SQLException {
-            alertaDAO = new AlertaDAO();
+    /**
+     * Inserta la alerta y dispara la asignación automática de unidad cercana.
+     * Retorna true si la alerta fue guardada (la asignación es un efecto
+     * secundario — su fallo no impide confirmar la alerta al usuario).
+     */
+    public int insertar(Alerta a) {
+
+        Validador.validarObjeto(a);
+        Validador.validarObjeto(a.getUsuario());
+        Validador.validarObjeto(a.getTipoalerta());
+        Validador.validarObjeto(a.getBarrio());
+
+        System.out.println("Tipo Alerta = " + a.getTipoalerta().getNombre());
+        System.out.println("Descripcion = " + a.getDescripcion());
+        System.out.println("Latitud = " + a.getLatitud());
+        System.out.println("Longitud = " + a.getLongitud());
+
+        int idAlerta = alertaDAO.insertar(
+                a.getUsuario().getUsername(),
+                a.getTipoalerta().getNombre(),
+                a.getBarrio().getNombre(),
+                a.getTipoarma() != null ? a.getTipoarma().getNombre() : null,
+                a.getMediotransporte() != null ? a.getMediotransporte().getNombre() : null,
+                a.getDireccion() != null ? a.getDireccion().getEtapa() : null,
+                a.getDireccion() != null ? a.getDireccion().getSector() : null,
+                a.getDireccion() != null ? a.getDireccion().getManzana() : null,
+                a.getDireccion() != null ? a.getDireccion().getCasa() : null,
+                a.getDireccion() != null ? a.getDireccion().getCalle() : null,
+                a.getDireccion() != null ? a.getDireccion().getCarrera() : null,
+                a.getDireccion() != null ? a.getDireccion().getReferencia() : null,
+                a.getDireccion() != null ? a.getDireccion().getLatitud() : null,
+                a.getDireccion() != null ? a.getDireccion().getLongitud() : null,
+                a.getDescripcion()
+        );
+
+        if (idAlerta <= 0) {
+            return -1;
+        }
+
+        a.setId_alerta(idAlerta);
+
+        if (asignacionService != null) {
             try {
-                asignacionService = new AsignacionUnidadService();
+                asignacionService.asignarUnidadCercana(idAlerta);
             } catch (Exception e) {
-                System.out.println("AsignacionUnidadService no disponible: " + e.getMessage());
+                System.out.println("Aviso: " + e.getMessage());
             }
         }
 
-        /**
-         * Inserta la alerta y dispara la asignación automática de unidad
-         * cercana. Retorna true si la alerta fue guardada (la asignación es un
-         * efecto secundario — su fallo no impide confirmar la alerta al
-         * usuario).
-         */
-public int insertar(Alerta a) {
-
-    Validador.validarObjeto(a);
-    Validador.validarObjeto(a.getUsuario());
-    Validador.validarObjeto(a.getTipoalerta());
-    Validador.validarObjeto(a.getBarrio());
-
-    System.out.println("Tipo Alerta = " + a.getTipoalerta().getNombre());
-    System.out.println("Descripcion = " + a.getDescripcion());
-    System.out.println("Latitud = " + a.getLatitud());
-    System.out.println("Longitud = " + a.getLongitud());
-
-    int idAlerta = alertaDAO.insertar(
-            a.getUsuario().getUsername(),
-            a.getTipoalerta().getNombre(),
-            a.getBarrio().getNombre(),
-            a.getTipoarma() != null ? a.getTipoarma().getNombre() : null,
-            a.getMediotransporte() != null ? a.getMediotransporte().getNombre() : null,
-            a.getDireccion() != null ? a.getDireccion().getEtapa() : null,
-            a.getDireccion() != null ? a.getDireccion().getSector() : null,
-            a.getDireccion() != null ? a.getDireccion().getManzana() : null,
-            a.getDireccion() != null ? a.getDireccion().getCasa() : null,
-            a.getDireccion() != null ? a.getDireccion().getCalle() : null,
-            a.getDireccion() != null ? a.getDireccion().getCarrera() : null,
-            a.getDireccion() != null ? a.getDireccion().getReferencia() : null,
-            a.getDireccion() != null ? a.getDireccion().getLatitud() : null,
-            a.getDireccion() != null ? a.getDireccion().getLongitud() : null,
-            a.getDescripcion()
-    );
-
-    if (idAlerta <= 0) {
-        return -1;
+        return idAlerta;
     }
-
-    a.setId_alerta(idAlerta);
-
-    if (asignacionService != null) {
-        try {
-            asignacionService.asignarUnidadCercana(idAlerta);
-        } catch (Exception e) {
-            System.out.println("Aviso: " + e.getMessage());
-        }
-    }
-
-    return idAlerta;
-}
 
     public List<Alerta> listar() {
         return alertaDAO.listar();
+    }
+
+    public List<Alerta> listarPorUnidad(String nombreUnidad) {
+        Validador.validarCampoVacio(nombreUnidad);
+        return alertaDAO.listarPorUnidad(nombreUnidad);
     }
 
     public List<Alerta> listarPorUsuario(String username) {
@@ -108,7 +113,18 @@ public int insertar(Alerta a) {
             throw new IllegalArgumentException();
         }
         Validador.validarCampoVacio(estado);
-        return alertaDAO.actualizarEstado(id, estado);
+
+        boolean actualizado = alertaDAO.actualizarEstado(id, estado);
+
+        if (actualizado) {
+            Alerta a = alertaDAO.buscarPorId(id);
+            if (a != null) {
+                a.setEstado(EstadoAlerta.valueOf(estado));
+                AlertaEmailSender.enviarCambioEstado(a);
+            }
+        }
+
+        return actualizado;
     }
 
     public boolean eliminar(int id) {

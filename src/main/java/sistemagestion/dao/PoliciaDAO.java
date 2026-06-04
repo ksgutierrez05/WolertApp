@@ -67,7 +67,8 @@ public class PoliciaDAO {
         }
 
         String sqlPolicia = "{call pkg_usuarios.pr_insertar_policia(?,?,?,?,?)}";
-        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {System.out.println("Insertando policia - cedula: [" + cedula + "] unidad: [" + nombreUnidad + "] placa: [" + placa + "] rango: [" + rango + "] estado: [" + estado + "]");
+        try (CallableStatement cs = con().prepareCall(sqlPolicia)) {
+            System.out.println("Insertando policia - cedula: [" + cedula + "] unidad: [" + nombreUnidad + "] placa: [" + placa + "] rango: [" + rango + "] estado: [" + estado + "]");
             cs.setString(1, cedula);
             cs.setString(2, nombreUnidad);
             cs.setString(3, placa);
@@ -224,11 +225,11 @@ public class PoliciaDAO {
         return lista;
     }
 
-// ── REEMPLAZA el método mapear() en PoliciaDAO.java ──────────
     private Policia mapear(ResultSet rs) throws SQLException {
         Policia p = new Policia();
 
         // campos heredados de Persona
+        p.setId_policia(rs.getInt("ID_USUARIO"));
         p.setPrimer_nombre(rs.getString("PRIMER_NOMBRE"));
         p.setSegundo_nombre(rs.getString("SEGUNDO_NOMBRE"));
         p.setPrimer_apellido(rs.getString("PRIMER_APELLIDO"));
@@ -271,8 +272,18 @@ public class PoliciaDAO {
         }
 
         // NOMBRE_UNIDAD puede ser null
+        // ASÍ DEBE QUEDAR
         String nomUnidad = rs.getString("NOMBRE_UNIDAD");
+        int idUnidad = 0;
+        try {
+            idUnidad = rs.getInt("ID_UNIDAD");
+            System.out.println(">>> ID_UNIDAD leído: " + idUnidad);
+        } catch (SQLException e) {
+            System.out.println(">>> ERROR leyendo ID_UNIDAD: " + e.getMessage());
+        }
+
         UnidadPolicial u = new UnidadPolicial();
+        u.setId_unidad(idUnidad);
         u.setNombre(nomUnidad != null ? nomUnidad : "—");
         p.setUnidadpolicial(u);
 

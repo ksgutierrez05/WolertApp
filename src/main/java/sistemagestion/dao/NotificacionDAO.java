@@ -27,7 +27,7 @@ public class NotificacionDAO {
     }
 
     public NotificacionDAO() throws SQLException {
-         
+
     }
 
     public boolean insertar(int idAlerta, String cedulaUsuario, String mensaje) {
@@ -69,6 +69,31 @@ public class NotificacionDAO {
         } catch (SQLException e) {
             System.out.println("Error listar notificaciones: " + e.getMessage());
         }
+        return lista;
+    }
+
+    public List<Notificacion> listarPorUnidad(int idUnidad) {
+        List<Notificacion> lista = new ArrayList<>();
+
+        String sql = "{call pkg_alertas.pr_listar_notificaciones_unidad(?, ?)}";
+
+        try (CallableStatement cs = con().prepareCall(sql)) {
+
+            cs.setInt(1, idUnidad);
+            cs.registerOutParameter(2, OracleTypes.CURSOR);
+
+            cs.execute();
+
+            ResultSet rs = (ResultSet) cs.getObject(2);
+
+            while (rs.next()) {
+                lista.add(mapear(rs));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
         return lista;
     }
 

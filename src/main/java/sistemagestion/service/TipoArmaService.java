@@ -43,7 +43,7 @@ public class TipoArmaService {
         );
     }
 
-    public List<TipoArma> listar() throws SQLException {
+    public List<TipoArma> listar() {
         return dao.listar();
     }
 

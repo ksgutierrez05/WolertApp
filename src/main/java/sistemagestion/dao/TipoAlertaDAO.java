@@ -27,10 +27,11 @@ public class TipoAlertaDAO {
          
     }
 
-    public boolean insertar(String nombre) {
-        String sql = "{call pkg_catalogos.pr_insertar_tipo_alerta(?)}";
+ public boolean insertar(String nombre, String prioridad) {
+        String sql = "{call pkg_catalogos.pr_insertar_tipo_alerta(?, ?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombre);
+            cs.setString(2, prioridad);
             cs.execute();
             return true;
         } catch (SQLException e) {
@@ -39,11 +40,12 @@ public class TipoAlertaDAO {
         }
     }
 
-    public boolean actualizar(String nombreActual, String nombreNuevo) {
-        String sql = "{call pkg_catalogos.pr_actualizar_tipo_alerta(?, ?)}";
+    public boolean actualizar(String nombreActual, String nombreNuevo, String prioridad) {
+        String sql = "{call pkg_catalogos.pr_actualizar_tipo_alerta(?, ?, ?)}";
         try (CallableStatement cs = con().prepareCall(sql)) {
             cs.setString(1, nombreActual);
             cs.setString(2, nombreNuevo);
+            cs.setString(3, prioridad);
             cs.execute();
             return true;
         } catch (SQLException e) {
@@ -122,6 +124,7 @@ public class TipoAlertaDAO {
         TipoAlerta t = new TipoAlerta();
         t.setId_tipoalerta(rs.getInt("ID_TIPO_ALERTA"));
         t.setNombre(rs.getString("NOMBRE"));
+        t.setPrioridad(rs.getString("PRIORIDAD"));
         return t;
     }
 }

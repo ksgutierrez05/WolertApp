@@ -28,7 +28,8 @@ public class TipoAlertaService {
         Validador.validarCampoVacio(t.getNombre());
 
         return dao.insertar(
-                t.getNombre()
+                t.getNombre(),
+                t.getPrioridad()
         );
     }
 
@@ -43,7 +44,8 @@ public class TipoAlertaService {
 
         return dao.actualizar(
                 t.getNombre(),
-                t.getNombre()
+                t.getNombre(),
+                t.getPrioridad()
         );
     }
 

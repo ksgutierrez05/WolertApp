@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
  */
 public class AtencionAlerta {
 
-
     private int id_atencion;
     Alerta alerta;
     EstadoAtencionAlerta estado;
@@ -22,6 +21,15 @@ public class AtencionAlerta {
     TipoArma tipoarma;
     MedioTransporte mediotransporte;
     private String observacion;
+    Policia policia;
+
+    public Policia getPolicia() {
+        return policia;
+    }
+
+    public void setPolicia(Policia policia) {
+        this.policia = policia;
+    }
 
     public int getId_atencion() {
         return id_atencion;
@@ -38,7 +46,6 @@ public class AtencionAlerta {
     public void setAlerta(Alerta alerta) {
         this.alerta = alerta;
     }
-
 
     public EstadoAtencionAlerta getEstado() {
         return estado;

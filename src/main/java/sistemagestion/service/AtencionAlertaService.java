@@ -22,26 +22,27 @@ public class AtencionAlertaService {
         atencionDAO = new AtencionAlertaDAO();
     }
 
-    public boolean insertar(AtencionAlerta a) {
-
+    public boolean insertar(AtencionAlerta a, int Policia) {
         Validador.validarObjeto(a);
         Validador.validarObjeto(a.getAlerta());
         Validador.validarObjeto(a.getUnidad());
-
         Validador.validarCampoVacio(a.getUnidad().getNombre());
         Validador.validarEnum(a.getEstado());
         Validador.validarCampoVacio(a.getDescripcion());
 
         String tipoArma = null;
         String medioTransporte = null;
-
         if (a.getTipoarma() != null) {
             tipoArma = a.getTipoarma().getNombre();
         }
-
         if (a.getMediotransporte() != null) {
             medioTransporte = a.getMediotransporte().getNombre();
         }
+
+        int idPolicia = Policia;
+
+        System.out.println("Parametro Policia = " + Policia);
+        System.out.println("a.getPolicia() = " + a.getPolicia());
 
         return atencionDAO.insertar(
                 a.getAlerta().getId_alerta(),
@@ -50,7 +51,8 @@ public class AtencionAlertaService {
                 a.getDescripcion(),
                 tipoArma,
                 medioTransporte,
-                a.getObservacion()
+                a.getObservacion(),
+                idPolicia
         );
     }
 
@@ -130,4 +132,5 @@ public class AtencionAlertaService {
 
         return atencionDAO.buscarPorEstadoExacto(estado);
     }
+
 }
