@@ -91,101 +91,21 @@ public class UsuarioService {
 
     public boolean suspender(String cedula) throws SQLException {
         Validador.validarIdentificacion(cedula);
-
-        // Buscar el usuario para obtener su correo
         Usuario u = dao.buscarPorCedula(cedula);
-
-        boolean ok = dao.inactivar(cedula); // usa inactivar que ya tienes en el DAO
-
-        // Si se suspendió correctamente, enviar correo
-        if (ok && u != null && u.getCorreo() != null) {
-            String nombre = u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "Usuario";
-            String cuerpo = """
-            <div style='font-family:Arial,sans-serif;max-width:500px;margin:auto;
-                        border:1px solid #e5e7eb;border-radius:12px;overflow:hidden'>
-              <div style='background:#e53935;padding:20px;text-align:center'>
-                <h2 style='color:white;margin:0'>🐺 WolertApp</h2>
-                <p style='color:#ffcdd2;margin:4px 0 0'>Sistema de alertas ciudadanas</p>
-              </div>
-              <div style='padding:24px'>
-                <h3 style='color:#111827'>Cuenta suspendida</h3>
-                <p style='color:#374151;font-size:15px'>
-                  Hola <b>%s</b>, tu cuenta en WolertApp ha sido <b style='color:#e53935'>suspendida</b>
-                  por un administrador del sistema.
-                </p>
-                <p style='color:#374151;font-size:14px'>
-                  Si crees que esto es un error, comunícate con el administrador.
-                </p>
-                <hr style='border:none;border-top:1px solid #e5e7eb;margin:20px 0'>
-                <p style='color:#6b7280;font-size:12px'>
-                  Este es un mensaje automático de WolertApp.<br>
-                  Por favor no responda este correo.
-                </p>
-              </div>
-            </div>
-            """.formatted(nombre);
-
-            final String correo = u.getCorreo();
-            new Thread(() -> {
-                boolean enviado = EmailService.enviarCorreo(
-                        correo,
-                        "⚠️ Tu cuenta ha sido suspendida — WolertApp",
-                        cuerpo
-                );
-                System.out.println(enviado
-                        ? "✅ Correo de suspensión enviado a " + correo
-                        : "❌ Error al enviar correo a " + correo);
-            }).start();
+        boolean ok = dao.inactivar(cedula);
+        if (ok) {
+            UsuarioEmailSender.enviarSuspension(u);  // ← una sola línea
         }
-
         return ok;
     }
 
     public boolean activar(String cedula) throws SQLException {
         Validador.validarIdentificacion(cedula);
-
         Usuario u = dao.buscarPorCedula(cedula);
-
         boolean ok = dao.activar(cedula);
-
-        // Si se activó correctamente, enviar correo
-        if (ok && u != null && u.getCorreo() != null) {
-            String nombre = u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "Usuario";
-            String cuerpo = """
-            <div style='font-family:Arial,sans-serif;max-width:500px;margin:auto;
-                        border:1px solid #e5e7eb;border-radius:12px;overflow:hidden'>
-              <div style='background:#43a047;padding:20px;text-align:center'>
-                <h2 style='color:white;margin:0'> WolertApp</h2>
-                <p style='color:#c8e6c9;margin:4px 0 0'>Sistema de alertas ciudadanas</p>
-              </div>
-              <div style='padding:24px'>
-                <h3 style='color:#111827'>Cuenta reactivada</h3>
-                <p style='color:#374151;font-size:15px'>
-                  Hola <b>%s</b>, tu cuenta en WolertApp ha sido <b style='color:#43a047'>reactivada</b>.
-                  Ya puedes volver a iniciar sesión normalmente.
-                </p>
-                <hr style='border:none;border-top:1px solid #e5e7eb;margin:20px 0'>
-                <p style='color:#6b7280;font-size:12px'>
-                  Este es un mensaje automático de WolertApp.<br>
-                  Por favor no responda este correo.
-                </p>
-              </div>
-            </div>
-            """.formatted(nombre);
-
-            final String correo = u.getCorreo();
-            new Thread(() -> {
-                boolean enviado = EmailService.enviarCorreo(
-                        correo,
-                        "✅ Tu cuenta ha sido reactivada — WolertApp",
-                        cuerpo
-                );
-                System.out.println(enviado
-                        ? "✅ Correo de reactivación enviado a " + correo
-                        : "❌ Error al enviar correo a " + correo);
-            }).start();
+        if (ok) {
+            UsuarioEmailSender.enviarReactivacion(u); // ← una sola línea
         }
-
         return ok;
     }
 
