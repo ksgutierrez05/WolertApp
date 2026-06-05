@@ -132,10 +132,10 @@ public class AsignacionesAdminPoliciaView {
         Label sub = label("Administra las asignaciones de unidades policiales", 13, GRAY_TEXT, false);
         titles.getChildren().addAll(title, sub);
 
-        Button btnMapa = mkBtn("\uf3c5  Mapa de operaciones", "#e53935", "#b71c1c");
+       Button btnMapa = mkBtn("\uf3c5  Mapa de operaciones", "#ef5350", "#c62828");
         btnMapa.setOnAction(e -> abrirMapaOperaciones());
 
-        Button btnNueva = mkBtn("＋  Nueva asignación", BLUE, "#0d47a1");
+      Button btnNueva = mkBtn("＋  Nueva asignación", "#1f3a56", "#0d1c2b");
         btnNueva.setOnAction(e -> abrirFormularioAsignacion());  // ← conectado
 
         HBox right = new HBox(10);
@@ -724,7 +724,7 @@ public class AsignacionesAdminPoliciaView {
         HBox header = new HBox();
         header.setPadding(new Insets(20, 24, 18, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color:" + BLUE + ";");
+        header.setStyle("-fx-background-color:#1f3a56;");
         Label titleLbl = new Label("Detalle de asignación");
         titleLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
         titleLbl.setTextFill(Color.web(WHITE));
@@ -826,11 +826,11 @@ public class AsignacionesAdminPoliciaView {
         HBox header = new HBox(12);
         header.setPadding(new Insets(20, 24, 18, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color:" + ORANGE + ";");
+      header.setStyle("-fx-background-color:#1f3a56;");
         Label titleLbl = new Label("Editar asignación");
         titleLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
         titleLbl.setTextFill(Color.web(WHITE));
-        Label subLbl = label("Modifica los datos de la asignación.", 12, "#ffe0b2", false);
+      Label subLbl = label("Modifica los datos de la asignación.", 12, "#a8c0dd", false);
         VBox headerText = new VBox(4, titleLbl, subLbl);
         header.getChildren().add(headerText);
 

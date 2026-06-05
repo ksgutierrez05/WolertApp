@@ -92,7 +92,7 @@ public class PoliciasAdminPoliciaView {
         Label sub = lbl("Administra el personal policial del sistema", 13, GRAY_TEXT, false);
         titles.getChildren().addAll(title, sub);
 
-        Button btnNuevo = styledBtn("＋  Nuevo policía", BLUE, "#0d47a1");
+        Button btnNuevo = styledBtn("＋  Nuevo policía", "#1f3a56","#0d1c2b");
         btnNuevo.setOnAction(e -> abrirFormulario(null));
 
         HBox right = new HBox();
@@ -386,7 +386,7 @@ public class PoliciasAdminPoliciaView {
         VBox header = new VBox(10);
         header.setAlignment(Pos.CENTER);
         header.setPadding(new Insets(30, 24, 24, 24));
-        header.setStyle("-fx-background-color:" + BLUE + ";");
+       header.setStyle("-fx-background-color:#1f3a56;");
 
         String nombre = nombreCompleto(p);
         StackPane avBox = new StackPane();
@@ -461,7 +461,7 @@ public class PoliciasAdminPoliciaView {
         HBox header = new HBox(12);
         header.setPadding(new Insets(20, 24, 18, 24));
         header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-background-color:" + BLUE + ";");
+        header.setStyle("-fx-background-color:#1f3a56;");
         Label titleLbl = new Label(esNuevo ? "Nuevo policia" : "Editar policia");
         titleLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
         titleLbl.setTextFill(Color.WHITE);

@@ -141,6 +141,7 @@ sistemagestion\dao\AlarmaDAO.class
 sistemagestion\model\TipoArma.class
 sistemagestion\view\UnidadesAdminPoliciaView$1.class
 sistemagestion\view\MapaAlarmasRegistada$6.class
+sistemagestion\view\NotificacionesAdminPoliciaView$1.class
 sistemagestion\model\EstadoAlerta.class
 sistemagestion\view\MisAlertasView.class
 sistemagestion\view\HistorialAdminPoliciaView$1.class

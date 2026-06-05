@@ -155,7 +155,7 @@ public class PoliciaApp {
                 navItem("\uf015", "Centro de operaciones"),
                 navItem("\uf0f3", "Mis alertas"),
                 navItem("\uf46d", "Mis atenciones"),
-                navItem("\uf0f3", "Alarmas"),
+                navItem("\uf0a1", "Alarmas"),
                 navItem("\uf1da", "Historial"),
                 navItem("\uf279", "Mapas"),
                 navItem("\uf0e0", "Notificaciones"),

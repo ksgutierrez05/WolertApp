@@ -85,10 +85,12 @@ public class UnidadesAdminPoliciaView {
 
         Button btnNueva = new Button("＋  Nueva unidad");
         btnNueva.setPrefHeight(40);
-        String base = "-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
+        String base = "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);"
+                + "-fx-text-fill:white;"
                 + "-fx-font-size:13px;-fx-font-weight:bold;"
                 + "-fx-background-radius:8;-fx-padding:8 18;-fx-cursor:hand;";
-        String hover = "-fx-background-color:#0d47a1;-fx-text-fill:white;"
+        String hover = "-fx-background-color: linear-gradient(to right, #0d1c2b, #162d45);"
+                + "-fx-text-fill:white;"
                 + "-fx-font-size:13px;-fx-font-weight:bold;"
                 + "-fx-background-radius:8;-fx-padding:8 18;-fx-cursor:hand;";
         btnNueva.setStyle(base);

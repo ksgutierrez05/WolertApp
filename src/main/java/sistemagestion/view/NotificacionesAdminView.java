@@ -221,50 +221,7 @@ public class NotificacionesAdminView {
         return card;
     }
 
-    private void agregarHeader(GridPane tabla, int columna, String texto) {
-
-        Label lbl = new Label(texto);
-
-        lbl.setFont(Font.font("System", FontWeight.BOLD, 13));
-
-        lbl.setTextFill(Color.web("#6b7280"));
-
-        lbl.setMaxWidth(Double.MAX_VALUE);
-
-        lbl.setPadding(new Insets(15));
-
-        lbl.setStyle(
-                "-fx-background-color:#f8fafc;"
-                + "-fx-border-color:#e5e7eb;"
-                + "-fx-border-width:0 0 1 0;"
-        );
-
-        tabla.add(lbl, columna, 0);
-    }
-
-    private void agregarCelda(
-            GridPane tabla,
-            int fila,
-            int columna,
-            String texto) {
-
-        Label lbl = new Label(texto);
-
-        lbl.setWrapText(true);
-
-        lbl.setMaxWidth(Double.MAX_VALUE);
-
-        lbl.setPadding(new Insets(15));
-
-        lbl.setTextFill(Color.web("#374151"));
-
-        lbl.setStyle(
-                "-fx-border-color:#e5e7eb;"
-                + "-fx-border-width:0 0 1 0;"
-        );
-
-        tabla.add(lbl, columna, fila);
-    }
+   
 
     private List<Notificacion> cargarNotificaciones() {
         try {

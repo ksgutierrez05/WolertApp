@@ -125,13 +125,13 @@ public class EstadisticasAdminPoliciaView {
                 .count();
 
         row.getChildren().addAll(
-                statCard("#e8f0fe", BLUE, "",
+                statCard("#e8f0fe", BLUE, "\uf0f3",
                         String.valueOf(totalAlertas), "Alertas totales", "Historial completo"),
-                statCard("#fff0f0", RED, "",
+                statCard("#fff0f0", RED, "\uf071",
                         String.valueOf(alertasActivas), "Alertas activas", "↑ Requieren atención"),
-                statCard("#e8f5e9", GREEN, "",
+                statCard("#e8f5e9", GREEN, "\uf1b9",
                         String.valueOf(unidadesOper), "Unidades operativas", "Estado OPERATIVA"),
-                statCard("#fff8e1", ORANGE, "",
+                statCard("#fff8e1", ORANGE, "\uf505",
                         String.valueOf(policiasDisp), "Policías activos", "DISPONIBLE · EN SERVICIO")
         );
         return row;

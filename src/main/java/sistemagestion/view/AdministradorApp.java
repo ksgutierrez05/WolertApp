@@ -217,7 +217,7 @@ public class AdministradorApp {
                 navItem("\uf3fd", "Dashboard"),
                 navItem("\uf0c0", "Usuarios"),
                 navItem("\uf0f3", "Alertas"),
-                navItem("\uf071", "Alarmas"),
+                navItem("\uf0a1", "Alarmas"),
                 navItem("\uf041", "Comunas"),
                 navItem("\uf015", "Barrios"),
                 navItem("\uf0cb", "Tipos"),
