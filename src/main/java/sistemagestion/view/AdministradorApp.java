@@ -79,6 +79,14 @@ public class AdministradorApp {
     private static final double LOGOUT_ICON_SIZE = 70;
     private static final double PLACEHOLDER_MSG_SIZE = 18;
     private static final double SEPARATOR_HEIGHT = 1;
+    // ── Nuevos campos de clase ────────────────────────────────────
+    private static final double SIDEBAR_EXPANDED_A = 250;
+    private static final double SIDEBAR_COLLAPSED_A = 60;
+    private VBox sidebarVBox;
+    private VBox logoTextAdminApp;
+    private Label logoutTextAdminApp;
+    private Label bellBadge;
+    private int pendingCount;
 
     // ── Límites de listas ─────────────────────────────────────────
     private static final int MAX_ALERTAS_PANEL = 4;
@@ -108,16 +116,19 @@ public class AdministradorApp {
         root = new BorderPane();
         root.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-        VBox sidebar = buildSidebar();
+        sidebarVBox = buildSidebarInner();
 
-        ScrollPane sidebarScroll = new ScrollPane(sidebar);
-        sidebar.prefHeightProperty().bind(sidebarScroll.heightProperty());
+        ScrollPane sidebarScroll = new ScrollPane(sidebarVBox);
+        sidebarVBox.prefHeightProperty().bind(sidebarScroll.heightProperty());
         sidebarScroll.setFitToWidth(true);
         sidebarScroll.setFitToHeight(true);
-        sidebarScroll.setStyle("""
-                -fx-background: #16283d;
-                -fx-background-color: #16283d;
-                """);
+        sidebarScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        sidebarScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        sidebarScroll.setStyle(
+                "-fx-background: #16283d;"
+                + "-fx-background-color: #16283d;"
+                + "-fx-border-color: transparent;"
+                + "-fx-padding: 0;");
 
         root.setLeft(sidebarScroll);
         root.setCenter(buildMainContent());
@@ -142,41 +153,51 @@ public class AdministradorApp {
     // ═══════════════════════════════════════════════════════════════
     // SIDEBAR
     // ═══════════════════════════════════════════════════════════════
-    private VBox buildSidebar() {
-        VBox sidebar = new VBox();
-        sidebar.setPrefWidth(SIDEBAR_WIDTH);
-        sidebar.setStyle("-fx-background-color: linear-gradient(to right, "
+    private VBox buildSidebarInner() {
+        sidebarVBox = new VBox();
+        sidebarVBox.setPrefWidth(SIDEBAR_COLLAPSED_A);
+        sidebarVBox.setMinWidth(SIDEBAR_COLLAPSED_A);
+        sidebarVBox.setMaxWidth(SIDEBAR_COLLAPSED_A);
+        sidebarVBox.setStyle("-fx-background-color: linear-gradient(to right, "
                 + SIDEBAR_BG_START + ", " + SIDEBAR_BG_END + ");");
 
-        // Logo
+        // ── Logo ──────────────────────────────────────────────────
         HBox logoBox = new HBox(10);
-        logoBox.setPadding(new Insets(20, 16, 20, 16));
+        logoBox.setPadding(new Insets(20, 8, 20, 8));
         logoBox.setAlignment(Pos.CENTER_LEFT);
+        javafx.scene.shape.Rectangle logoClip
+                = new javafx.scene.shape.Rectangle(SIDEBAR_EXPANDED_A, 80);
+        logoBox.setClip(logoClip);
 
         ImageView logoImg = new ImageView(
                 new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
-        logoImg.setFitWidth(65);
-        logoImg.setFitHeight(65);
+        logoImg.setFitWidth(44);
+        logoImg.setFitHeight(44);
         logoImg.setPreserveRatio(true);
-        logoImg.setTranslateY(-2);
 
-        VBox logoText = new VBox(1);
-        logoText.setAlignment(Pos.CENTER_LEFT);
-        logoText.getChildren().addAll(
-                label("WolertApp", 18, WHITE, true),
+        logoTextAdminApp = new VBox(2);
+        logoTextAdminApp.getChildren().addAll(
+                label("WolertApp", 15, WHITE, true),
                 label("Panel Administrativo", 9, SIDEBAR_NAV_TEXT, false));
-        logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
+        logoTextAdminApp.setVisible(false);
+        logoTextAdminApp.setManaged(false);
+        logoBox.getChildren().addAll(new StackPane(logoImg), logoTextAdminApp);
 
-        // Tarjeta de admin
+        // ── Admin card ────────────────────────────────────────────
         HBox adminCard = new HBox(12);
-        adminCard.setPadding(new Insets(12, 16, 12, 16));
+        adminCard.setPadding(new Insets(10, 8, 10, 14));
         adminCard.setAlignment(Pos.CENTER_LEFT);
         adminCard.setStyle("-fx-background-color: rgba(255,255,255,0.08);"
                 + "-fx-background-radius: 12;");
 
-        Circle avatar = new Circle(20, Color.web(SIDEBAR_AVATAR_BG));
-        Label avatarLbl = label("👨‍💼", 15, WHITE, false);
+        Circle avatar = new Circle(18, Color.web(SIDEBAR_AVATAR_BG));
+        Label avatarLbl = new Label("\uf007");
+        avatarLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:14px; -fx-text-fill:#a8c0dd;");
         StackPane avatarBox = new StackPane(avatar, avatarLbl);
+        avatarBox.setMinWidth(28);
+        avatarBox.setMaxWidth(28);
+        avatarBox.setPrefWidth(28);
 
         VBox adminInfo = new VBox(2);
         HBox statusRow = new HBox(4);
@@ -184,59 +205,115 @@ public class AdministradorApp {
         statusRow.getChildren().addAll(
                 new Circle(4, Color.web(GREEN)),
                 label("Sistema activo", 10, GREEN, false));
-        adminInfo.getChildren().addAll(label("Administrador", 13, WHITE, true), statusRow);
+        adminInfo.getChildren().addAll(
+                label("Administrador", 12, WHITE, true),
+                statusRow);
         adminCard.getChildren().addAll(avatarBox, adminInfo);
 
-        // Navegación
+        // ── Nav ───────────────────────────────────────────────────
         nav = new VBox(2);
-        nav.setPadding(new Insets(16, 8, 16, 8));
+        nav.setPadding(new Insets(12, 4, 12, 4));
         nav.getChildren().addAll(
-                navItem("\uf3fd", "Dashboard"), // house-chimney
-                navItem("\uf0c0", "Usuarios"), // users
-                navItem("\uf0f3", "Alertas"), // bell
-                navItem("\uf0f3", "Alarmas"), // bell (con badge)
-                navItem("\uf041", "Comunas"), // map-marker
-                navItem("\uf015", "Barrios"), // home
-                navItem("\uf0cb", "Tipos"), // list-ol
-                navItem("\uf1f6", "Notificaciones"), // bell-slash
-                navItem("\uf080", "Reportes"), // bar-chart
-                navItem("\uf201", "Estadísticas"), // line-chart
-                navItem("\uf013", "Configuración") // cog
-
+                navItem("\uf3fd", "Dashboard"),
+                navItem("\uf0c0", "Usuarios"),
+                navItem("\uf0f3", "Alertas"),
+                navItem("\uf071", "Alarmas"),
+                navItem("\uf041", "Comunas"),
+                navItem("\uf015", "Barrios"),
+                navItem("\uf0cb", "Tipos"),
+                navItem("\uf1f6", "Notificaciones"),
+                navItem("\uf080", "Reportes"),
+                navItem("\uf201", "Estadísticas"),
+                navItem("\uf013", "Configuración")
         );
-
-        // Cerrar sesión
-        HBox logout = new HBox(10);
-        logout.setPadding(new Insets(10, 16, 10, 16));
-        logout.setAlignment(Pos.CENTER_LEFT);
-        logout.setCursor(javafx.scene.Cursor.HAND);
-        logout.setStyle("-fx-background-color: transparent;");
-
-        logout.setOnMouseEntered(e -> logout.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
-
-        logout.setOnMouseExited(e -> logout.setStyle(
-                "-fx-background-color: transparent;"));
-
-        logout.setOnMouseClicked(e -> {
-            Stage stage = (Stage) root.getScene().getWindow();
-            stage.close();
-        });
-
-        Label logoutIcon = new Label("\uf2f5");  // fa-right-from-bracket
-        logoutIcon.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 14px;"
-                + "-fx-text-fill: " + RED + ";");
-
-        logout.getChildren().addAll(logoutIcon, label("Cerrar sesión", 13, WHITE, true));
 
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
-        VBox.setVgrow(sidebar, Priority.ALWAYS);
 
-        sidebar.getChildren().addAll(logoBox, adminCard, nav, spacer, logout);
-        return sidebar;
+        // ── Logout ────────────────────────────────────────────────
+        HBox logout = new HBox(10);
+        logout.setPadding(new Insets(14, 8, 18, 14));
+        logout.setAlignment(Pos.CENTER_LEFT);
+        logout.setCursor(javafx.scene.Cursor.HAND);
+        logout.setStyle("-fx-background-color: transparent;");
+        logout.setOnMouseEntered(e -> logout.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
+        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
+        logout.setOnMouseClicked(e -> ((Stage) root.getScene().getWindow()).close());
+
+        Label logoutIcon = new Label("\uf2f5");
+        logoutIcon.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:14px; -fx-text-fill:" + RED + ";");
+        logoutIcon.setMinWidth(28);
+        logoutIcon.setAlignment(Pos.CENTER);
+
+        logoutTextAdminApp = label("Cerrar sesión", 13, WHITE, true);
+        logoutTextAdminApp.setVisible(false);
+        logoutTextAdminApp.setManaged(false);
+        logout.getChildren().addAll(logoutIcon, logoutTextAdminApp);
+
+        sidebarVBox.getChildren().addAll(logoBox, adminCard, nav, spacer, logout);
+
+        // ── Hover ─────────────────────────────────────────────────
+        sidebarVBox.setOnMouseEntered(e -> setSidebarAdminExpanded(true));
+        sidebarVBox.setOnMouseExited(e -> setSidebarAdminExpanded(false));
+
+        return sidebarVBox;
+    }
+
+    private void setSidebarAdminExpanded(boolean expand) {
+        double target = expand ? SIDEBAR_EXPANDED_A : SIDEBAR_COLLAPSED_A;
+        javafx.animation.Timeline tl = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(180),
+                        new javafx.animation.KeyValue(sidebarVBox.prefWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(sidebarVBox.minWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(sidebarVBox.maxWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH)));
+        tl.play();
+
+        if (logoTextAdminApp != null) {
+            logoTextAdminApp.setVisible(expand);
+            logoTextAdminApp.setManaged(expand);
+        }
+        if (logoutTextAdminApp != null) {
+            logoutTextAdminApp.setVisible(expand);
+            logoutTextAdminApp.setManaged(expand);
+        }
+        nav.getChildren().forEach(node -> {
+            if (node instanceof HBox hbox) {
+                hbox.getChildren().forEach(child -> {
+                    if (child instanceof Label lbl && !lbl.getStyle().contains("Font Awesome")) {
+                        lbl.setVisible(expand);
+                        lbl.setManaged(expand);
+                    }
+                });
+            }
+        });
+        // Admin card info
+        sidebarVBox.getChildren().forEach(node -> {
+            if (node instanceof HBox card) {
+                card.getChildren().forEach(child -> {
+                    if (child instanceof VBox vb) {
+                        vb.getChildren().forEach(c -> {
+                            if (c instanceof Label lbl && !lbl.getStyle().contains("Font Awesome")) {
+                                lbl.setVisible(expand);
+                                lbl.setManaged(expand);
+                            }
+                            if (c instanceof HBox row) {
+                                row.getChildren().forEach(rc -> {
+                                    if (rc instanceof Label rl && !rl.getStyle().contains("Font Awesome")) {
+                                        rl.setVisible(expand);
+                                        rl.setManaged(expand);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
     private HBox navItem(String icon, String text) {
@@ -251,13 +328,19 @@ public class AdministradorApp {
                 "-fx-background-color: " + SIDEBAR_HOVER + "; -fx-background-radius: 8;"));
         item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
 
-        // Variables nombradas para poder referenciarlas en el click
         Label iconLbl = new Label(icon);
         iconLbl.setStyle(
                 "-fx-font-family: 'Font Awesome 6 Free Solid';"
                 + "-fx-font-size: 15px;"
                 + "-fx-text-fill: " + SIDEBAR_NAV_TEXT + ";");
+        iconLbl.setMinWidth(28);
+        iconLbl.setPrefWidth(28);
+        iconLbl.setMaxWidth(28);
+        iconLbl.setAlignment(Pos.CENTER);    // ← centrado horizontal y vertical
+
         Label textLbl = label(text, 13, SIDEBAR_NAV_TEXT, false);
+        textLbl.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(textLbl, Priority.ALWAYS);
         item.getChildren().addAll(iconLbl, textLbl);
 
         item.setOnMouseClicked(e -> {
@@ -453,17 +536,17 @@ public class AdministradorApp {
         bellIco.setStyle(
                 "-fx-font-family:'Font Awesome 6 Free Solid';"
                 + "-fx-font-size:16px;-fx-text-fill:#374151;");
-
-        Label badge = new Label(totalBadge > 9 ? "9+" : String.valueOf(totalBadge));
-        badge.setStyle(
+        pendingCount = totalBadge;
+        bellBadge = new Label(pendingCount > 9 ? "9+" : String.valueOf(pendingCount));
+        bellBadge.setStyle(
                 "-fx-background-color:#e53935;-fx-text-fill:white;"
                 + "-fx-font-size:9px;-fx-font-weight:bold;"
                 + "-fx-background-radius:20;-fx-padding:1 4;");
-        badge.setTranslateX(10);
-        badge.setTranslateY(-10);
-        badge.setVisible(totalBadge > 0);
+        bellBadge.setTranslateX(10);
+        bellBadge.setTranslateY(-10);
+        bellBadge.setVisible(pendingCount > 0);
 
-        bell.getChildren().addAll(bellBg, bellIco, badge);
+        bell.getChildren().addAll(bellBg, bellIco, bellBadge);
 
         bell.setOnMouseEntered(e -> bellBg.setStyle(
                 "-fx-background-color:#f0f7ff;"
@@ -693,11 +776,14 @@ public class AdministradorApp {
         popupBox.getChildren().add(popFooter);
         popup.getContent().add(popupBox);
 
-        // Abrir / cerrar popup
         bell.setOnMouseClicked(e -> {
             if (popup.isShowing()) {
                 popup.hide();
             } else {
+                // ── Limpiar badge al ver notificaciones ──
+                pendingCount = 0;
+                bellBadge.setVisible(false);
+
                 javafx.geometry.Bounds b = bell.localToScreen(bell.getBoundsInLocal());
                 popup.show(bell, b.getMaxX() - 330, b.getMaxY() + 8);
             }

@@ -8,56 +8,41 @@ package sistemagestion.service;
  *
  * @author Maria Cristina
  */
-
-
 import sistemagestion.model.Alerta;
 import sistemagestion.model.EstadoAlerta;
-import java.io.InputStream;
-import java.util.Base64;
 
 public class AlertaEmailSender {
 
-    private static final String LOGO_BASE64 = cargarLogoBase64();
-
-    private static String cargarLogoBase64() {
-        try (InputStream is = AlertaEmailSender.class
-                .getResourceAsStream("/LogoWolertAPP.png")) {
-            if (is == null) return null;
-            return Base64.getEncoder().encodeToString(is.readAllBytes());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     private static String logoTag() {
-        if (LOGO_BASE64 != null) {
-            return "<img src='data:image/png;base64," + LOGO_BASE64 + "' "
-                 + "width='54' height='54' "
-                 + "style='border-radius:10px;display:block;' "
-                 + "alt='WolertApp'/>";
-        }
-        return "<span style='font-size:28px;'>🐺</span>";
+        return "<img src='https://i.imgur.com/TWqPylo.png' "
+                + "width='54' height='54' "
+                + "style='border-radius:10px;display:block;' "
+                + "alt='WolertApp'/>";
     }
 
     public static void enviarCambioEstado(Alerta a) {
-        if (a == null || a.getUsuario() == null) return;
+        if (a == null || a.getUsuario() == null) {
+            return;
+        }
         String correo = a.getUsuario().getCorreo();
-        if (correo == null) return;
+        if (correo == null) {
+            return;
+        }
 
-        String nombre  = a.getUsuario().getPrimer_nombre() != null
-                       ? a.getUsuario().getPrimer_nombre() : "Usuario";
-        String tipo    = a.getTipoalerta() != null
-                       ? a.getTipoalerta().getNombre() : "Alerta";
+        String nombre = a.getUsuario().getPrimer_nombre() != null
+                ? a.getUsuario().getPrimer_nombre() : "Usuario";
+        String tipo = a.getTipoalerta() != null
+                ? a.getTipoalerta().getNombre() : "Alerta";
         EstadoAlerta estado = a.getEstado();
 
         String headerColor = colorPorEstado(estado);
-        String subColor    = subColorPorEstado(estado);
-        String icono       = iconoPorEstado(estado);
-        String etiqueta    = etiquetaPorEstado(estado);
+        String subColor = subColorPorEstado(estado);
+        String icono = iconoPorEstado(estado);
+        String etiqueta = etiquetaPorEstado(estado);
         String descripcion = descripcionPorEstado(estado, tipo);
 
         String cuerpo = buildHtml(headerColor, subColor, icono + " " + etiqueta,
-                                  descripcion, a.getId_alerta(), tipo, nombre);
+                descripcion, a.getId_alerta(), tipo, nombre);
 
         new Thread(() -> {
             boolean ok = EmailService.enviarCorreo(
@@ -72,71 +57,99 @@ public class AlertaEmailSender {
     }
 
     // ── Helpers por estado ────────────────────────────────────
-
     private static String colorPorEstado(EstadoAlerta e) {
         return switch (e) {
-            case PENDIENTE        -> "#f59e0b";
-            case RECIBIDA         -> "#3b82f6";
-            case EN_ATENCION      -> "#8b5cf6";
-            case UNIDAD_ASIGNADA  -> "#0ea5e9";
-            case RESUELTA         -> "#43a047";
-            case CANCELADA        -> "#e53935";
+            case PENDIENTE ->
+                "#f59e0b";
+            case RECIBIDA ->
+                "#3b82f6";
+            case EN_ATENCION ->
+                "#8b5cf6";
+            case UNIDAD_ASIGNADA ->
+                "#0ea5e9";
+            case RESUELTA ->
+                "#43a047";
+            case CANCELADA ->
+                "#e53935";
         };
     }
 
     private static String subColorPorEstado(EstadoAlerta e) {
         return switch (e) {
-            case PENDIENTE        -> "#fef3c7";
-            case RECIBIDA         -> "#dbeafe";
-            case EN_ATENCION      -> "#ede9fe";
-            case UNIDAD_ASIGNADA  -> "#e0f2fe";
-            case RESUELTA         -> "#c8e6c9";
-            case CANCELADA        -> "#ffcdd2";
+            case PENDIENTE ->
+                "#fef3c7";
+            case RECIBIDA ->
+                "#dbeafe";
+            case EN_ATENCION ->
+                "#ede9fe";
+            case UNIDAD_ASIGNADA ->
+                "#e0f2fe";
+            case RESUELTA ->
+                "#c8e6c9";
+            case CANCELADA ->
+                "#ffcdd2";
         };
     }
 
     private static String iconoPorEstado(EstadoAlerta e) {
         return switch (e) {
-            case PENDIENTE        -> "⏳";
-            case RECIBIDA         -> "📥";
-            case EN_ATENCION      -> "🚨";
-            case UNIDAD_ASIGNADA  -> "🚔";
-            case RESUELTA         -> "✅";
-            case CANCELADA        -> "❌";
+            case PENDIENTE ->
+                "⏳";
+            case RECIBIDA ->
+                "📥";
+            case EN_ATENCION ->
+                "🚨";
+            case UNIDAD_ASIGNADA ->
+                "🚔";
+            case RESUELTA ->
+                "✅";
+            case CANCELADA ->
+                "❌";
         };
     }
 
     private static String etiquetaPorEstado(EstadoAlerta e) {
         return switch (e) {
-            case PENDIENTE        -> "Alerta pendiente";
-            case RECIBIDA         -> "Alerta recibida";
-            case EN_ATENCION      -> "En atención";
-            case UNIDAD_ASIGNADA  -> "Unidad asignada";
-            case RESUELTA         -> "Alerta resuelta";
-            case CANCELADA        -> "Alerta cancelada";
+            case PENDIENTE ->
+                "Alerta pendiente";
+            case RECIBIDA ->
+                "Alerta recibida";
+            case EN_ATENCION ->
+                "En atención";
+            case UNIDAD_ASIGNADA ->
+                "Unidad asignada";
+            case RESUELTA ->
+                "Alerta resuelta";
+            case CANCELADA ->
+                "Alerta cancelada";
         };
     }
 
     private static String descripcionPorEstado(EstadoAlerta e, String tipo) {
         return switch (e) {
-            case PENDIENTE       -> "Tu alerta de tipo <b>" + tipo + "</b> ha sido registrada "
-                                  + "y está <b style='color:#f59e0b'>pendiente</b> de revisión.";
-            case RECIBIDA        -> "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
-                                  + "<b style='color:#3b82f6'>recibida</b> por nuestro equipo "
-                                  + "y será atendida a la brevedad.";
-            case EN_ATENCION     -> "Tu alerta de tipo <b>" + tipo + "</b> está siendo "
-                                  + "<b style='color:#8b5cf6'>atendida</b> en este momento.";
-            case UNIDAD_ASIGNADA -> "Se ha asignado una <b style='color:#0ea5e9'>unidad</b> "
-                                  + "para atender tu alerta de tipo <b>" + tipo + "</b>.";
-            case RESUELTA        -> "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
-                                  + "<b style='color:#43a047'>resuelta</b> exitosamente.";
-            case CANCELADA       -> "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
-                                  + "<b style='color:#e53935'>cancelada</b>.";
+            case PENDIENTE ->
+                "Tu alerta de tipo <b>" + tipo + "</b> ha sido registrada "
+                + "y está <b style='color:#f59e0b'>pendiente</b> de revisión.";
+            case RECIBIDA ->
+                "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
+                + "<b style='color:#3b82f6'>recibida</b> por nuestro equipo "
+                + "y será atendida a la brevedad.";
+            case EN_ATENCION ->
+                "Tu alerta de tipo <b>" + tipo + "</b> está siendo "
+                + "<b style='color:#8b5cf6'>atendida</b> en este momento.";
+            case UNIDAD_ASIGNADA ->
+                "Se ha asignado una <b style='color:#0ea5e9'>unidad</b> "
+                + "para atender tu alerta de tipo <b>" + tipo + "</b>.";
+            case RESUELTA ->
+                "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
+                + "<b style='color:#43a047'>resuelta</b> exitosamente.";
+            case CANCELADA ->
+                "Tu alerta de tipo <b>" + tipo + "</b> ha sido "
+                + "<b style='color:#e53935'>cancelada</b>.";
         };
     }
 
     // ── HTML ──────────────────────────────────────────────────
-
     private static String buildHtml(String headerColor, String subColor,
             String titulo, String parrafo, int idAlerta, String tipo, String nombre) {
         return """
@@ -149,11 +162,10 @@ public class AlertaEmailSender {
               <div style="background:#1f3a56;padding:24px 32px;
                           border-radius:16px 16px 0 0;
                           display:flex;align-items:center;gap:14px;">
-                <div style="width:58px;height:58px;
-                            background:rgba(255,255,255,0.12);
-                            border-radius:12px;overflow:hidden;
-                            display:flex;align-items:center;
-                            justify-content:center;flex-shrink:0;">
+               <div style="width:58px;height:58px;
+                                        border-radius:12px;overflow:hidden;
+                                        display:flex;align-items:center;
+                                        justify-content:center;flex-shrink:0;">
                   %s
                 </div>
                 <div>

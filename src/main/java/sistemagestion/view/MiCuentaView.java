@@ -8,6 +8,7 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
+import java.sql.SQLException;
 import java.util.List;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,9 +20,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import static oracle.sql.NUMBER.e;
+
 import sistemagestion.model.Barrio;
-import sistemagestion.model.Comuna;
 import sistemagestion.model.Direccion;
 import sistemagestion.model.EstadoSuscripcion;
 import sistemagestion.model.Suscripcion;
@@ -134,7 +134,8 @@ public class MiCuentaView {
 
         String nombre = usuarioActual != null
                 ? ((usuarioActual.getPrimer_nombre() != null ? usuarioActual.getPrimer_nombre() : "")
-                        + " " + (usuarioActual.getPrimer_apellido() != null ? usuarioActual.getPrimer_apellido() : "")).trim()
+                        + " " + (usuarioActual.getPrimer_apellido() != null
+                        ? usuarioActual.getPrimer_apellido() : "")).trim()
                 : "Usuario";
         Label nombreLbl = new Label(nombre.isEmpty() ? "Usuario" : nombre);
         nombreLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
@@ -159,7 +160,9 @@ public class MiCuentaView {
 
         HBox statusRow = new HBox(6);
         statusRow.setAlignment(Pos.CENTER_LEFT);
-        statusRow.getChildren().addAll(new Circle(4, Color.web(GREEN)), label("En línea", 11, GREEN, false));
+        statusRow.getChildren().addAll(
+                new Circle(4, Color.web(GREEN)),
+                label("En línea", 11, GREEN, false));
 
         info.getChildren().addAll(nombreLbl, rolLbl, correoLbl, userLbl, statusRow);
 
@@ -183,7 +186,6 @@ public class MiCuentaView {
     // PANEL: INFORMACIÓN PERSONAL
     // =========================================================================
     private VBox buildPerfilPanel() {
-
         VBox panel = createPanel("Información personal");
         if (usuarioActual == null) {
             panel.getChildren().add(label("No hay información disponible.", 13, GRAY_TEXT, false));
@@ -191,7 +193,6 @@ public class MiCuentaView {
         }
         Direccion dir = usuarioActual.getDireccion();
 
-        // Construir dirección legible
         StringBuilder dirTexto = new StringBuilder();
         if (dir != null) {
             if (dir.getCalle() != null && !dir.getCalle().isBlank()) {
@@ -215,7 +216,8 @@ public class MiCuentaView {
             dirFinal = "—";
         }
 
-        String barrio = dir != null && dir.getBarrio() != null ? dir.getBarrio().getNombre() : "—";
+        String barrio = dir != null && dir.getBarrio() != null
+                ? dir.getBarrio().getNombre() : "—";
 
         panel.getChildren().addAll(
                 infoRow("Identificación", val(usuarioActual.getIdentificacion())), sep(),
@@ -251,7 +253,8 @@ public class MiCuentaView {
                 VBox vacio = new VBox(8);
                 vacio.setAlignment(Pos.CENTER);
                 vacio.setPadding(new Insets(12, 0, 12, 0));
-                vacio.getChildren().add(label("No tienes suscripciones activas.", 13, GRAY_TEXT, false));
+                vacio.getChildren().add(
+                        label("No tienes suscripciones activas.", 13, GRAY_TEXT, false));
                 panel.getChildren().add(vacio);
             } else {
                 for (Suscripcion s : lista) {
@@ -272,7 +275,6 @@ public class MiCuentaView {
                             GRAY_TEXT;
                     };
 
-                    // Botón eliminar
                     Button btnEliminar = new Button("✕ Eliminar");
                     btnEliminar.setStyle(
                             "-fx-background-color: #fee2e2; -fx-text-fill: #e53935;"
@@ -288,20 +290,18 @@ public class MiCuentaView {
                             + "-fx-background-radius: 6; -fx-padding: 4 10; -fx-cursor: hand;"));
 
                     final int idSusc = s.getId_suscripcion();
+                    final String zonaCopy = zona;
                     btnEliminar.setOnAction(e -> {
                         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                         confirm.setTitle("Eliminar suscripción");
                         confirm.setHeaderText(null);
-                        confirm.setContentText("¿Seguro que quieres eliminar esta suscripción?\n" + zona);
+                        confirm.setContentText("¿Seguro que quieres eliminar esta suscripción?\n" + zonaCopy);
                         confirm.showAndWait().ifPresent(resp -> {
                             if (resp == ButtonType.OK) {
                                 boolean ok = suscripcionService.eliminar(idSusc);
-                                if (ok) {
-                                    System.out.println("✅ Suscripción eliminada: " + idSusc);
-                                } else {
-                                    System.out.println("❌ No se pudo eliminar: " + idSusc);
-                                }
-                                // Refrescar la vista
+                                System.out.println(ok
+                                        ? "✅ Suscripción eliminada: " + idSusc
+                                        : "❌ No se pudo eliminar: " + idSusc);
                                 if (root != null) {
                                     root.setCenter(getView());
                                 }
@@ -314,7 +314,6 @@ public class MiCuentaView {
                     HBox infoSusc = infoRowBadge("Suscripción", zona, estadoStr, badgeColor);
                     HBox.setHgrow(infoSusc, Priority.ALWAYS);
                     fila.getChildren().addAll(infoSusc, btnEliminar);
-
                     panel.getChildren().addAll(fila, sep());
                 }
             }
@@ -333,7 +332,8 @@ public class MiCuentaView {
                 List<Suscripcion> listaFresca = suscripcionService.listar().stream()
                         .filter(s -> s.getUsuario() != null
                         && usuarioActual.getIdentificacion() != null
-                        && usuarioActual.getIdentificacion().equals(s.getUsuario().getIdentificacion()))
+                        && usuarioActual.getIdentificacion()
+                                .equals(s.getUsuario().getIdentificacion()))
                         .toList();
                 abrirDialogoSuscripcion(listaFresca);
             });
@@ -347,6 +347,7 @@ public class MiCuentaView {
 
     // =========================================================================
     // PANEL: INFORMACIÓN ÚTIL
+    // =========================================================================
     private VBox buildInfoUtilPanel() {
         VBox panel = createPanel("Información útil");
         panel.getChildren().addAll(
@@ -355,7 +356,8 @@ public class MiCuentaView {
                 infoRowFA("\uf46a", "#fb8c00", "Bomberos", "119"), sep(),
                 infoRowFA("\uf0f1", "#43a047", "Cruz Roja", "132"), sep(),
                 infoRowFA("\uf4a4", "#7b1fa2", "Línea de denuncia", "018000910600"), sep(),
-                infoRowFA("\uf086", "#0288d1", "Soporte WolertApp", "wolertapp.notificaciones@gmail.com")
+                infoRowFA("\uf086", "#0288d1", "Soporte WolertApp",
+                        "wolertapp.notificaciones@gmail.com")
         );
         return panel;
     }
@@ -374,7 +376,9 @@ public class MiCuentaView {
         form.setPrefWidth(400);
 
         Label lblZona = label("¿A qué zona quieres suscribirte?", 13, "#111827", true);
-        Label lblSub = label("Recibirás notificaciones de todas las alertas en la zona elegida.", 11, GRAY_TEXT, false);
+        Label lblSub = label(
+                "Recibirás notificaciones de todas las alertas en la zona elegida.",
+                11, GRAY_TEXT, false);
 
         ToggleGroup tgZona = new ToggleGroup();
         RadioButton rbBarrio = new RadioButton("Por barrio");
@@ -434,7 +438,7 @@ public class MiCuentaView {
                         .distinct().sorted()
                         .forEach(cmbComuna.getItems()::add);
             }
-        } catch (Exception ignored) {
+        } catch (SQLException ignored) {
         }
 
         tgZona.selectedToggleProperty().addListener((obs, o, n) -> {
@@ -455,7 +459,6 @@ public class MiCuentaView {
         sp.setPrefHeight(300);
         sp.setStyle("-fx-background: white; -fx-background-color: white;");
 
-        // ── Botones ───────────────────────────────────────────────
         ButtonType btnGuardarType = new ButtonType("Guardar suscripción", ButtonBar.ButtonData.OK_DONE);
         ButtonType btnCancelarType = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
         dlg.getDialogPane().setContent(sp);
@@ -477,7 +480,7 @@ public class MiCuentaView {
                         ev.consume();
                         return;
                     }
-                    barrioSeleccionado = cmbBarrio.getValue(); // ← objeto completo con ID
+                    barrioSeleccionado = cmbBarrio.getValue();
                 } else if (rbComuna.isSelected()) {
                     if (cmbComuna.getValue() == null) {
                         lblRes.setText("⚠️ Selecciona una comuna.");
@@ -497,12 +500,10 @@ public class MiCuentaView {
                 ta.setNombre("GENERAL");
                 suscripcion.setTipoalerta(ta);
 
-// ✅ Asigna el objeto Barrio completo (con ID)
                 if (finalBarrio != null) {
                     suscripcion.setBarrio(finalBarrio);
                 }
                 if (finalComuna != null) {
-                    // Busca el objeto Comuna con ID desde el barrio ya cargado
                     try {
                         List<Barrio> barrios = barrioService.listar();
                         barrios.stream()
@@ -572,21 +573,12 @@ public class MiCuentaView {
         TextField fTelefono = dlgField("Teléfono", val(usuarioActual.getTelefono()));
         TextField fCorreo = dlgField("Correo", val(usuarioActual.getCorreo()));
 
-        String calleActual = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getCalle() != null
-                ? usuarioActual.getDireccion().getCalle() : "";
-        String carreraActual = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getCarrera() != null
-                ? usuarioActual.getDireccion().getCarrera() : "";
-        String etapaActual = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getEtapa() != null
-                ? usuarioActual.getDireccion().getEtapa() : "";
-        String manzanaActual = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getManzana() != null
-                ? usuarioActual.getDireccion().getManzana() : "";
-        String casaActual = usuarioActual.getDireccion() != null
-                && usuarioActual.getDireccion().getCasa() != null
-                ? usuarioActual.getDireccion().getCasa() : "";
+        Direccion dirActual = usuarioActual.getDireccion();
+        String calleActual = dirActual != null && dirActual.getCalle() != null ? dirActual.getCalle() : "";
+        String carreraActual = dirActual != null && dirActual.getCarrera() != null ? dirActual.getCarrera() : "";
+        String etapaActual = dirActual != null && dirActual.getEtapa() != null ? dirActual.getEtapa() : "";
+        String manzanaActual = dirActual != null && dirActual.getManzana() != null ? dirActual.getManzana() : "";
+        String casaActual = dirActual != null && dirActual.getCasa() != null ? dirActual.getCasa() : "";
 
         TextField fEtapa = dlgField("Etapa", etapaActual);
         TextField fManzana = dlgField("Manzana", manzanaActual);
@@ -608,7 +600,6 @@ public class MiCuentaView {
             }
         } catch (Exception e) {
             System.out.println("Error cargando barrios: " + e.getMessage());
-            e.printStackTrace();
         }
 
         for (Barrio b : barrios) {
@@ -623,7 +614,6 @@ public class MiCuentaView {
             }
         } catch (Exception e) {
             System.out.println("Error seteando barrio inicial: " + e.getMessage());
-            e.printStackTrace();
         }
 
         Label lblError = label("", 12, RED, false);
@@ -696,7 +686,6 @@ public class MiCuentaView {
                             .ifPresent(dir::setBarrio);
                 }
 
-                // Validar que haya barrio antes de guardar
                 if (dir.getBarrio() == null) {
                     lblError.setText("⚠️ Selecciona un barrio.");
                     ev.consume();
@@ -707,9 +696,7 @@ public class MiCuentaView {
                 if (usuarioService != null) {
                     usuarioService.actualizar(usuarioActual);
                     System.out.println("✅ Usuario actualizado correctamente.");
-
                     if (root != null) {
-
                         javafx.application.Platform.runLater(() -> root.setCenter(getView()));
                     }
                 }
@@ -731,7 +718,6 @@ public class MiCuentaView {
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(10, 0, 10, 0));
 
-        // Icono FA en círculo de color
         StackPane iconWrap = new StackPane();
         iconWrap.setPrefSize(34, 34);
         iconWrap.setMinSize(34, 34);
@@ -746,7 +732,6 @@ public class MiCuentaView {
                 + "-fx-text-fill: " + iconColor + ";");
         iconWrap.getChildren().addAll(iconBg, iconLbl);
 
-        // Texto
         VBox texto = new VBox(2);
         HBox.setHgrow(texto, Priority.ALWAYS);
         Label campoLbl = label(campo, 11, GRAY_TEXT, false);
@@ -829,9 +814,11 @@ public class MiCuentaView {
         if (usuarioActual == null) {
             return "?";
         }
-        String n = usuarioActual.getPrimer_nombre() != null && !usuarioActual.getPrimer_nombre().isBlank()
+        String n = usuarioActual.getPrimer_nombre() != null
+                && !usuarioActual.getPrimer_nombre().isBlank()
                 ? usuarioActual.getPrimer_nombre().substring(0, 1).toUpperCase() : "?";
-        String a = usuarioActual.getPrimer_apellido() != null && !usuarioActual.getPrimer_apellido().isBlank()
+        String a = usuarioActual.getPrimer_apellido() != null
+                && !usuarioActual.getPrimer_apellido().isBlank()
                 ? usuarioActual.getPrimer_apellido().substring(0, 1).toUpperCase() : "";
         return n + a;
     }

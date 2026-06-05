@@ -55,6 +55,12 @@ public class UsuarioApp {
     private static final String GRAY_TEXT = "#6b7280";
     private static final String BORDER = "#e5e7eb";
 
+    private static final double SIDEBAR_EXPANDED_U = 250;
+    private static final double SIDEBAR_COLLAPSED_U = 60;
+    private VBox sidebarVBoxU;
+    private VBox logoTextUsuario;
+    private Label logoutTextUsuario;
+
     // ── Servicios ─────────────────────────────────────────────────
     private AlertaService alertaService;
     private SuscripcionService suscripcionService;
@@ -161,41 +167,60 @@ public class UsuarioApp {
     // SIDEBAR
     // =========================================================================
     private ScrollPane buildSidebar() {
-        VBox sidebar = new VBox();
-        sidebar.setPrefWidth(250);
-        sidebar.setMaxHeight(Double.MAX_VALUE);
-        sidebar.setFillWidth(true);
-        VBox.setVgrow(sidebar, Priority.ALWAYS);
-        sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56); -fx-padding: 0;");
+        sidebarVBoxU = new VBox();
+        sidebarVBoxU.setPrefWidth(SIDEBAR_COLLAPSED_U);
+        sidebarVBoxU.setMinWidth(SIDEBAR_COLLAPSED_U);
+        sidebarVBoxU.setMaxWidth(SIDEBAR_COLLAPSED_U);
+        sidebarVBoxU.setMaxHeight(Double.MAX_VALUE);
+        sidebarVBoxU.setFillWidth(true);
+        VBox.setVgrow(sidebarVBoxU, Priority.ALWAYS);
+        sidebarVBoxU.setStyle(
+                "-fx-background-color: linear-gradient(to right, #16283d, #1f3a56); -fx-padding: 0;");
 
-        // ── Logo ──────────────────────────────────────────────────────
+        // ── Logo ──────────────────────────────────────────────────
         HBox logoBox = new HBox(10);
-        logoBox.setPadding(new Insets(20, 16, 20, 16));
+        logoBox.setPadding(new Insets(16, 8, 16, 8));
         logoBox.setAlignment(Pos.CENTER_LEFT);
+        javafx.scene.shape.Rectangle logoClip
+                = new javafx.scene.shape.Rectangle(SIDEBAR_EXPANDED_U, 80);
+        logoBox.setClip(logoClip);
 
         ImageView logoImg = new ImageView(
-                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
-        logoImg.setFitWidth(65);
-        logoImg.setFitHeight(65);
+                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png"),
+                        128, 128, true, true));
+        logoImg.setFitHeight(44);
+        logoImg.setFitWidth(44);
         logoImg.setPreserveRatio(true);
-        logoImg.setTranslateY(-2);
+        logoImg.setSmooth(true);
 
-        VBox logoText = new VBox(1);
-        logoText.setAlignment(Pos.CENTER_LEFT);
-        logoText.getChildren().addAll(
-                label("WolertApp", 18, WHITE, true),
-                label("Sistema de Alertas Comunitarias", 9, "#8899bb", false));
-        logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
+        StackPane logoWrap = new StackPane(logoImg);
+        logoWrap.setPrefSize(44, 44);
+        logoWrap.setMinSize(44, 44);
+        logoWrap.setMaxSize(44, 44);
 
-        // ── User card ─────────────────────────────────────────────────
+        logoTextUsuario = new VBox(1);
+        logoTextUsuario.setAlignment(Pos.CENTER_LEFT);
+        logoTextUsuario.getChildren().addAll(
+                label("WolertApp", 15, WHITE, true),
+                label("Sistema de Alertas", 9, "#8899bb", false));
+        logoTextUsuario.setVisible(false);
+        logoTextUsuario.setManaged(false);
+        logoBox.getChildren().addAll(logoWrap, logoTextUsuario);
+
+        // ── User card ─────────────────────────────────────────────
         HBox userCard = new HBox(12);
-        userCard.setPadding(new Insets(12, 16, 12, 16));
+        userCard.setPadding(new Insets(10, 8, 10, 14));
         userCard.setAlignment(Pos.CENTER_LEFT);
         userCard.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 12;");
 
-        Circle avatar = new Circle(20, Color.web("#334155"));
-        Label avatarLbl = label("👤", 15, WHITE, false);
+        Circle avatar = new Circle(18, Color.web("#334155"));
+        Label avatarLbl = new Label("\uf007");
+        avatarLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:14px; -fx-text-fill:#a8c0dd;");
         StackPane avatarBox = new StackPane(avatar, avatarLbl);
+        avatarBox.setPrefSize(36, 36);
+        avatarBox.setMinSize(36, 36);
+        avatarBox.setMaxSize(36, 36);
 
         VBox userInfo = new VBox(2);
         String nombreCompleto = usuarioActual != null
@@ -212,16 +237,15 @@ public class UsuarioApp {
         statusRow.getChildren().addAll(
                 new Circle(4, Color.web(GREEN)),
                 label("En línea", 10, GREEN, false));
-
         userInfo.getChildren().addAll(
-                label(nombreCompleto, 13, WHITE, true),
-                label(barrioNombre, 10, "#8899bb", false),
+                label(nombreCompleto, 12, WHITE, true),
+                label(barrioNombre, 9, "#8899bb", false),
                 statusRow);
         userCard.getChildren().addAll(avatarBox, userInfo);
 
-        // ── Nav ───────────────────────────────────────────────────────
+        // ── Nav ───────────────────────────────────────────────────
         nav = new VBox(2);
-        nav.setPadding(new Insets(16, 8, 16, 8));
+        nav.setPadding(new Insets(12, 4, 12, 4));
         nav.getChildren().addAll(
                 navItem("\uf015", "Dashboard"),
                 navItem("\uf0f3", "Alertas"),
@@ -232,38 +256,107 @@ public class UsuarioApp {
                 navItem("\uf007", "Mi Cuenta")
         );
 
-        // ── Cerrar sesión ─────────────────────────────────────────────
-        HBox logout = new HBox(10);
-        logout.setPadding(new Insets(10, 16, 10, 16));
-        logout.setAlignment(Pos.CENTER_LEFT);
-        logout.setCursor(javafx.scene.Cursor.HAND);
-        logout.setStyle("-fx-background-color: transparent;");
-        logout.setOnMouseEntered(e -> logout.setStyle("-fx-background-color: #ffffff15; -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
-        logout.setOnMouseClicked(e -> cerrarSesion());
-        Label logoutIcon = new Label("\uf2f5");
-        logoutIcon.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 14px;"
-                + "-fx-text-fill: " + RED + ";");
-        logout.getChildren().addAll(logoutIcon, label("Cerrar sesión", 13, RED, false));
-
         VBox spacer = new VBox();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        sidebar.getChildren().addAll(logoBox, userCard, nav, spacer, logout);
+        // ── Logout ────────────────────────────────────────────────
+        HBox logout = new HBox(10);
+        logout.setPadding(new Insets(14, 8, 18, 14));
+        logout.setAlignment(Pos.CENTER_LEFT);
+        logout.setCursor(javafx.scene.Cursor.HAND);
+        logout.setStyle("-fx-background-color: transparent;");
+        logout.setOnMouseEntered(e -> logout.setStyle(
+                "-fx-background-color: rgba(229,57,53,0.15); -fx-background-radius: 8;"));
+        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
+        logout.setOnMouseClicked(e -> cerrarSesion());
 
-        ScrollPane scroll = new ScrollPane(sidebar);
+        Label logoutIcon = new Label("\uf2f5");
+        logoutIcon.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:14px; -fx-text-fill:" + RED + ";");
+        logoutIcon.setMinWidth(28);
+        logoutIcon.setAlignment(Pos.CENTER);
+
+        logoutTextUsuario = label("Cerrar sesión", 13, RED, false);
+        logoutTextUsuario.setVisible(false);
+        logoutTextUsuario.setManaged(false);
+        logout.getChildren().addAll(logoutIcon, logoutTextUsuario);
+
+        sidebarVBoxU.getChildren().addAll(logoBox, userCard, nav, spacer, logout);
+
+        // ── Hover expand/collapse ─────────────────────────────────
+        sidebarVBoxU.setOnMouseEntered(e -> setSidebarUsuarioExpanded(true));
+        sidebarVBoxU.setOnMouseExited(e -> setSidebarUsuarioExpanded(false));
+
+        ScrollPane scroll = new ScrollPane(sidebarVBoxU);
         scroll.setFitToWidth(true);
         scroll.setFitToHeight(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle(
-                "-fx-background: transparent;"
-                + "-fx-background-color: transparent;"
-                + "-fx-border-color: transparent;"
-                + "-fx-padding: 0;");
+        scroll.setStyle("-fx-background: transparent; -fx-background-color: transparent;"
+                + "-fx-border-color: transparent; -fx-padding: 0;");
         return scroll;
+    }
+
+    private void setSidebarUsuarioExpanded(boolean expand) {
+        double target = expand ? SIDEBAR_EXPANDED_U : SIDEBAR_COLLAPSED_U;
+        javafx.animation.Timeline tl = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(180),
+                        new javafx.animation.KeyValue(sidebarVBoxU.prefWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(sidebarVBoxU.minWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(sidebarVBoxU.maxWidthProperty(), target,
+                                javafx.animation.Interpolator.EASE_BOTH)));
+        tl.play();
+
+        // Logo y logout
+        if (logoTextUsuario != null) {
+            logoTextUsuario.setVisible(expand);
+            logoTextUsuario.setManaged(expand);
+        }
+        if (logoutTextUsuario != null) {
+            logoutTextUsuario.setVisible(expand);
+            logoutTextUsuario.setManaged(expand);
+        }
+
+        // Nav items
+        nav.getChildren().forEach(node -> {
+            if (node instanceof HBox hbox) {
+                hbox.getChildren().forEach(child -> {
+                    if (child instanceof Label lbl
+                            && !lbl.getStyle().contains("Font Awesome")) {
+                        lbl.setVisible(expand);
+                        lbl.setManaged(expand);
+                    }
+                });
+            }
+        });
+
+        // User card info
+        sidebarVBoxU.getChildren().forEach(node -> {
+            if (node instanceof HBox hbox) {
+                hbox.getChildren().forEach(child -> {
+                    if (child instanceof VBox vb) {
+                        vb.getChildren().forEach(c -> {
+                            if (c instanceof Label lbl
+                                    && !lbl.getStyle().contains("Font Awesome")) {
+                                lbl.setVisible(expand);
+                                lbl.setManaged(expand);
+                            }
+                            if (c instanceof HBox row) {
+                                row.getChildren().forEach(rc -> {
+                                    if (rc instanceof Label rl
+                                            && !rl.getStyle().contains("Font Awesome")) {
+                                        rl.setVisible(expand);
+                                        rl.setManaged(expand);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
     private HBox navItem(String icon, String text) {
@@ -288,6 +381,8 @@ public class UsuarioApp {
                 + "-fx-font-size: 15px;"
                 + "-fx-text-fill: #8899bb;");
         Label textLabel = label(text, 13, "#8899bb", false);
+        iconLabel.setMinWidth(28);
+        iconLabel.setAlignment(Pos.CENTER);
         item.getChildren().addAll(iconLabel, textLabel);
 
         item.setOnMouseEntered(e -> {

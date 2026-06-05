@@ -4,7 +4,6 @@
  */
 package sistemagestion.view;
 
-
 import java.sql.SQLException;
 import java.util.List;
 import javafx.geometry.Insets;
@@ -23,19 +22,19 @@ import sistemagestion.service.ComunaService;
 public class ComunaAdminView {
 
     // ── Colores — idénticos a UsuariosAdminView ──────────────────
-    private static final String WHITE     = "#ffffff";
-    private static final String BG        = "#f4f6fb";
-    private static final String BLUE      = "#1565c0";
-    private static final String GREEN     = "#43a047";
-    private static final String RED       = "#e53935";
+    private static final String WHITE = "#ffffff";
+    private static final String BG = "#f4f6fb";
+    private static final String BLUE = "#1565c0";
+    private static final String GREEN = "#43a047";
+    private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE    = "#fb8c00";
+    private static final String ORANGE = "#fb8c00";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
     // ── Color del sidebar (igual al botón de la barra lateral) ────
     private static final String SIDEBAR_BG_START = "#16283d";
-    private static final String SIDEBAR_BG_END   = "#1f3a56";
+    private static final String SIDEBAR_BG_END = "#1f3a56";
 
     private ComunaService comunaService;
     private VBox tablaContainer;
@@ -93,7 +92,7 @@ public class ComunaAdminView {
         Button btnNueva = new Button("+ Nueva comuna");
         btnNueva.setStyle(btnSidebarStyle());
         btnNueva.setOnMouseEntered(e -> btnNueva.setStyle(btnSidebarHoverStyle()));
-        btnNueva.setOnMouseExited(e  -> btnNueva.setStyle(btnSidebarStyle()));
+        btnNueva.setOnMouseExited(e -> btnNueva.setStyle(btnSidebarStyle()));
         btnNueva.setOnAction(e -> abrirFormulario(null));
 
         right.getChildren().add(btnNueva);
@@ -110,16 +109,14 @@ public class ComunaAdminView {
 
         int total = cargarComunas().size();
 
-        Label lblTotalVal   = boldNum(String.valueOf(total), BLUE);
+        Label lblTotalVal = boldNum(String.valueOf(total), BLUE);
         Label lblActivosVal = boldNum(String.valueOf(total), GREEN);
-        Label lblBarriosVal = boldNum("—",                  ORANGE);
-        Label lblAlertasVal = boldNum("—",                  RED);
+        Label lblAlertasVal = boldNum("—", RED);
 
         row.getChildren().addAll(
-                statCard("#e8f0fe", BLUE,   "\uf5a0", "Total comunas",       lblTotalVal,   "Divisiones registradas"),
-                statCard("#e8f5e9", GREEN,  "\uf058", "Comunas activas",     lblActivosVal, "En el sistema"),
-                statCard("#fff8e1", ORANGE, "\uf279", "Barrios asociados",   lblBarriosVal, "Ver módulo Barrios"),
-                statCard(RED_LIGHT, RED,    "\uf071", "Alertas por zona",    lblAlertasVal, "Ver módulo Alertas")
+                statCard("#e8f0fe", BLUE, "\uf5a0", "Total comunas", lblTotalVal, "Divisiones registradas"),
+                statCard("#e8f5e9", GREEN, "\uf058", "Comunas activas", lblActivosVal, "En el sistema"),
+                statCard(RED_LIGHT, RED, "\uf071", "Alertas por zona", lblAlertasVal, "Ver módulo Alertas")
         );
         return row;
     }
@@ -134,7 +131,7 @@ public class ComunaAdminView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String title, Label valueLabel, String sub) {
+            String title, Label valueLabel, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -172,7 +169,7 @@ public class ComunaAdminView {
         card.getChildren().add(top);
 
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e  -> card.setTranslateY(0));
+        card.setOnMouseExited(e -> card.setTranslateY(0));
         return card;
     }
 
@@ -242,10 +239,8 @@ public class ComunaAdminView {
         Label hNombre = colHeader("Nombre", 0);
         hNombreWrap.getChildren().add(hNombre);
 
-        Label hBarrios  = colHeaderFixed("Barrios asociados", 180);
-        Label hAcciones = colHeaderFixed("Acciones",          200);
-
-        header.getChildren().addAll(hNombreWrap, hBarrios, hAcciones);
+        Label hAcciones = colHeaderFixed("Acciones", 200);
+        header.getChildren().addAll(hNombreWrap, hAcciones);
         card.getChildren().add(header);
 
         tablaContainer = new VBox(0);
@@ -302,7 +297,7 @@ public class ComunaAdminView {
         }
         List<Comuna> filtradas = todas.stream()
                 .filter(c -> c.getNombre() != null
-                          && c.getNombre().toLowerCase().contains(texto))
+                && c.getNombre().toLowerCase().contains(texto))
                 .toList();
         renderizarLista(filtradas);
     }
@@ -367,31 +362,6 @@ public class ComunaAdminView {
         nombreBox.getChildren().addAll(nombreLbl, subLbl);
         celdaNombre.getChildren().addAll(avatarBox, nombreBox);
 
-        // ── Col 2: Botón "Ver barrios" que abre BarrioAdminView filtrado (180px) ──
-        Button btnVerBarrios = new Button("🏘 Ver barrios");
-        btnVerBarrios.setCursor(javafx.scene.Cursor.HAND);
-        String baseBtnBarrios = "-fx-background-color: #e8f0fe;"
-                + "-fx-text-fill: " + BLUE + ";"
-                + "-fx-font-size: 11px; -fx-font-weight: bold;"
-                + "-fx-background-radius: 20; -fx-padding: 4 12 4 12; -fx-cursor: hand;"
-                + "-fx-border-color: transparent;";
-        String hoverBtnBarrios = "-fx-background-color: " + BLUE + ";"
-                + "-fx-text-fill: white;"
-                + "-fx-font-size: 11px; -fx-font-weight: bold;"
-                + "-fx-background-radius: 20; -fx-padding: 4 12 4 12; -fx-cursor: hand;"
-                + "-fx-border-color: transparent;";
-        btnVerBarrios.setStyle(baseBtnBarrios);
-        btnVerBarrios.setOnMouseEntered(e -> btnVerBarrios.setStyle(hoverBtnBarrios));
-        btnVerBarrios.setOnMouseExited(e  -> btnVerBarrios.setStyle(baseBtnBarrios));
-        // Abre un diálogo mostrando los barrios de esta comuna
-        btnVerBarrios.setOnAction(e -> abrirDialogoBarriosPorComuna(c));
-
-        HBox barrioBox = new HBox(btnVerBarrios);
-        barrioBox.setAlignment(Pos.CENTER_LEFT);
-        barrioBox.setPrefWidth(180);
-        barrioBox.setMinWidth(180);
-        barrioBox.setMaxWidth(180);
-
         // ── Col 3: Acciones (200px) ───────────────────────────────────
         HBox acciones = new HBox(6);
         acciones.setAlignment(Pos.CENTER_LEFT);
@@ -399,99 +369,13 @@ public class ComunaAdminView {
         acciones.setMinWidth(200);
         acciones.setMaxWidth(200);
         acciones.getChildren().addAll(
-                btnAccion("\uf06e", BLUE,   "#e8f0fe", "Ver",      () -> abrirDialogoVer(c)),
-                btnAccion("\uf044", ORANGE, "#fff8e1", "Editar",   () -> abrirFormulario(c)),
-                btnAccion("\uf2ed", RED,    RED_LIGHT, "Eliminar", () -> confirmarEliminar(c))
+                btnAccion("\uf06e", BLUE, "#e8f0fe", "Ver", () -> abrirDialogoVer(c)),
+                btnAccion("\uf044", ORANGE, "#fff8e1", "Editar", () -> abrirFormulario(c)),
+                btnAccion("\uf2ed", RED, RED_LIGHT, "Eliminar", () -> confirmarEliminar(c))
         );
 
-        fila.getChildren().addAll(celdaNombre, barrioBox, acciones);
+        fila.getChildren().addAll(celdaNombre, acciones);
         return fila;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // DIÁLOGO — barrios de esta comuna
-    // ═══════════════════════════════════════════════════════════════
-    private void abrirDialogoBarriosPorComuna(Comuna c) {
-        Dialog<Void> dlg = new Dialog<>();
-        dlg.setTitle("Barrios de " + c.getNombre());
-        dlg.setHeaderText(null);
-
-        VBox content = new VBox(0);
-        content.setPrefWidth(400);
-        content.setPrefHeight(320);
-
-        Label titulo = new Label("🏘  Barrios — " + c.getNombre());
-        titulo.setFont(Font.font("System", FontWeight.BOLD, 16));
-        titulo.setTextFill(Color.web("#111827"));
-        titulo.setPadding(new Insets(16, 16, 12, 16));
-        content.getChildren().add(titulo);
-
-        // Intentar cargar barrios si el service está disponible
-        List<sistemagestion.model.Barrio> barrios = cargarBarriosDe(c);
-
-        ScrollPane sp = new ScrollPane();
-        sp.setFitToWidth(true);
-        sp.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        sp.setPrefHeight(260);
-        sp.setStyle("-fx-background: white; -fx-background-color: white;");
-
-        VBox lista = new VBox(0);
-        if (barrios.isEmpty()) {
-            Label ninguno = label("Esta comuna no tiene barrios registrados.", 13, GRAY_TEXT, false);
-            VBox.setMargin(ninguno, new Insets(20, 16, 20, 16));
-            lista.getChildren().add(ninguno);
-        } else {
-            boolean par = true;
-            for (sistemagestion.model.Barrio b : barrios) {
-                HBox fila = new HBox(10);
-                fila.setAlignment(Pos.CENTER_LEFT);
-                fila.setPadding(new Insets(9, 16, 9, 16));
-                String bg = par ? WHITE : "#fafbfd";
-                fila.setStyle("-fx-background-color: " + bg + ";"
-                        + "-fx-border-color: transparent transparent #e5e7eb transparent;"
-                        + "-fx-border-width: 0 0 1 0;");
-
-                Circle dot = new Circle(5, Color.web(BLUE));
-                Label nombre = label(b.getNombre() != null ? b.getNombre() : "—", 13, "#111827", false);
-                HBox.setHgrow(nombre, Priority.ALWAYS);
-
-                String coords = "Lat: " + b.getLatitudcentro() + "  Lng: " + b.getLongitudcentro();
-                Label coordLbl = label(coords, 11, GRAY_TEXT, false);
-
-                fila.getChildren().addAll(dot, nombre, coordLbl);
-                lista.getChildren().add(fila);
-                par = !par;
-            }
-        }
-        sp.setContent(lista);
-
-        // Footer con total
-        HBox footer = new HBox();
-        footer.setPadding(new Insets(8, 16, 8, 16));
-        footer.setStyle("-fx-background-color: #f8fafc;"
-                + "-fx-border-color: #e5e7eb transparent transparent transparent;"
-                + "-fx-border-width: 1 0 0 0;");
-        footer.getChildren().add(
-                label("Total: " + barrios.size() + " barrios", 12, GRAY_TEXT, false));
-
-        content.getChildren().addAll(sp, footer);
-
-        dlg.getDialogPane().setContent(content);
-        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dlg.showAndWait();
-    }
-
-    /** Intenta cargar barrios usando BarrioService; retorna lista vacía si falla. */
-    private List<sistemagestion.model.Barrio> cargarBarriosDe(Comuna c) {
-        try {
-            sistemagestion.service.BarrioService bs = new sistemagestion.service.BarrioService();
-            return bs.listar().stream()
-                    .filter(b -> b.getComuna() != null
-                              && b.getComuna().getId_comuna() == c.getId_comuna())
-                    .toList();
-        } catch (Exception ex) {
-            return List.of();
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -521,7 +405,7 @@ public class ComunaAdminView {
         content.getChildren().addAll(
                 header,
                 new Separator(),
-                detalleRow("🆔 ID",     String.valueOf(c.getId_comuna())),
+                detalleRow("🆔 ID", String.valueOf(c.getId_comuna())),
                 detalleRow("📍 Nombre", c.getNombre())
         );
 
@@ -551,7 +435,7 @@ public class ComunaAdminView {
 
         Label lblSub = label(
                 esEdicion ? "Modifica los datos de la comuna"
-                          : "Registra una nueva división territorial",
+                        : "Registra una nueva división territorial",
                 13, GRAY_TEXT, false);
 
         Label lblNombreCampo = label("Nombre de la comuna *", 12, GRAY_TEXT, false);
@@ -632,7 +516,9 @@ public class ComunaAdminView {
     // HELPERS DE DATOS
     // ═══════════════════════════════════════════════════════════════
     private List<Comuna> cargarComunas() {
-        if (comunaService == null) return List.of();
+        if (comunaService == null) {
+            return List.of();
+        }
         try {
             return comunaService.listar();
         } catch (Exception e) {
@@ -644,7 +530,7 @@ public class ComunaAdminView {
     // HELPERS UI
     // ═══════════════════════════════════════════════════════════════
     private Button btnAccion(String iconFA, String iconColor,
-                              String bgColor, String tooltip, Runnable accion) {
+            String bgColor, String tooltip, Runnable accion) {
         Button b = new Button(iconFA);
         String base = "-fx-background-color: " + bgColor + ";"
                 + "-fx-text-fill: " + iconColor + ";"
@@ -662,7 +548,7 @@ public class ComunaAdminView {
                 + "-fx-cursor: hand;";
         b.setStyle(base);
         b.setOnMouseEntered(e -> b.setStyle(hover));
-        b.setOnMouseExited(e  -> b.setStyle(base));
+        b.setOnMouseExited(e -> b.setStyle(base));
         b.setOnAction(e -> accion.run());
         Tooltip.install(b, new Tooltip(tooltip));
         return b;
@@ -716,14 +602,20 @@ public class ComunaAdminView {
     };
 
     private String colorAvatar(String nombre) {
-        if (nombre == null || nombre.isBlank()) return AVATAR_COLORS[0];
+        if (nombre == null || nombre.isBlank()) {
+            return AVATAR_COLORS[0];
+        }
         return AVATAR_COLORS[Math.abs(nombre.hashCode()) % AVATAR_COLORS.length];
     }
 
     private String iniciales(String nombre) {
-        if (nombre == null || nombre.isBlank()) return "?";
+        if (nombre == null || nombre.isBlank()) {
+            return "?";
+        }
         String[] partes = nombre.trim().split("\\s+");
-        if (partes.length == 1) return partes[0].substring(0, 1).toUpperCase();
+        if (partes.length == 1) {
+            return partes[0].substring(0, 1).toUpperCase();
+        }
         return (partes[0].substring(0, 1) + partes[1].substring(0, 1)).toUpperCase();
     }
 

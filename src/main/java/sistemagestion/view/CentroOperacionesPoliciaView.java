@@ -164,48 +164,149 @@ public class CentroOperacionesPoliciaView {
     }
 
     private void abrirNotificacionesPopup(StackPane bell) {
-
         javafx.stage.Popup popup = new javafx.stage.Popup();
         popup.setAutoHide(true);
 
-        VBox box = new VBox(8);
-        box.setPrefWidth(320);
+        VBox box = new VBox(0);
+        box.setPrefWidth(340);
         box.setStyle(
-                "-fx-background-color:white;"
-                + "-fx-background-radius:12;"
-                + "-fx-border-color:#e5e7eb;"
-                + "-fx-border-radius:12;"
-                + "-fx-padding:10;"
+                "-fx-background-color: white;"
+                + "-fx-background-radius: 16;"
+                + "-fx-border-color: #e5e7eb;"
+                + "-fx-border-radius: 16;"
+                + "-fx-border-width: 0.8;"
+                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.14), 24, 0, 0, 6);"
         );
 
-        Label title = new Label("Notificaciones");
-        title.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
-        box.getChildren().add(title);
+        // ── HEADER ────────────────────────────────────────────────
+        HBox header = new HBox(10);
+        header.setPadding(new Insets(14, 16, 12, 16));
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-border-color: transparent transparent #e5e7eb transparent; -fx-border-width: 0 0 0.8 0;");
 
+        StackPane bellWrap = new StackPane();
+        bellWrap.setPrefSize(36, 36);
+        bellWrap.setMinSize(36, 36);
+        bellWrap.setMaxSize(36, 36);
+        bellWrap.setStyle("-fx-background-color: #dbeafe; -fx-background-radius: 10;");
+        Label bellFA = new Label("\uf0f3");
+        bellFA.setStyle("-fx-font-family:'Font Awesome 6 Free Solid'; -fx-font-size:15px; -fx-text-fill:#1565c0;");
+        bellWrap.getChildren().add(bellFA);
+
+        Label titleLbl = new Label("Notificaciones");
+        titleLbl.setStyle("-fx-font-size:14px; -fx-font-weight:bold; -fx-text-fill:#111827;");
+
+        int total = contarNotificaciones();
+        Label countBadge = new Label(String.valueOf(total));
+        countBadge.setStyle(
+                "-fx-font-size:11px; -fx-font-weight:bold; -fx-text-fill:#1565c0;"
+                + "-fx-background-color:#e8f0fe; -fx-background-radius:20; -fx-padding:2 10 2 10;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label markRead = new Label("Marcar leídas");
+        markRead.setStyle("-fx-font-size:11px; -fx-text-fill:#1565c0; -fx-cursor:hand;");
+        markRead.setOnMouseEntered(e -> markRead.setStyle(
+                "-fx-font-size:11px; -fx-text-fill:#0d47a1; -fx-underline:true; -fx-cursor:hand;"));
+        markRead.setOnMouseExited(e -> markRead.setStyle(
+                "-fx-font-size:11px; -fx-text-fill:#1565c0; -fx-cursor:hand;"));
+
+        header.getChildren().addAll(bellWrap, titleLbl, countBadge, spacer, markRead);
+        box.getChildren().add(header);
+
+        // ── ITEMS ─────────────────────────────────────────────────
         try {
             List<sistemagestion.model.Notificacion> list
                     = notificacionService != null ? notificacionService.listar() : List.of();
 
             if (list.isEmpty()) {
-                box.getChildren().add(label("Sin notificaciones", 12, GRAY_TEXT, false));
+                VBox empty = new VBox();
+                empty.setPadding(new Insets(28, 16, 28, 16));
+                empty.setAlignment(Pos.CENTER);
+                Label emptyLbl = new Label("Sin notificaciones nuevas");
+                emptyLbl.setStyle("-fx-font-size:12px; -fx-text-fill:#9ca3af;");
+                empty.getChildren().add(emptyLbl);
+                box.getChildren().add(empty);
             } else {
-                list.stream()
-                        .limit(5)
-                        .forEach(n -> {
-                            Label item = label("• " + n.getMensaje(), 11, "#374151", false);
-                            item.setWrapText(true);
-                            box.getChildren().add(item);
-                        });
+                list.stream().limit(5).forEach(n -> {
+                    box.getChildren().add(buildNotiItem(n));
+                });
             }
-
         } catch (Exception e) {
-            box.getChildren().add(label("Error cargando notificaciones", 11, RED, false));
+            Label err = new Label("Error cargando notificaciones");
+            err.setStyle("-fx-font-size:11px; -fx-text-fill:#e53935; -fx-padding:12 16 12 16;");
+            box.getChildren().add(err);
         }
 
-        popup.getContent().add(box);
+        // ── FOOTER ────────────────────────────────────────────────
+        HBox footer = new HBox();
+        footer.setPadding(new Insets(10, 16, 12, 16));
+        footer.setAlignment(Pos.CENTER);
+        footer.setStyle("-fx-border-color: #e5e7eb transparent transparent transparent; -fx-border-width: 0.8 0 0 0;");
+        Label footerBtn = new Label("Ver todas las notificaciones  →");
+        footerBtn.setStyle("-fx-font-size:12px; -fx-text-fill:#1565c0; -fx-font-weight:bold; -fx-cursor:hand;");
+        footerBtn.setOnMouseEntered(e -> footerBtn.setStyle(
+                "-fx-font-size:12px; -fx-text-fill:#0d47a1; -fx-font-weight:bold; -fx-underline:true; -fx-cursor:hand;"));
+        footerBtn.setOnMouseExited(e -> footerBtn.setStyle(
+                "-fx-font-size:12px; -fx-text-fill:#1565c0; -fx-font-weight:bold; -fx-cursor:hand;"));
+        footerBtn.setOnMouseClicked(e -> {
+            popup.hide();
+            root.setCenter(new NotificacionesPoliciaView(usuarioActual, policiaActual, notificacionService).build());
+        });
+        footer.getChildren().add(footerBtn);
+        box.getChildren().add(footer);
 
+        popup.getContent().add(box);
         javafx.geometry.Bounds b = bell.localToScreen(bell.getBoundsInLocal());
-        popup.show(bell, b.getMaxX() - 320, b.getMaxY() + 8);
+        popup.show(bell, b.getMaxX() - 340, b.getMaxY() + 10);
+    }
+
+// ── Item individual de notificación ──────────────────────────
+    private HBox buildNotiItem(sistemagestion.model.Notificacion n) {
+        HBox row = new HBox(11);
+        row.setPadding(new Insets(12, 16, 12, 16));
+        row.setAlignment(Pos.TOP_LEFT);
+        row.setStyle("-fx-border-color: transparent transparent #f3f4f6 transparent; -fx-border-width: 0 0 0.8 0; -fx-cursor:hand;");
+        row.setOnMouseEntered(e -> row.setStyle(
+                "-fx-background-color:#f8fafc; -fx-border-color:transparent transparent #f3f4f6 transparent;"
+                + "-fx-border-width:0 0 0.8 0; -fx-cursor:hand;"));
+        row.setOnMouseExited(e -> row.setStyle(
+                "-fx-border-color:transparent transparent #f3f4f6 transparent;"
+                + "-fx-border-width:0 0 0.8 0; -fx-cursor:hand;"));
+
+        // Dot de color
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(4, Color.web("#1565c0"));
+        VBox dotWrap = new VBox(dot);
+        dotWrap.setAlignment(Pos.TOP_CENTER);
+        dotWrap.setPadding(new Insets(5, 0, 0, 0));
+
+        // Ícono
+        StackPane iconWrap = new StackPane();
+        iconWrap.setPrefSize(36, 36);
+        iconWrap.setMinSize(36, 36);
+        iconWrap.setMaxSize(36, 36);
+        iconWrap.setStyle("-fx-background-color:#e8f0fe; -fx-background-radius:10;");
+        Label iconLbl = new Label("\uf0f3");
+        iconLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid'; -fx-font-size:14px; -fx-text-fill:#1565c0;");
+        iconWrap.getChildren().add(iconLbl);
+
+        // Texto
+        VBox body = new VBox(3);
+        HBox.setHgrow(body, Priority.ALWAYS);
+
+        String msg = n.getMensaje() != null ? n.getMensaje() : "Sin mensaje";
+        Label msgLbl = new Label(msg);
+        msgLbl.setStyle("-fx-font-size:12px; -fx-text-fill:#111827;");
+        msgLbl.setWrapText(true);
+        msgLbl.setMaxWidth(210);
+
+        Label timeLbl = new Label("Reciente");
+        timeLbl.setStyle("-fx-font-size:11px; -fx-text-fill:#9ca3af;");
+
+        body.getChildren().addAll(msgLbl, timeLbl);
+        row.getChildren().addAll(dotWrap, iconWrap, body);
+        return row;
     }
 
     // ── Stats ────────────────────────────────────────────────────

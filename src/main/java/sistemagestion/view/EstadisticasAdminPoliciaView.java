@@ -3,7 +3,7 @@ package sistemagestion.view;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -14,21 +14,22 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
 public class EstadisticasAdminPoliciaView {
 
-    private static final String BG        = "#f4f6fb";
-    private static final String RED       = "#e53935";
-    private static final String ORANGE    = "#fb8c00";
-    private static final String GREEN     = "#43a047";
-    private static final String BLUE      = "#1565c0";
-    private static final String PURPLE    = "#7b1fa2";
-    private static final String TEAL      = "#00796b";
-    private static final String GRAY      = "#9e9e9e";
+    private static final String BG = "#f4f6fb";
+    private static final String RED = "#e53935";
+    private static final String ORANGE = "#fb8c00";
+    private static final String GREEN = "#43a047";
+    private static final String BLUE = "#1565c0";
+    private static final String PURPLE = "#7b1fa2";
+    private static final String TEAL = "#00796b";
+    private static final String GRAY = "#9e9e9e";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER    = "#e5e7eb";
+    private static final String BORDER = "#e5e7eb";
 
     private static final String[] BAR_COLORS_ESTADO = {
         "#fb8c00", "#1565c0", "#7b1fa2", "#0288d1", "#43a047", "#9e9e9e"
@@ -40,17 +41,17 @@ public class EstadisticasAdminPoliciaView {
         "#43a047", "#fb8c00", "#9e9e9e"
     };
 
-    private final AlertaService           alertaService;
+    private final AlertaService alertaService;
     private final AsignacionUnidadService asignacionService;
-    private final UnidadPolicialService   unidadService;
-    private final PoliciaService          policiaService;
-    private final AlarmaService           alarmaService;
-    private final NotificacionService     notificacionService;
+    private final UnidadPolicialService unidadService;
+    private final PoliciaService policiaService;
+    private final AlarmaService alarmaService;
+    private final NotificacionService notificacionService;
 
-    private List<Alerta>       alertas;
-    private List<Policia>      policias;
+    private List<Alerta> alertas;
+    private List<Policia> policias;
     private List<UnidadPolicial> unidades;
-    private List<Alarma>       alarmas;
+    private List<Alarma> alarmas;
 
     public EstadisticasAdminPoliciaView(
             AlertaService alertaService,
@@ -60,11 +61,11 @@ public class EstadisticasAdminPoliciaView {
             AlarmaService alarmaService,
             NotificacionService notificacionService) {
         Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
-        this.alertaService       = alertaService;
-        this.asignacionService   = asignacionService;
-        this.unidadService       = unidadService;
-        this.policiaService      = policiaService;
-        this.alarmaService       = alarmaService;
+        this.alertaService = alertaService;
+        this.asignacionService = asignacionService;
+        this.unidadService = unidadService;
+        this.policiaService = policiaService;
+        this.alarmaService = alarmaService;
         this.notificacionService = notificacionService;
         cargarDatos();
     }
@@ -108,29 +109,29 @@ public class EstadisticasAdminPoliciaView {
         HBox row = new HBox(16);
         HBox.setHgrow(row, Priority.ALWAYS);
 
-        long totalAlertas  = alertas.size();
+        long totalAlertas = alertas.size();
         long alertasActivas = alertas.stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                          || a.getEstado() == EstadoAlerta.RECIBIDA
-                          || a.getEstado() == EstadoAlerta.EN_ATENCION
-                          || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
+                || a.getEstado() == EstadoAlerta.RECIBIDA
+                || a.getEstado() == EstadoAlerta.EN_ATENCION
+                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
                 .count();
         long policiasDisp = policias.stream()
                 .filter(p -> p.getEstadopolicial() == EstadoPolicia.DISPONIBLE
-                          || p.getEstadopolicial() == EstadoPolicia.EN_SERVICIO)
+                || p.getEstadopolicial() == EstadoPolicia.EN_SERVICIO)
                 .count();
         long unidadesOper = unidades.stream()
                 .filter(u -> u.getEstado() == EstadoUnidadPolicial.OPERATIVA)
                 .count();
 
         row.getChildren().addAll(
-                statCard("#e8f0fe", BLUE,   "",
+                statCard("#e8f0fe", BLUE, "",
                         String.valueOf(totalAlertas), "Alertas totales", "Historial completo"),
-                statCard("#fff0f0", RED,    "",
+                statCard("#fff0f0", RED, "",
                         String.valueOf(alertasActivas), "Alertas activas", "↑ Requieren atención"),
-                statCard("#e8f5e9", GREEN,  "",
+                statCard("#e8f5e9", GREEN, "",
                         String.valueOf(unidadesOper), "Unidades operativas", "Estado OPERATIVA"),
-                statCard("#fff8e1", ORANGE, "",
+                statCard("#fff8e1", ORANGE, "",
                         String.valueOf(policiasDisp), "Policías activos", "DISPONIBLE · EN SERVICIO")
         );
         return row;
@@ -146,15 +147,15 @@ public class EstadisticasAdminPoliciaView {
     }
 
     private VBox buildPanelBarrasEstadoAlerta() {
-        VBox panel = crearPanel("Alertas por estado", "", ORANGE, "#fff8e1");
+        VBox panel = crearPanel("Alertas por estado", "", ORANGE, "#fff8e1");
 
         Map<String, Long> porEstado = new LinkedHashMap<>();
-        porEstado.put("PENDIENTE",       contarAlerta(EstadoAlerta.PENDIENTE));
-        porEstado.put("RECIBIDA",        contarAlerta(EstadoAlerta.RECIBIDA));
-        porEstado.put("EN ATENCIÓN",     contarAlerta(EstadoAlerta.EN_ATENCION));
+        porEstado.put("PENDIENTE", contarAlerta(EstadoAlerta.PENDIENTE));
+        porEstado.put("RECIBIDA", contarAlerta(EstadoAlerta.RECIBIDA));
+        porEstado.put("EN ATENCIÓN", contarAlerta(EstadoAlerta.EN_ATENCION));
         porEstado.put("UNIDAD ASIGNADA", contarAlerta(EstadoAlerta.UNIDAD_ASIGNADA));
-        porEstado.put("RESUELTA",        contarAlerta(EstadoAlerta.RESUELTA));
-        porEstado.put("CANCELADA",       contarAlerta(EstadoAlerta.CANCELADA));
+        porEstado.put("RESUELTA", contarAlerta(EstadoAlerta.RESUELTA));
+        porEstado.put("CANCELADA", contarAlerta(EstadoAlerta.CANCELADA));
 
         long maximo = porEstado.values().stream().mapToLong(Long::longValue).max().orElse(1);
         int idx = 0;
@@ -169,16 +170,16 @@ public class EstadisticasAdminPoliciaView {
     }
 
     private VBox buildPanelBarrasEstadoPolicia() {
-        VBox panel = crearPanel("Policías por estado", "", BLUE, "#e8f0fe");
+        VBox panel = crearPanel("Policías por estado", "", BLUE, "#e8f0fe");
 
         Map<String, Long> porEstado = new LinkedHashMap<>();
-        porEstado.put("DISPONIBLE",       contarPolicia(EstadoPolicia.DISPONIBLE));
-        porEstado.put("EN SERVICIO",      contarPolicia(EstadoPolicia.EN_SERVICIO));
-        porEstado.put("OCUPADO",          contarPolicia(EstadoPolicia.OCUPADO));
+        porEstado.put("DISPONIBLE", contarPolicia(EstadoPolicia.DISPONIBLE));
+        porEstado.put("EN SERVICIO", contarPolicia(EstadoPolicia.EN_SERVICIO));
+        porEstado.put("OCUPADO", contarPolicia(EstadoPolicia.OCUPADO));
         porEstado.put("FUERA DE SERVICIO", policias.stream()
                 .filter(p -> p.getEstadopolicial() != EstadoPolicia.DISPONIBLE
-                          && p.getEstadopolicial() != EstadoPolicia.EN_SERVICIO
-                          && p.getEstadopolicial() != EstadoPolicia.OCUPADO).count());
+                && p.getEstadopolicial() != EstadoPolicia.EN_SERVICIO
+                && p.getEstadopolicial() != EstadoPolicia.OCUPADO).count());
 
         long maximo = porEstado.values().stream().mapToLong(Long::longValue).max().orElse(1);
         int idx = 0;
@@ -209,11 +210,13 @@ public class EstadisticasAdminPoliciaView {
         barraContainer.setAlignment(Pos.CENTER_LEFT);
 
         Rectangle fondo = new Rectangle(maxBarWidth, 12);
-        fondo.setArcWidth(6); fondo.setArcHeight(6);
+        fondo.setArcWidth(6);
+        fondo.setArcHeight(6);
         fondo.setFill(Color.web("#e5e7eb"));
 
         Rectangle barra = new Rectangle(Math.max(4, pct * maxBarWidth), 12);
-        barra.setArcWidth(6); barra.setArcHeight(6);
+        barra.setArcWidth(6);
+        barra.setArcHeight(6);
         barra.setFill(Color.web(color));
 
         StackPane.setAlignment(fondo, Pos.CENTER_LEFT);
@@ -230,22 +233,25 @@ public class EstadisticasAdminPoliciaView {
 
     // ── PANEL INFERIOR — Estado de alarmas ───────────────────────
     private VBox buildPanelEstadosAlarma() {
-        VBox panel = crearPanel("Estado de alarmas y unidades", "", RED, "#fff0f0");
+        VBox panel = crearPanel("Estado de alarmas y unidades", "", RED, "#fff0f0");
 
         long totalAlarmas = Math.max(alarmas.size(), 1);
-        record Info(String nombre, long cantidad, String color) {}
+        record Info(String nombre, long cantidad, String color) {
+
+        }
 
         List<Info> filas = List.of(
-                new Info("Alarmas activas",        contarAlarma(EstadoAlarma.ACTIVA),           GREEN),
+                new Info("Alarmas activas", contarAlarma(EstadoAlarma.ACTIVA), GREEN),
                 new Info("Alarmas en mantenimiento", contarAlarma(EstadoAlarma.EN_MANTENIMIENTO), ORANGE),
-                new Info("Alarmas inactivas",       contarAlarma(EstadoAlarma.INACTIVA),         GRAY),
-                new Info("Unidades operativas",     contarUnidad(EstadoUnidadPolicial.OPERATIVA), GREEN),
-                new Info("Unidades activas",        contarUnidad(EstadoUnidadPolicial.ACTIVA),    ORANGE),
-                new Info("Unidades inactivas",      contarUnidad(EstadoUnidadPolicial.INACTIVA),  GRAY)
+                new Info("Alarmas inactivas", contarAlarma(EstadoAlarma.INACTIVA), GRAY),
+                new Info("Unidades operativas", contarUnidad(EstadoUnidadPolicial.OPERATIVA), GREEN),
+                new Info("Unidades activas", contarUnidad(EstadoUnidadPolicial.ACTIVA), ORANGE),
+                new Info("Unidades inactivas", contarUnidad(EstadoUnidadPolicial.INACTIVA), GRAY)
         );
 
         for (Info info : filas) {
-            long total = info.nombre().startsWith("Alarma") ? totalAlarmas
+            long total = info.nombre().startsWith("Alarma")
+                    ? totalAlarmas
                     : Math.max(unidades.size(), 1);
             int pct = (int) Math.round((double) info.cantidad() / total * 100);
             panel.getChildren().add(buildFilaEstado(info.color(), info.nombre(), info.cantidad(), pct));
@@ -277,10 +283,26 @@ public class EstadisticasAdminPoliciaView {
 
     // ── CARGA DE DATOS ───────────────────────────────────────────
     private void cargarDatos() {
-        try { alertas  = alertaService.listar();   } catch (Exception e) { alertas  = List.of(); }
-        try { policias = policiaService.listar();  } catch (Exception e) { policias = List.of(); }
-        try { unidades = unidadService.listar();   } catch (Exception e) { unidades = List.of(); }
-        try { alarmas  = alarmaService.listar();   } catch (Exception e) { alarmas  = List.of(); }
+        try {
+            alertas = alertaService.listar();
+        } catch (Exception e) {
+            alertas = List.of();
+        }
+        try {
+            policias = policiaService.listar();
+        } catch (Exception e) {
+            policias = List.of();
+        }
+        try {
+            unidades = unidadService.listar();
+        } catch (Exception e) {
+            unidades = List.of();
+        }
+        try {
+            alarmas = alarmaService.listar();
+        } catch (Exception e) {
+            alarmas = List.of();
+        }
     }
 
     private long contarAlerta(EstadoAlerta e) {
@@ -312,7 +334,8 @@ public class EstadisticasAdminPoliciaView {
         iconWrap.setMaxSize(34, 34);
 
         Rectangle bg = new Rectangle(34, 34);
-        bg.setArcWidth(10); bg.setArcHeight(10);
+        bg.setArcWidth(10);
+        bg.setArcHeight(10);
         bg.setFill(Color.web(iconBg));
 
         Label iconLbl = new Label(iconFA);
@@ -330,7 +353,7 @@ public class EstadisticasAdminPoliciaView {
     }
 
     private VBox statCard(String bgIcon, String accentColor, String iconFA,
-                          String valor, String titulo, String variacion) {
+            String valor, String titulo, String variacion) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
@@ -343,7 +366,8 @@ public class EstadisticasAdminPoliciaView {
         iconWrap.setMaxSize(52, 52);
 
         Rectangle iconBg = new Rectangle(52, 52);
-        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16);
+        iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
 
         Label iconLbl = new Label(iconFA);
@@ -366,6 +390,16 @@ public class EstadisticasAdminPoliciaView {
         return card;
     }
 
+    // CORRECCIÓN 3: wrapScroll movido dentro de la clase (era código muerto fuera de la clase)
+    //              Se conserva por si se necesita en el futuro
+    private ScrollPane wrapScroll(VBox content) {
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
+        return scroll;
+    }
+
     private Region separadorH() {
         Region sep = new Region();
         sep.setPrefHeight(1);
@@ -379,27 +413,50 @@ public class EstadisticasAdminPoliciaView {
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
-<<<<<<< HEAD
-}
-=======
 
-    private ScrollPane wrapScroll(VBox content) {
-        ScrollPane scroll = new ScrollPane(content);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
-        return scroll;
-    }
+    // CORRECCIÓN 4: recortarTransparencia movido dentro de la clase.
+    //              Se reescribió usando javafx.scene.image.Image para evitar
+    //              la mezcla AWT/JavaFX problemática en entornos modulares.
+    //              Si realmente necesitas BufferedImage, añade
+    //              requires java.desktop; en tu module-info.java.
+    private javafx.scene.image.WritableImage recortarTransparencia(javafx.scene.image.Image image) {
+        int w = (int) image.getWidth();
+        int h = (int) image.getHeight();
+        javafx.scene.image.PixelReader pr = image.getPixelReader();
 
-    private java.awt.image.BufferedImage recortarTransparencia(java.awt.image.BufferedImage image) {
-        int minX = image.getWidth(), minY = image.getHeight(), maxX = 0, maxY = 0;
-        for (int y = 0; y < image.getHeight(); y++)
-            for (int x = 0; x < image.getWidth(); x++) {
-                int alpha = (image.getRGB(x, y) >> 24) & 0xff;
-                if (alpha > 0) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
+        int minX = w, minY = h, maxX = 0, maxY = 0;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                if (pr.getColor(x, y).getOpacity() > 0) {
+                    if (x < minX) {
+                        minX = x;
+                    }
+                    if (y < minY) {
+                        minY = y;
+                    }
+                    if (x > maxX) {
+                        maxX = x;
+                    }
+                    if (y > maxY) {
+                        maxY = y;
+                    }
+                }
             }
-        return image.getSubimage(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        }
+
+        if (maxX < minX || maxY < minY) {
+            return new javafx.scene.image.WritableImage(1, 1);
+        }
+
+        int cropW = maxX - minX + 1;
+        int cropH = maxY - minY + 1;
+        javafx.scene.image.WritableImage result = new javafx.scene.image.WritableImage(cropW, cropH);
+        result.getPixelWriter().setPixels(
+                0, 0, cropW, cropH,
+                pr,
+                minX, minY);
+        return result;
     }
-}
-  
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+
+} // fin de la clase
+

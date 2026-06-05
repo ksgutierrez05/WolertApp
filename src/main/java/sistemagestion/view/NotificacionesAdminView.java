@@ -23,12 +23,8 @@ import sistemagestion.service.NotificacionService;
 
 public class NotificacionesAdminView {
 
-    private static final String WHITE = "#ffffff";
     private static final String BG = "#f4f6fb";
-    private static final String BLUE = "#1565c0";
     private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER = "#e5e7eb";
-
     private final NotificacionService notificacionService;
 
     public NotificacionesAdminView(NotificacionService notificacionService) {
@@ -60,87 +56,168 @@ public class NotificacionesAdminView {
     }
 
     private VBox buildTabla() {
-
         VBox card = new VBox();
         card.setStyle(
                 "-fx-background-color: white;"
-                + "-fx-background-radius: 12;"
-        );
-
-        card.setEffect(new DropShadow(
-                12,
-                Color.rgb(0, 0, 0, 0.12)
-        ));
-
-        GridPane tabla = new GridPane();
-        tabla.setMaxWidth(Double.MAX_VALUE);
-
-        ColumnConstraints c1 = new ColumnConstraints();
-        c1.setPercentWidth(45);
-
-        ColumnConstraints c2 = new ColumnConstraints();
-        c2.setPercentWidth(25);
-
-        ColumnConstraints c3 = new ColumnConstraints();
-        c3.setPercentWidth(15);
-
-        ColumnConstraints c4 = new ColumnConstraints();
-        c4.setPercentWidth(15);
-
-        tabla.getColumnConstraints().addAll(c1, c2, c3, c4);
-
-        agregarHeader(tabla, 0, "Mensaje");
-        agregarHeader(tabla, 1, "Destinatario");
-        agregarHeader(tabla, 2, "Fecha");
-        agregarHeader(tabla, 3, "Estado");
+                + "-fx-background-radius: 12;");
+        card.setEffect(new DropShadow(12, Color.rgb(0, 0, 0, 0.10)));
 
         List<Notificacion> notifs = cargarNotificaciones();
 
         if (notifs.isEmpty()) {
-
-            Label vacio = label(
-                    "No hay notificaciones registradas.",
-                    14,
-                    GRAY_TEXT,
-                    false
-            );
-
-            VBox.setMargin(vacio, new Insets(25));
-
-            card.getChildren().add(vacio);
+            VBox empty = new VBox(8);
+            empty.setAlignment(Pos.CENTER);
+            empty.setPadding(new Insets(48));
+            Label ico = new Label("🔔");
+            ico.setFont(Font.font(36));
+            Label msg = label("No hay notificaciones registradas.", 14, GRAY_TEXT, false);
+            empty.getChildren().addAll(ico, msg);
+            card.getChildren().add(empty);
             return card;
         }
 
-        int fila = 1;
+        TableView<Notificacion> tabla = new TableView<>();
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setStyle(
+                "-fx-background-color: white;"
+                + "-fx-background-radius: 12;"
+                + "-fx-border-color: transparent;"
+                + "-fx-table-cell-border-color: #f3f4f6;");
+        tabla.setFixedCellSize(48);
+        tabla.prefHeightProperty().bind(
+                tabla.fixedCellSizeProperty()
+                        .multiply(javafx.beans.binding.Bindings.size(tabla.getItems()).add(1.12)));
+        tabla.setMinHeight(0);
+        tabla.setMaxHeight(Double.MAX_VALUE);
 
-        for (Notificacion n : notifs) {
+        // Columna Mensaje
+        TableColumn<Notificacion, String> colMensaje = new TableColumn<>("Mensaje");
+        colMensaje.setCellValueFactory(c -> {
+            String m = c.getValue().getMensaje();
+            return new javafx.beans.property.SimpleStringProperty(m != null ? m : "—");
+        });
+        colMensaje.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+                setText(item.length() > 60 ? item.substring(0, 60) + "…" : item);
+                setStyle("-fx-font-size:13px; -fx-text-fill:#111827; -fx-padding:0 12;");
+            }
+        });
+        colMensaje.setMaxWidth(1f * Integer.MAX_VALUE * 45);  // 45% ancho
 
-            String mensaje = n.getMensaje() != null
-                    ? n.getMensaje()
+        // Columna Destinatario
+        TableColumn<Notificacion, String> colDest = new TableColumn<>("Destinatario");
+        colDest.setCellValueFactory(c -> {
+            String d = c.getValue().getCorreodestinatario();
+            return new javafx.beans.property.SimpleStringProperty(d != null ? d : "—");
+        });
+        colDest.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+                setText(item);
+                setStyle("-fx-font-size:13px; -fx-text-fill:#374151; -fx-padding:0 12;");
+            }
+        });
+        colDest.setMaxWidth(1f * Integer.MAX_VALUE * 28);  // 28%
+
+        // Columna Fecha
+        TableColumn<Notificacion, String> colFecha = new TableColumn<>("Fecha");
+        colFecha.setCellValueFactory(c -> {
+            String f = c.getValue().getFechahora() != null
+                    ? c.getValue().getFechahora()
+                            .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
                     : "—";
+            return new javafx.beans.property.SimpleStringProperty(f);
+        });
+        colFecha.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    return;
+                }
+                setText(item);
+                setStyle("-fx-font-size:13px; -fx-text-fill:#6b7280; -fx-padding:0 12;");
+            }
+        });
+        colFecha.setMaxWidth(1f * Integer.MAX_VALUE * 15);  // 15%
 
-            String destinatario = n.getCorreodestinatario() != null
-                    ? n.getCorreodestinatario()
-                    : "—";
+        // Columna Estado (con badge de color)
+        TableColumn<Notificacion, String> colEstado = new TableColumn<>("Estado");
+        colEstado.setCellValueFactory(c -> {
+            String e = c.getValue().getEstado() != null
+                    ? c.getValue().getEstado().name() : "—";
+            return new javafx.beans.property.SimpleStringProperty(e);
+        });
+        colEstado.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setGraphic(null);
+                    return;
+                }
+                Label badge = new Label(item.replace("_", " "));
+                String bg, fg;
+                switch (item) {
+                    case "ENVIADA" -> {
+                        bg = "#e8f5e9";
+                        fg = "#2e7d32";
+                    }
+                    case "PENDIENTE" -> {
+                        bg = "#fff8e1";
+                        fg = "#f57f17";
+                    }
+                    case "FALLIDA" -> {
+                        bg = "#ffebee";
+                        fg = "#c62828";
+                    }
+                    default -> {
+                        bg = "#f1f5f9";
+                        fg = "#475569";
+                    }
+                }
+                badge.setStyle(
+                        "-fx-background-color:" + bg + ";"
+                        + "-fx-text-fill:" + fg + ";"
+                        + "-fx-font-size:11px;"
+                        + "-fx-font-weight:bold;"
+                        + "-fx-background-radius:20;"
+                        + "-fx-padding:4 10;");
+                setGraphic(badge);
+                setStyle("-fx-padding:0 12; -fx-alignment:center-left;");
+            }
+        });
+        colEstado.setMaxWidth(1f * Integer.MAX_VALUE * 12);  // 12%
 
-            String fecha = n.getFechahora() != null
-                    ? n.getFechahora().toLocalDate().toString()
-                    : "—";
+        tabla.getColumns().addAll(colMensaje, colDest, colFecha, colEstado);
+        tabla.getItems().addAll(notifs);
 
-            String estado = n.getEstado() != null
-                    ? n.getEstado().name()
-                    : "—";
-
-            agregarCelda(tabla, fila, 0, mensaje);
-            agregarCelda(tabla, fila, 1, destinatario);
-            agregarCelda(tabla, fila, 2, fecha);
-            agregarCelda(tabla, fila, 3, estado);
-
-            fila++;
-        }
+        // Estilo del header y filas alternas vía CSS inline
+        tabla.getStylesheets().add(
+                "data:text/css,"
+                + ".table-view .column-header { -fx-background-color:#f8fafc; -fx-border-color:transparent transparent #e5e7eb transparent; -fx-border-width:0 0 1 0; }"
+                + ".table-view .column-header .label { -fx-font-size:12px; -fx-font-weight:bold; -fx-text-fill:#6b7280; -fx-padding:0 12; }"
+                + ".table-view .table-row-cell:even { -fx-background-color:white; }"
+                + ".table-view .table-row-cell:odd  { -fx-background-color:#fafbfd; }"
+                + ".table-view .table-row-cell:hover { -fx-background-color:#f0f4ff; }"
+                + ".table-view .table-row-cell:selected { -fx-background-color:#e8f0fe; }"
+                + ".table-view .scroll-bar { -fx-opacity:0; }"
+                + ".table-view .corner { -fx-background-color:#f8fafc; }"
+        );
 
         card.getChildren().add(tabla);
-
         return card;
     }
 
@@ -189,29 +266,6 @@ public class NotificacionesAdminView {
         tabla.add(lbl, columna, fila);
     }
 
-    private HBox buildFila(Notificacion n, boolean par) {
-        HBox fila = new HBox();
-        fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setPadding(new Insets(12, 16, 12, 16));
-        fila.setStyle("-fx-background-color: " + (par ? WHITE : "#fafbfd") + ";"
-                + "-fx-border-color: transparent transparent " + BORDER + " transparent;"
-                + "-fx-border-width: 0 0 1 0;");
-
-        String mensaje = n.getMensaje() != null ? n.getMensaje() : "—";
-        String dest = n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "—";
-        String fecha = n.getFechahora() != null
-                ? n.getFechahora().toLocalDate().toString() : "—";
-        String estado = n.getEstado() != null ? n.getEstado().name() : "—";
-
-        fila.getChildren().addAll(
-                celda(mensaje.length() > 50 ? mensaje.substring(0, 50) + "…" : mensaje),
-                celda(dest),
-                celda(fecha),
-                celda(estado)
-        );
-        return fila;
-    }
-
     private List<Notificacion> cargarNotificaciones() {
         try {
             return notificacionService.listar();
@@ -220,19 +274,7 @@ public class NotificacionesAdminView {
         }
     }
 
-    private Label colHeader(String text) {
-        Label l = label(text, 12, GRAY_TEXT, false);
-        l.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(l, Priority.ALWAYS);
-        return l;
-    }
-
-    private Label celda(String txt) {
-        Label l = label(txt, 13, "#374151", false);
-        l.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(l, Priority.ALWAYS);
-        return l;
-    }
+    
 
     private Label label(String text, double size, String color, boolean bold) {
         Label lbl = new Label(text);

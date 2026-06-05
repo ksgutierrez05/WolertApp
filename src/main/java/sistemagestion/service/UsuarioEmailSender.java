@@ -8,44 +8,27 @@ package sistemagestion.service;
  *
  * @author Maria Cristina
  */
-
-
 import sistemagestion.model.Usuario;
-import java.io.InputStream;
-import java.util.Base64;
 
 public class UsuarioEmailSender {
 
     // ── Logo en Base64 (se carga una sola vez) ────────────────
-    private static final String LOGO_BASE64 = cargarLogoBase64();
-
-    private static String cargarLogoBase64() {
-        try (InputStream is = UsuarioEmailSender.class
-                .getResourceAsStream("/LogoWolertAPP.png")) {
-            if (is == null) return null;
-            return Base64.getEncoder().encodeToString(is.readAllBytes());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     private static String logoTag() {
-        if (LOGO_BASE64 != null) {
-            return "<img src='data:image/png;base64," + LOGO_BASE64 + "' "
-                 + "width='54' height='54' "
-                 + "style='border-radius:10px;display:block;' "
-                 + "alt='WolertApp'/>";
-        }
-        return "<span style='font-size:28px;'>🐺</span>";
+        return "<img src='https://i.imgur.com/TWqPylo.png' "
+                + "width='54' height='54' "
+                + "style='border-radius:10px;display:block;' "
+                + "alt='WolertApp'/>";
     }
 
     // ── Correo de suspensión ──────────────────────────────────
     public static void enviarSuspension(Usuario u) {
-        if (u == null || u.getCorreo() == null) return;
+        if (u == null || u.getCorreo() == null) {
+            return;
+        }
         String nombre = u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "Usuario";
         String cuerpo = buildHtml(
-                "#e53935",          // color header
-                "#ffcdd2",          // color subtítulo header
+                "#e53935", // color header
+                "#ffcdd2", // color subtítulo header
                 "Cuenta suspendida",
                 "Tu cuenta en WolertApp ha sido <b style='color:#e53935'>suspendida</b> "
                 + "por un administrador del sistema.",
@@ -57,15 +40,17 @@ public class UsuarioEmailSender {
 
     // ── Correo de reactivación ────────────────────────────────
     public static void enviarReactivacion(Usuario u) {
-        if (u == null || u.getCorreo() == null) return;
+        if (u == null || u.getCorreo() == null) {
+            return;
+        }
         String nombre = u.getPrimer_nombre() != null ? u.getPrimer_nombre() : "Usuario";
         String cuerpo = buildHtml(
-                "#43a047",          // color header
-                "#c8e6c9",          // color subtítulo header
+                "#43a047", // color header
+                "#c8e6c9", // color subtítulo header
                 "Cuenta reactivada",
                 "Tu cuenta en WolertApp ha sido <b style='color:#43a047'>reactivada</b>. "
                 + "Ya puedes volver a iniciar sesión normalmente.",
-                null,               // sin párrafo extra
+                null, // sin párrafo extra
                 nombre
         );
         enviar(u.getCorreo(), "✅ Tu cuenta ha sido reactivada — WolertApp", cuerpo);
@@ -87,7 +72,7 @@ public class UsuarioEmailSender {
 
         String p2Html = (parrafo2 != null && !parrafo2.isBlank())
                 ? "<p style='color:#374151;font-size:14px;margin:0 0 16px;line-height:1.6;'>"
-                  + parrafo2 + "</p>"
+                + parrafo2 + "</p>"
                 : "";
 
         return """
@@ -99,12 +84,10 @@ public class UsuarioEmailSender {
               <!-- HEADER -->
               <div style="background:#1f3a56;padding:24px 32px;
                           border-radius:16px 16px 0 0;
-                          display:flex;align-items:center;gap:14px;">
-                <div style="width:58px;height:58px;
-                            background:rgba(255,255,255,0.12);
-                            border-radius:12px;overflow:hidden;
-                            display:flex;align-items:center;
-                            justify-content:center;flex-shrink:0;">
+               <div style="width:58px;height:58px;
+                                        border-radius:12px;overflow:hidden;
+                                        display:flex;align-items:center;
+                                        justify-content:center;flex-shrink:0;">
                   %s
                 </div>
                 <div>
@@ -158,13 +141,13 @@ public class UsuarioEmailSender {
             </body>
             </html>
             """.formatted(
-                logoTag(),      // logo header
-                headerColor,    // color banner
-                titulo,         // título banner
-                subColor,       // color subtítulo banner
-                nombre,         // Hola, {nombre}
-                parrafo1,       // párrafo principal
-                p2Html          // párrafo extra (opcional)
+                logoTag(), // logo header
+                headerColor, // color banner
+                titulo, // título banner
+                subColor, // color subtítulo banner
+                nombre, // Hola, {nombre}
+                parrafo1, // párrafo principal
+                p2Html // párrafo extra (opcional)
         );
     }
 }

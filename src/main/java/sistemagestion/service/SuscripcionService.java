@@ -58,6 +58,10 @@ public class SuscripcionService {
         return dao.eliminar(id);
     }
 
+    public List<Suscripcion> listar() {
+        return dao.listar();
+    }
+
     public List<Suscripcion> listarPorBarrio(String nombreBarrio) {
         return dao.listar().stream()
                 .filter(s -> s.getEstado() == sistemagestion.model.EstadoSuscripcion.ACTIVA

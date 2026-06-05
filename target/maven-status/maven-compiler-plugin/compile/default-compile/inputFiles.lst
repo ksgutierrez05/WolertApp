@@ -42,6 +42,7 @@ C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\j
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\model\UnidadPolicial.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\model\Usuario.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\AlarmaService.java
+C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\AlertaEmailSender.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\AlertaService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\AsignacionUnidadService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\AtencionAlertaService.java
@@ -49,6 +50,7 @@ C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\j
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\ComunaService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\EmailService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\MedioTransporteService.java
+C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\NotificacionEmailSender.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\NotificacionService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\PoliciaService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\RolUsuarioService.java
@@ -56,6 +58,7 @@ C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\j
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\TipoAlertaService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\TipoArmaService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\UnidadPolicialService.java
+C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\UsuarioEmailSender.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\service\UsuarioService.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\util\Validador.java
 C:\Users\Maria Cristina\OneDrive\Documents\NetBeansProjects\WolertApp\src\main\java\sistemagestion\view\AdministradorApp.java

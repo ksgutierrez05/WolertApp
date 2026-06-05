@@ -940,6 +940,7 @@ public class MapaAlerta {
                                     aNotificar.add(s);
                                 }
                             }
+                            System.out.println(">>> Suscriptores a notificar: " + aNotificar.size());
                             for (Suscripcion s : aNotificar) {
                                 try {
                                     String alcance = s.getBarrio() != null

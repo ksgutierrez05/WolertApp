@@ -4,8 +4,6 @@
  */
 package sistemagestion.view;
 
-
-
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -58,13 +56,9 @@ public class MapaOperaciones {
     private static final String GRAY_TEXT = "#6b7280";
 
     // Colores de capa
-<<<<<<< HEAD
     private static final Color FX_ALARMA = Color.web("#ffc107");
     private static final Color FX_UNIDAD = Color.web("#2f568a");
-=======
-    private static final Color FX_ALARMA = Color.web("#fb8c00");
-    private static final Color FX_UNIDAD = Color.web("#1565c0");
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+
     private static final Color FX_ALERTA = Color.web("#e53935");
 
     private static final java.awt.Color AWT_ALARMA = new java.awt.Color(251, 140, 0);

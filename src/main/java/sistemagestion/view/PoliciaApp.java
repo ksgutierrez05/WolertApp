@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.List;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import static javafx.scene.layout.Region.USE_COMPUTED_SIZE;
 import sistemagestion.model.*;
 import sistemagestion.service.*;
 
@@ -43,7 +44,12 @@ public class PoliciaApp {
     private PoliciaService policiaService;
     private UnidadPolicialService unidadService;
     private TipoArmaService tipoArmaService;
-    private  MedioTransporteService medioTransporteService;
+    private MedioTransporteService medioTransporteService;
+    private static final double SIDEBAR_EXPANDED = 240;
+    private static final double SIDEBAR_COLLAPSED = 60;
+    private boolean sidebarExpanded = false;   // empieza colapsado
+    private VBox sidebar;
+    private VBox logoTextBox;
 
     private final Usuario usuarioActual;
     private Policia policiaActual;
@@ -59,12 +65,10 @@ public class PoliciaApp {
             notificacionService = new NotificacionService();
             asignacionService = new AsignacionUnidadService();
             policiaService = new PoliciaService();
-<<<<<<< HEAD
+
             unidadService = new UnidadPolicialService();
-            tipoArmaService= new TipoArmaService();
-            medioTransporteService=new MedioTransporteService();
-=======
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+            tipoArmaService = new TipoArmaService();
+            medioTransporteService = new MedioTransporteService();
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -91,7 +95,7 @@ public class PoliciaApp {
         root.setCenter(new CentroOperacionesPoliciaView(
                 usuarioActual, policiaActual,
                 alertaService, atencionService,
-                alarmaService, notificacionService,tipoArmaService,medioTransporteService, root).build());
+                alarmaService, notificacionService, tipoArmaService, medioTransporteService, root).build());
         root.setStyle("-fx-background-color: " + BG + ";");
         Scene scene = new Scene(root, 1100, 650);
         stage.setTitle("WolertApp – Policía");
@@ -105,36 +109,48 @@ public class PoliciaApp {
     // SIDEBAR
     // =========================================================================
     private VBox buildSidebar() {
-        VBox sidebar = new VBox();
-        sidebar.setPrefWidth(240);
-        sidebar.setMinWidth(240);
-        sidebar.setMaxWidth(240);
+        sidebar = new VBox();
+        sidebar.setPrefWidth(SIDEBAR_COLLAPSED);
+        sidebar.setMinWidth(SIDEBAR_COLLAPSED);
+        sidebar.setMaxWidth(SIDEBAR_COLLAPSED);
         sidebar.setStyle("-fx-background-color: linear-gradient(to right, #16283d, #1f3a56);");
         VBox.setVgrow(sidebar, Priority.ALWAYS);
         sidebar.setMaxHeight(Double.MAX_VALUE);
 
         // Logo
         HBox logoBox = new HBox(10);
-        logoBox.setPadding(new Insets(20, 16, 20, 16));
+        logoBox.setPadding(new Insets(16, 8, 16, 8));
         logoBox.setAlignment(Pos.CENTER_LEFT);
+        logoBox.setMinWidth(USE_COMPUTED_SIZE);
+        javafx.scene.shape.Rectangle logoClip = new javafx.scene.shape.Rectangle(SIDEBAR_EXPANDED, 80);
+        logoBox.setClip(logoClip);
 
         ImageView logoImg = new ImageView(
                 new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
-        logoImg.setFitWidth(65);
-        logoImg.setFitHeight(65);
+
+        logoImg.setFitHeight(48);
+        logoImg.setFitWidth(0);
         logoImg.setPreserveRatio(true);
-        logoImg.setTranslateY(-2);
+        logoImg.setSmooth(true);
+        logoImg.setCache(true);
 
         VBox logoText = new VBox(2);
         logoText.getChildren().addAll(
                 label("WolertApp", 15, WHITE, true),
                 label("Portal Policía", 9, "#8899bb", false));
+        logoText.setVisible(false);
+        logoText.setManaged(false);
+        this.logoTextBox = logoText;
 
-        logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
+        StackPane logoWrap = new StackPane(logoImg);
+        logoWrap.setPrefSize(48, 48);
+        logoWrap.setMinSize(48, 48);
+        logoWrap.setMaxSize(48, 48);
+        logoBox.getChildren().addAll(logoWrap, logoText);
 
         // Nav
-        VBox nav = new VBox(2);
-        nav.setPadding(new Insets(12, 8, 12, 8));
+        nav = new VBox(2);
+        nav.setPadding(new Insets(12, 4, 12, 4));
         nav.getChildren().addAll(
                 navItem("\uf015", "Centro de operaciones"),
                 navItem("\uf0f3", "Mis alertas"),
@@ -152,7 +168,7 @@ public class PoliciaApp {
 
         // Logout
         HBox logout = new HBox(10);
-        logout.setPadding(new Insets(14, 16, 18, 16));
+        logout.setPadding(new Insets(14, 8, 18, 14));
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.setCursor(javafx.scene.Cursor.HAND);
         logout.setStyle("-fx-background-color: transparent;");
@@ -167,22 +183,99 @@ public class PoliciaApp {
                 "-fx-font-family: 'Font Awesome 6 Free Solid';"
                 + "-fx-font-size: 14px;"
                 + "-fx-text-fill: " + RED + ";");
-        logout.getChildren().addAll(logoutIcon, label("Cerrar sesión", 13, WHITE, true));
+        Label logoutText = label("Cerrar sesión", 13, WHITE, true);
+        logoutText.setVisible(false);
+        logoutText.setManaged(false);
+        logout.getChildren().addAll(logoutIcon, logoutText);
 
-        sidebar.getChildren().addAll(logoBox, buildProfileCard(), nav, spacer, logout);
+        HBox profileCard = buildProfileCard();
+
+        sidebar.getChildren().addAll(logoBox, profileCard, nav, spacer, logout);
+
+        // ── Hover: expandir / colapsar ────────────────────────────
+        sidebar.setOnMouseEntered(e -> setSidebarExpanded(true));
+        sidebar.setOnMouseExited(e -> setSidebarExpanded(false));
+
         return sidebar;
+    }
+
+// ── Animación de expansión/colapso ───────────────────────────
+    private void setSidebarExpanded(boolean expand) {
+        sidebarExpanded = expand;
+        if (logoTextBox != null) {
+            logoTextBox.setVisible(expand);
+            logoTextBox.setManaged(expand);
+        }
+
+        double targetWidth = expand ? SIDEBAR_EXPANDED : SIDEBAR_COLLAPSED;
+
+        // Animación de ancho con Timeline
+        javafx.animation.Timeline tl = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.millis(180),
+                        new javafx.animation.KeyValue(
+                                sidebar.prefWidthProperty(), targetWidth,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(
+                                sidebar.minWidthProperty(), targetWidth,
+                                javafx.animation.Interpolator.EASE_BOTH),
+                        new javafx.animation.KeyValue(
+                                sidebar.maxWidthProperty(), targetWidth,
+                                javafx.animation.Interpolator.EASE_BOTH)
+                )
+        );
+        tl.play();
+
+        // Mostrar/ocultar textos de todos los nodos del nav
+        nav.getChildren().forEach(node -> {
+            if (node instanceof HBox hbox) {
+                hbox.getChildren().forEach(child -> {
+                    if (child instanceof Label lbl
+                            && !lbl.getStyle().contains("Font Awesome")) {
+                        lbl.setVisible(expand);
+                        lbl.setManaged(expand);
+                    }
+                });
+            }
+        });
+
+        // Mostrar/ocultar textos en logoBox, profileCard, logout
+        toggleTextChildren(sidebar, expand);
+    }
+
+// Recorre todos los HBox/VBox del sidebar y oculta Labels de texto
+    private void toggleTextChildren(javafx.scene.Parent parent, boolean show) {
+        parent.getChildrenUnmodifiable().forEach(node -> {
+            if (node instanceof Label lbl) {
+                // Solo labels de texto (no los de iconos FA)
+                if (!lbl.getStyle().contains("Font Awesome")) {
+                    lbl.setVisible(show);
+                    lbl.setManaged(show);
+                }
+            } else if (node instanceof javafx.scene.Parent p
+                    && !(node instanceof VBox vb && vb == nav)) {
+                // Recursivo, pero no entra al nav (ya se manejó arriba)
+                toggleTextChildren(p, show);
+            }
+        });
     }
 
     // ── Profile card ─────────────────────────────────────────────
     private HBox buildProfileCard() {
         HBox card = new HBox(10);
-        card.setPadding(new Insets(10, 16, 10, 16));
+
+        card.setPadding(new Insets(10, 8, 10, 14));
         card.setAlignment(Pos.CENTER_LEFT);
         card.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-background-radius: 12;");
-
-        Circle av = new Circle(20, Color.web("#334155"));
-        StackPane avBox = new StackPane(av, label("👮", 15, WHITE, false));
-
+        Circle av = new Circle(18, Color.web("#1f3a56"));
+        Label icon = new Label("\uf505");
+        icon.setStyle(
+                "-fx-font-family: 'Font Awesome 6 Free Solid';"
+                + "-fx-font-size: 15px;"
+                + "-fx-text-fill: #a8c0dd;");
+        StackPane avBox = new StackPane(av, icon);
+        avBox.setPrefSize(36, 36);   // ← tamaño explícito
+        avBox.setMinSize(36, 36);
+        avBox.setMaxSize(36, 36);
         VBox info = new VBox(2);
         String nombre = usuarioActual != null
                 ? trim(usuarioActual.getPrimer_nombre()) + " " + trim(usuarioActual.getPrimer_apellido())
@@ -210,17 +303,18 @@ public class PoliciaApp {
     // ── Nav item ─────────────────────────────────────────────────
     private HBox navItem(String icon, String text) {
         HBox item = new HBox(10);
-        item.setPadding(new Insets(9, 12, 9, 12));
+        item.setPadding(new Insets(9, 8, 9, 14));
         item.setAlignment(Pos.CENTER_LEFT);
         item.setCursor(javafx.scene.Cursor.HAND);
         item.setMaxWidth(Double.MAX_VALUE);
         item.setStyle("-fx-background-radius: 8;");
-
         Label iconLbl = new Label(icon);
         iconLbl.setStyle(
                 "-fx-font-family: 'Font Awesome 6 Free Solid';"
                 + "-fx-font-size: 14px;"
                 + "-fx-text-fill: #8899bb;");
+        iconLbl.setMinWidth(28);
+        iconLbl.setAlignment(Pos.CENTER);
         Label textLbl = label(text, 13, "#f8fafc", false);
 
         item.getChildren().addAll(iconLbl, textLbl);
@@ -262,11 +356,11 @@ public class PoliciaApp {
                     root.setCenter(new CentroOperacionesPoliciaView(
                             usuarioActual, policiaActual,
                             alertaService, atencionService,
-                            alarmaService, notificacionService,tipoArmaService,medioTransporteService, root).build());
+                            alarmaService, notificacionService, tipoArmaService, medioTransporteService, root).build());
                 case "Mis alertas" ->
                     root.setCenter(new MisAlertasPoliciaView(
                             usuarioActual, policiaActual,
-                            alertaService, atencionService, tipoArmaService,medioTransporteService, root).build());
+                            alertaService, atencionService, tipoArmaService, medioTransporteService, root).build());
                 case "Mis atenciones" ->
                     root.setCenter(new MisAtencionesPoliciaView(
                             usuarioActual, policiaActual,
@@ -279,63 +373,26 @@ public class PoliciaApp {
                             policiaService, root).build());
                 case "Mapas" ->
                     root.setCenter(new MapaOperaciones(asignacionService, unidadService).build());
+
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesPoliciaView(
-<<<<<<< HEAD
-                            usuarioActual,policiaActual, notificacionService).build());
-=======
-                            usuarioActual, notificacionService).build());
-                case "Reportes" -> {
-                    try {
-                        root.setCenter(
-                                new ReportesAdminView(
-                                        new sistemagestion.service.UsuarioService(),
-                                        new sistemagestion.service.AlertaService()
-                                ).build()
-                        );
-                    } catch (Exception ex) {
-                        mostrarAlerta("Error en Reportes", ex.getMessage());
-                    }
-                }
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+                            usuarioActual, policiaActual, notificacionService).build());
+                case "Reportes" ->
+                    root.setCenter(new ReportesPoliciaView(
+                            policiaActual,
+                            atencionService,
+                            asignacionService,
+                            alertaService,
+                            notificacionService,
+                            alarmaService
+                    ).build());
+
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
                             usuarioActual, policiaActual).build());
             }
         });
         return item;
-    }
-
-    // =========================================================================
-    // PANTALLA EN CONSTRUCCIÓN
-    // =========================================================================
-    private VBox pantallaEnConstruccion(String icono, String nombreVista) {
-        VBox pane = new VBox(20);
-        pane.setAlignment(Pos.CENTER);
-        pane.setStyle("-fx-background-color: " + BG + ";");
-
-        Label iconLbl = new Label(icono);
-        iconLbl.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 64px;"
-                + "-fx-text-fill: #fb8c00;");
-
-        Label titleLbl = new Label(nombreVista);
-        titleLbl.setFont(Font.font("System", FontWeight.BOLD, 26));
-        titleLbl.setTextFill(Color.web("#111827"));
-
-        Label msgLbl = new Label("🚧  Esta sección está en construcción");
-        msgLbl.setFont(Font.font("System", FontWeight.BOLD, 16));
-        msgLbl.setTextFill(Color.web("#fb8c00"));
-        msgLbl.setPadding(new Insets(10, 24, 10, 24));
-        msgLbl.setStyle("-fx-background-color: #fff3e0; -fx-background-radius: 10;");
-
-        Label subLbl = new Label("Próximamente disponible. Por ahora puedes usar las demás secciones.");
-        subLbl.setFont(Font.font("System", 13));
-        subLbl.setTextFill(Color.web(GRAY_TEXT));
-
-        pane.getChildren().addAll(iconLbl, titleLbl, msgLbl, subLbl);
-        return pane;
     }
 
     // =========================================================================
