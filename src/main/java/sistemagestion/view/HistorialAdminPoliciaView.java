@@ -31,8 +31,6 @@ public class HistorialAdminPoliciaView {
     // ── Paleta consistente con la app ─────────────────────────────
     private static final String BG = "#f4f6fb";
     private static final String WHITE = "#ffffff";
-    private static final String SIDEBAR_A = "#16283d";
-    private static final String SIDEBAR_B = "#1f3a56";
     private static final String BLUE = "#1565c0";
     private static final String BLUE_LIGHT = "#e8f0fe";
     private static final String GREEN = "#43a047";

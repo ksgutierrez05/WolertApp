@@ -130,7 +130,6 @@ public class CentroOperacionesPoliciaView {
 
         dateBox.getChildren().addAll(dateLbl, timeLbl);
 
-        // ── CAMPANA ───────────────────────────────
         int notiCount = contarNotificaciones();
 
         StackPane bell = new StackPane();
@@ -152,10 +151,9 @@ public class CentroOperacionesPoliciaView {
             bell.getChildren().add(bellIcon);
         }
 
-        // ⚠️ CLICK EVENT CORRECTO
         bell.setOnMouseClicked(e -> abrirNotificacionesPopup(bell));
 
-        // ✔️ ESTO FALTABA
+      
         rightBox.getChildren().addAll(dateBox, bell);
 
         bar.getChildren().addAll(greeting, rightBox);
@@ -562,7 +560,7 @@ public class CentroOperacionesPoliciaView {
         lockBox.setMinSize(56, 56);
         lockBox.setMaxSize(56, 56);
         lockBox.setStyle("-fx-background-color: #dbeafe; -fx-background-radius: 50%;");
-        Label lockLbl = new Label("\uf023");     // fa-lock
+        Label lockLbl = new Label("\uf023");     
         lockLbl.setStyle(
                 "-fx-font-family: 'Font Awesome 6 Free Solid';"
                 + "-fx-font-size: 24px;"

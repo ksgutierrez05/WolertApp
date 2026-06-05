@@ -21,8 +21,6 @@ public class NotificacionesAdminPoliciaView {
     // ── Paleta consistente con la app ─────────────────────────────
     private static final String BG = "#f4f6fb";
     private static final String WHITE = "#ffffff";
-    private static final String SIDEBAR_A = "#16283d";
-    private static final String SIDEBAR_B = "#1f3a56";
     private static final String BLUE = "#1565c0";
     private static final String BLUE_LIGHT = "#e8f0fe";
     private static final String GREEN = "#43a047";
@@ -32,7 +30,6 @@ public class NotificacionesAdminPoliciaView {
     private static final String ORANGE = "#fb8c00";
     private static final String ORANGE_LIGHT = "#fff8e1";
     private static final String GRAY = "#6b7280";
-    private static final String GRAY_LIGHT = "#f3f4f6";
     private static final String BORDER = "#e5e7eb";
     private static final String TEXT_DARK = "#111827";
     private static final String FA = "'Font Awesome 6 Free Solid'";
@@ -42,7 +39,6 @@ public class NotificacionesAdminPoliciaView {
     // Estado para filtrado
     private VBox listaContainer;
     private List<Notificacion> todasLasNotis;
-    private String filtroActivo = "Todos";
 
     public NotificacionesAdminPoliciaView(NotificacionService notificacionService) {
         this.notificacionService = notificacionService;

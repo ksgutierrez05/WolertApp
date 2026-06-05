@@ -166,7 +166,7 @@ public class MapaAlarmasRegistada {
         Region sep = new Region();
         sep.setStyle("-fx-background-color:" + C_SEPARATOR + ";");
         sep.setPrefSize(1, 20);
-        
+
         lblInstruccionHeader = new Label("Mapa de Alarmas Registradas");
         lblInstruccionHeader.setFont(Font.font("Arial", 13));
         lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
@@ -186,7 +186,7 @@ public class MapaAlarmasRegistada {
                 + "-fx-background-radius:20;-fx-padding:4 14 4 14;");
 
         HBox bar = new HBox(10, logoBox, logoText, sep, new Label("🗺️"), lblInstruccionHeader,
-        spacer, leyenda, lblContador);
+                spacer, leyenda, lblContador);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
@@ -544,7 +544,6 @@ public class MapaAlarmasRegistada {
 
         if (a.getBarrio() != null && a.getBarrio().getNombre() != null) {
             try {
-                // Buscar barrio completo desde el servicio
                 Barrio barrioCompleto = barrioService.listar().stream()
                         .filter(b -> b.getNombre().equalsIgnoreCase(a.getBarrio().getNombre()))
                         .findFirst()
@@ -552,10 +551,23 @@ public class MapaAlarmasRegistada {
 
                 if (barrioCompleto != null && barrioCompleto.getComuna() != null) {
 
+                    // 1. Poner la comuna
                     cmbComuna.setValue(barrioCompleto.getComuna().getNombre());
-                    filtrarBarrios();
 
-                    cmbBarrio.getItems().stream()
+                    // 2. Cargar los barrios de esa comuna DIRECTAMENTE aquí
+                    //    sin depender de filtrarBarrios()
+                    List<Barrio> barrios = barrioService.listar().stream()
+                            .filter(b -> b.getComuna() != null
+                            && barrioCompleto.getComuna().getNombre()
+                                    .equals(b.getComuna().getNombre()))
+                            .collect(java.util.stream.Collectors.toList());
+
+                    cmbBarrio.setItems(
+                            javafx.collections.FXCollections.observableArrayList(barrios));
+                    cmbBarrio.setDisable(false);
+
+                    // 3. Ahora sí seleccionar el barrio (ya están los items)
+                    barrios.stream()
                             .filter(b -> b.getNombre().equalsIgnoreCase(barrioCompleto.getNombre()))
                             .findFirst()
                             .ifPresent(cmbBarrio::setValue);
@@ -600,35 +612,21 @@ public class MapaAlarmasRegistada {
             return;
         }
 
-        Barrio barrioSeleccionado = null;
-        try {
-            for (Barrio b : barrioService.listar()) {
-                if (b.getNombre().equals(cmbBarrio.getValue())) {
-                    barrioSeleccionado = b;
-                    break;
-                }
-            }
-        } catch (Exception ex) {
-            alerta("Error buscando el barrio: " + ex.getMessage());
-            return;
-        }
-        if (barrioSeleccionado == null) {
-            alerta("No se encontró el barrio seleccionado.");
-            return;
-        }
+        Barrio barrioSeleccionado = cmbBarrio.getValue(); // ← directo, ya tiene el ID
 
         alarmaEnEdicion.setNombre(txtNombre.getText().trim());
-        alarmaEnEdicion.setBarrio(barrioSeleccionado);          // barrio con id real
+        alarmaEnEdicion.setBarrio(barrioSeleccionado);
         alarmaEnEdicion.setLatitud(posicionSeleccionada.getLatitude());
         alarmaEnEdicion.setLongitud(posicionSeleccionada.getLongitude());
         alarmaEnEdicion.setRadio_cobertura(sliderRadio.getValue());
-        alarmaEnEdicion.setEstado(EstadoAlarma.valueOf(cmbEstado.getValue()));
+        alarmaEnEdicion.setEstado(EstadoAlarma.valueOf(
+                cmbEstado.getValue().replace(" ", "_")));  // ← por si acaso "EN MANTENIMIENTO"
 
         boolean ok = alarmaService.actualizar(alarmaEnEdicion);
         if (ok) {
             mostrarExito("Alarma actualizada", "Los cambios fueron guardados correctamente.");
             Stage stage = (Stage) btnAccionPrincipal.getScene().getWindow();
-            stage.close(); // ← esto dispara setOnHidden → recarga la tabla
+            stage.close();
         } else {
             alerta("Error al actualizar — verifica los datos.");
         }
@@ -954,16 +952,18 @@ public class MapaAlarmasRegistada {
         ventana.setScene(new Scene(contenido, 360, 220));
         ventana.showAndWait();
     }
-    
+
     public void centrarEnAlarma(Alarma a) {
-    if (a == null || mapa == null) return;
-    GeoPosition pos = new GeoPosition(a.getLatitud(), a.getLongitud());
-    SwingUtilities.invokeLater(() -> {
-        mapa.setAddressLocation(pos);
-        mapa.setZoom(2); // zoom cercano, ajusta entre 1-5 a tu gusto
-        mapa.repaint();
-    });
-}
+        if (a == null || mapa == null) {
+            return;
+        }
+        GeoPosition pos = new GeoPosition(a.getLatitud(), a.getLongitud());
+        SwingUtilities.invokeLater(() -> {
+            mapa.setAddressLocation(pos);
+            mapa.setZoom(2); // zoom cercano, ajusta entre 1-5 a tu gusto
+            mapa.repaint();
+        });
+    }
 
     // ════════════════════════════════════════════════════════════════════════
     // UTILIDAD AWT 
