@@ -68,7 +68,7 @@ public class MapaAlarmasRegistada {
     // ── Estado de edición (null = modo Registrar) ─────────────────────────────
     private Alarma alarmaEnEdicion = null;
     private List<Alarma> todasLasAlarmas = new ArrayList<>();
-    
+    private Alarma alarmaInicial = null;
 
     // ── Controles ─────────────────────────────────────────────────────────────
     private TextField txtNombre;
@@ -111,19 +111,28 @@ public class MapaAlarmasRegistada {
         cargarAlarmaEnFormulario(a);
     }
 
+    public void setAlarmaInicial(Alarma a) {
+        this.alarmaInicial = a;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     public Stage mostrar() {
         Stage stage = new Stage();
         stage.setTitle("WolertApp — Registrar Alarma");
 
         BorderPane root = new BorderPane();
-        root.setTop(buildTopBar());
+        HBox topBar = buildTopBar();
+        root.setTop(topBar);
         root.setCenter(buildCentro());
         root.setStyle("-fx-background-color: white;");
 
         stage.setScene(new Scene(root, 1100, 680));
         stage.setResizable(true);
         cargarAlarmas();
+
+        if (alarmaInicial != null) {
+            cargarAlarmaEnFormulario(alarmaInicial);
+        }
 
         stage.show();
         return stage;
@@ -157,10 +166,10 @@ public class MapaAlarmasRegistada {
         Region sep = new Region();
         sep.setStyle("-fx-background-color:" + C_SEPARATOR + ";");
         sep.setPrefSize(1, 20);
-
-        Label titulo = new Label("Mapa de Alarmas Registradas");
-        titulo.setFont(Font.font("Arial", 13));
-        titulo.setTextFill(Color.web("#6b7280"));
+        
+        lblInstruccionHeader = new Label("Mapa de Alarmas Registradas");
+        lblInstruccionHeader.setFont(Font.font("Arial", 13));
+        lblInstruccionHeader.setTextFill(Color.web("#6b7280"));
 
         // Leyenda de estados
         HBox leyenda = buildLeyenda();
@@ -176,8 +185,8 @@ public class MapaAlarmasRegistada {
                 "-fx-background-color:" + C_DARK_GRAD + ";"
                 + "-fx-background-radius:20;-fx-padding:4 14 4 14;");
 
-        HBox bar = new HBox(10, logoBox, logoText, sep, new Label("🗺️"), titulo,
-                spacer, leyenda, lblContador);
+        HBox bar = new HBox(10, logoBox, logoText, sep, new Label("🗺️"), lblInstruccionHeader,
+        spacer, leyenda, lblContador);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(12, 20, 12, 20));
         bar.setStyle("-fx-background-color:white;-fx-border-color:" + C_SEPARATOR
@@ -482,7 +491,6 @@ public class MapaAlarmasRegistada {
         btnEliminar.setVisible(false);
         btnEliminar.setManaged(false);
 
-     
         Button btnSecundario = buildBotonSecundario("Limpiar");
         btnSecundario.setOnAction(e -> salirModoEdicion());
 
@@ -534,7 +542,6 @@ public class MapaAlarmasRegistada {
             mapa.repaint();
         });
 
-        
         if (a.getBarrio() != null && a.getBarrio().getNombre() != null) {
             try {
                 // Buscar barrio completo desde el servicio
@@ -544,10 +551,10 @@ public class MapaAlarmasRegistada {
                         .orElse(null);
 
                 if (barrioCompleto != null && barrioCompleto.getComuna() != null) {
-                    
+
                     cmbComuna.setValue(barrioCompleto.getComuna().getNombre());
                     filtrarBarrios();
-                   
+
                     cmbBarrio.getItems().stream()
                             .filter(b -> b.getNombre().equalsIgnoreCase(barrioCompleto.getNombre()))
                             .findFirst()
@@ -574,7 +581,7 @@ public class MapaAlarmasRegistada {
 
     // ════════════════════════════════════════════════════════════════════════
     // ACTUALIZAR
-   // ════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
     private void actualizarAlarma() {
         if (txtNombre.getText().trim().isEmpty()) {
             alerta("Ingrese el nombre.");
@@ -627,9 +634,9 @@ public class MapaAlarmasRegistada {
         }
     }
 
-   // ════════════════════════════════════════════════════════════════════════
-   // ELIMINAR 
-   // ════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
+    // ELIMINAR 
+    // ════════════════════════════════════════════════════════════════════════
     private void eliminarAlarma() {
         // Diálogo de confirmación estilizado
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
@@ -947,6 +954,16 @@ public class MapaAlarmasRegistada {
         ventana.setScene(new Scene(contenido, 360, 220));
         ventana.showAndWait();
     }
+    
+    public void centrarEnAlarma(Alarma a) {
+    if (a == null || mapa == null) return;
+    GeoPosition pos = new GeoPosition(a.getLatitud(), a.getLongitud());
+    SwingUtilities.invokeLater(() -> {
+        mapa.setAddressLocation(pos);
+        mapa.setZoom(2); // zoom cercano, ajusta entre 1-5 a tu gusto
+        mapa.repaint();
+    });
+}
 
     // ════════════════════════════════════════════════════════════════════════
     // UTILIDAD AWT 

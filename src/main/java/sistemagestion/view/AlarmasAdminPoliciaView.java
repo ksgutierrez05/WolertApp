@@ -25,6 +25,7 @@ public class AlarmasAdminPoliciaView {
     private static final String BLUE = "#1565c0";
     private static final String BLUE_LIGHT = "#e8f0fe";
     private static final String GREEN = "#43a047";
+    
     private static final String GREEN_LIGHT = "#e8f5e9";
     private static final String RED = "#e53935";
     private static final String RED_LIGHT = "#fff0f0";
@@ -32,6 +33,7 @@ public class AlarmasAdminPoliciaView {
     private static final String ORANGE_LIGHT = "#fff8e1";
     private static final String GRAY_TEXT = "#6b7280";
     private static final String BORDER = "#e5e7eb";
+    private static final String C_DARK_GRAD = "linear-gradient(to right, #16283d, #1f3a56)";
 
     private final AlarmaService alarmaService;
     private VBox tablaContainer;
@@ -414,55 +416,100 @@ public class AlarmasAdminPoliciaView {
 
     // ── Ver detalle ───────────────────────────────────────────────
     private void verAlarma(Alarma a) {
-        Dialog<Void> dlg = new Dialog<>();
-        dlg.setTitle("Detalle de alarma");
-        dlg.setHeaderText(null);
+        Stage dlgStage = new Stage();
+        dlgStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dlgStage.setResizable(false);
+        dlgStage.setTitle("Detalle de alarma");
 
-        VBox content = new VBox(12);
-        content.setPadding(new Insets(20));
-        content.setPrefWidth(400);
-
+        // ── Avatar ────────────────────────────────────────────────────
+        StackPane avBox = new StackPane();
+        avBox.setPrefSize(64, 64);
+        avBox.setMinSize(64, 64);
+        avBox.setMaxSize(64, 64);
         Circle av = new Circle(32, Color.web(colorAvatar(a.getNombre())));
-        Label avLbl = label(iniciales(a.getNombre()), 18, WHITE, true);
-        StackPane avBox = new StackPane(av, avLbl);
-        Label nomDlg = new Label(a.getNombre() != null ? a.getNombre() : "—");
-        nomDlg.setFont(Font.font("System", FontWeight.BOLD, 17));
-        nomDlg.setTextFill(Color.web("#111827"));
+        Label avLbl = label(iniciales(a.getNombre()), 20, WHITE, true);
+        avBox.getChildren().addAll(av, avLbl);
 
-        // Badge estado
+        Label nomLbl = new Label(a.getNombre() != null ? a.getNombre() : "—");
+        nomLbl.setFont(Font.font("System", FontWeight.BOLD, 18));
+        nomLbl.setTextFill(Color.web("#111827"));
+
         Label estBadge = badge(
                 a.getEstado() != null ? a.getEstado().name().replace("_", " ") : "—",
                 bgEstado(a.getEstado()), colorEstado(a.getEstado()));
-        estBadge.setFont(Font.font("System", FontWeight.BOLD, 13));
+        estBadge.setFont(Font.font("System", FontWeight.BOLD, 12));
 
-        VBox header = new VBox(6);
-        header.setAlignment(Pos.CENTER);
-        header.getChildren().addAll(avBox, nomDlg, estBadge);
+        VBox headerBox = new VBox(8, avBox, nomLbl, estBadge);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(28, 24, 20, 24));
+        headerBox.setStyle("-fx-background-color:#f8fafc;-fx-background-radius:14 14 0 0;");
 
-        content.getChildren().addAll(
-                header, new Separator(),
-                detRow("🔔 Nombre", a.getNombre() != null ? a.getNombre() : "—"),
-                detRow("🏘 Barrio", a.getBarrio() != null ? a.getBarrio().getNombre() : "—"),
-                detRow("📡 Radio", (int) a.getRadio_cobertura() + " metros"),
-                detRow("📍 Latitud", String.format("%.6f", a.getLatitud())),
-                detRow("📍 Longitud", String.format("%.6f", a.getLongitud()))
+        // ── Separador ─────────────────────────────────────────────────
+        Region sepLine = new Region();
+        sepLine.setPrefHeight(1);
+        sepLine.setMaxHeight(1);
+        sepLine.setStyle("-fx-background-color:" + BORDER + ";");
+
+        // ── Filas de detalle ──────────────────────────────────────────
+        VBox detalles = new VBox(0,
+                filaDetalle("Barrio", a.getBarrio() != null ? a.getBarrio().getNombre() : "—", false),
+                filaDetalle("Radio", (int) a.getRadio_cobertura() + " metros", true),
+                filaDetalle("Latitud", String.format("%.6f", a.getLatitud()), false),
+                filaDetalle("Longitud", String.format("%.6f", a.getLongitud()), true)
         );
+        detalles.setPadding(new Insets(0, 0, 4, 0));
 
-        // Botón ver en mapa
-        Button btnMapa = new Button("\uf3c5  Ver en mapa");
-        btnMapa.setStyle("-fx-font-family:'Font Awesome 6 Free Solid',System;"
-                + "-fx-background-color:" + BLUE_LIGHT + ";-fx-text-fill:" + BLUE + ";"
-                + "-fx-font-weight:bold;-fx-background-radius:8;"
-                + "-fx-padding:8 16;-fx-cursor:hand;");
+        // ── Botón ver en mapa ─────────────────────────────────────────
+        Button btnMapa = new Button("Ver en mapa");
+        btnMapa.setMaxWidth(Double.MAX_VALUE);
+        btnMapa.setPrefHeight(42);
+        btnMapa.setFont(Font.font("System", FontWeight.BOLD, 13));
+        String baseBtn = "-fx-background-color: #e3eefa" + ";-fx-text-fill:" + C_DARK_GRAD + ";"
+                + "-fx-background-radius:8;-fx-cursor:hand;";
+        String hovBtn = "-fx-background-color:" +C_DARK_GRAD + ";-fx-text-fill:white;"
+                + "-fx-background-radius:8;-fx-cursor:hand;";
+        btnMapa.setStyle(baseBtn);
+        btnMapa.setOnMouseEntered(e -> btnMapa.setStyle(hovBtn));
+        btnMapa.setOnMouseExited(e -> btnMapa.setStyle(baseBtn));
         btnMapa.setOnAction(e -> {
-            dlg.close();
+            dlgStage.close();
             visualizacionAlarmas(a);
         });
-        content.getChildren().addAll(new Separator(), btnMapa);
 
-        dlg.getDialogPane().setContent(content);
-        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
-        dlg.showAndWait();
+        Button btnCerrar = new Button("Cerrar");
+        btnCerrar.setMaxWidth(Double.MAX_VALUE);
+        btnCerrar.setPrefHeight(42);
+        btnCerrar.setFont(Font.font("System", 13));
+        btnCerrar.setStyle("-fx-background-color:white;-fx-text-fill:" + GRAY_TEXT + ";"
+                + "-fx-border-color:" + BORDER + ";-fx-border-width:1;"
+                + "-fx-background-radius:8;-fx-border-radius:8;-fx-cursor:hand;");
+        btnCerrar.setOnAction(e -> dlgStage.close());
+
+        HBox botones = new HBox(10, btnMapa, btnCerrar);
+        botones.setPadding(new Insets(16, 20, 20, 20));
+        HBox.setHgrow(btnMapa, Priority.ALWAYS);
+        HBox.setHgrow(btnCerrar, Priority.ALWAYS);
+
+        // ── Armado ────────────────────────────────────────────────────
+        VBox root = new VBox(headerBox, sepLine, detalles, botones);
+        root.setStyle("-fx-background-color:white;-fx-background-radius:14;");
+
+        dlgStage.setScene(new javafx.scene.Scene(root, 380, 400));
+        dlgStage.showAndWait();
+    }
+
+// ── Fila de detalle alternada ─────────────────────────────────────────────
+    private HBox filaDetalle(String campo, String valor, boolean par) {
+        Label k = label(campo, 12, GRAY_TEXT, false);
+        k.setMinWidth(110);
+        Label v = label(valor != null ? valor : "—", 12, "#111827", true);
+        v.setWrapText(true);
+        HBox row = new HBox(12, k, v);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(11, 20, 11, 20));
+        row.setStyle("-fx-background-color:" + (par ? "#f8fafc" : "white") + ";");
+        HBox.setHgrow(v, Priority.ALWAYS);
+        return row;
     }
 
     // ── Editar ────────────────────────────────────────────────────
@@ -471,14 +518,15 @@ public class AlarmasAdminPoliciaView {
     }
 
     private void visualizacionAlarmas(Alarma a) {
-        MapaAlarmasRegistradas mapa = new MapaAlarmasRegistradas();
-        mapa.mostrar();
+        MapaAlarmasRegistradas mapaView = new MapaAlarmasRegistradas();
+        mapaView.centrarEnAlarma(a);
+        mapaView.mostrar();
     }
 
     private void abrirEnMapaEdicion(Alarma a) {
         MapaAlarmasRegistada mapa = new MapaAlarmasRegistada();
-        Stage stage = mapa.mostrar(); // ← mostrar() debe retornar Stage
-        javafx.application.Platform.runLater(() -> mapa.cargarAlarmaPublico(a));
+        mapa.setAlarmaInicial(a);
+        Stage stage = mapa.mostrar();
 
         stage.setOnHidden(e -> {
             try {
@@ -488,7 +536,6 @@ public class AlarmasAdminPoliciaView {
                 mostrarAlerta("Error", "No se pudo recargar: " + ex.getMessage());
             }
         });
-
     }
 
     // ── Eliminar ──────────────────────────────────────────────────

@@ -56,6 +56,7 @@ public class MapaAlarmasRegistradas {
 
     // ── Servicios ─────────────────────────────────────────────────────────────
     private AlarmaService alarmaService;
+    private Alarma alarmaACentrar = null;
 
     // ── Estado ────────────────────────────────────────────────────────────────
     private JXMapViewer mapa;
@@ -100,6 +101,9 @@ public class MapaAlarmasRegistradas {
 
         // Cargar alarmas antes de mostrar
         cargarAlarmas();
+        if (alarmaACentrar != null) {
+            seleccionarAlarma(alarmaACentrar);
+        }
 
         stage.show();
     }
@@ -247,7 +251,23 @@ public class MapaAlarmasRegistradas {
             }
         });
         mapa.setOverlayPainter(this::pintarOverlay);
+        if (alarmaACentrar != null) {
+            GeoPosition pos = new GeoPosition(alarmaACentrar.getLatitud(), alarmaACentrar.getLongitud());
+            mapa.setAddressLocation(pos);
+            mapa.setZoom(2);
+        }
         swingNode.setContent(mapa);
+    }
+
+    public void centrarEnAlarma(Alarma a) {
+        this.alarmaACentrar = a;
+        if (mapa != null) {
+            SwingUtilities.invokeLater(() -> {
+                mapa.setAddressLocation(new GeoPosition(a.getLatitud(), a.getLongitud()));
+                mapa.setZoom(2);
+                mapa.repaint();
+            });
+        }
     }
 
     // Information Expert: click detecta alarma más cercana al punto
@@ -682,7 +702,8 @@ public class MapaAlarmasRegistradas {
         }
 
         // Centrar el mapa en la primera alarma si hay resultados
-        if (!alarmasFiltradas.isEmpty() && mapa != null) {
+        // Centrar el mapa en la primera alarma si hay resultados
+        if (!alarmasFiltradas.isEmpty() && mapa != null && alarmaACentrar == null) {
             Alarma primera = alarmasFiltradas.get(0);
             SwingUtilities.invokeLater(()
                     -> mapa.setAddressLocation(
