@@ -56,9 +56,10 @@ public class MapaOperaciones {
     private static final String GRAY_TEXT = "#6b7280";
 
     // Colores de capa
-    private static final Color FX_ALARMA = Color.web("#ffc107");
-    private static final Color FX_UNIDAD = Color.web("#2f568a");
 
+
+    private static final Color FX_ALARMA = Color.web("#fb8c00");
+    private static final Color FX_UNIDAD = Color.web("#1565c0");
     private static final Color FX_ALERTA = Color.web("#e53935");
 
     private static final java.awt.Color AWT_ALARMA = new java.awt.Color(251, 140, 0);

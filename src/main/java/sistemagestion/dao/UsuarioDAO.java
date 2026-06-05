@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import oracle.jdbc.OracleTypes;
+import sistemagestion.model.Barrio;
 import sistemagestion.model.Direccion;
 import sistemagestion.model.EstadoUsuario;
 import sistemagestion.model.RolUsuario;
@@ -246,7 +247,14 @@ public class UsuarioDAO {
         d.setManzana(rs.getString("MANZANA"));
         d.setCasa(rs.getString("CASA"));
 
+        String nombreBarrio = rs.getString("NOMBRE_BARRIO"); // ajusta el nombre de columna
+        if (nombreBarrio != null) {
+            Barrio b = new Barrio();
+            b.setNombre(nombreBarrio);
+            d.setBarrio(b);
+        }
         u.setDireccion(d);
+        
 
         return u;
     }

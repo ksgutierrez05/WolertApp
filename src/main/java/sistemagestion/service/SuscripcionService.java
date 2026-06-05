@@ -87,4 +87,5 @@ public class SuscripcionService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+
 }

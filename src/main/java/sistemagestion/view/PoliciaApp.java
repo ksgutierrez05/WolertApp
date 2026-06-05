@@ -67,8 +67,10 @@ public class PoliciaApp {
             policiaService = new PoliciaService();
 
             unidadService = new UnidadPolicialService();
-            tipoArmaService = new TipoArmaService();
-            medioTransporteService = new MedioTransporteService();
+            tipoArmaService= new TipoArmaService();
+            medioTransporteService=new MedioTransporteService();
+
+
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -150,7 +152,9 @@ public class PoliciaApp {
 
         // Nav
         nav = new VBox(2);
-        nav.setPadding(new Insets(12, 4, 12, 4));
+
+        nav.setPadding(new Insets(12, 8, 12, 8));
+
         nav.getChildren().addAll(
                 navItem("\uf015", "Centro de operaciones"),
                 navItem("\uf0f3", "Mis alertas"),
@@ -386,6 +390,7 @@ public class PoliciaApp {
                             notificacionService,
                             alarmaService
                     ).build());
+
 
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
