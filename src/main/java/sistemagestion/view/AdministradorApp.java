@@ -8,21 +8,13 @@ package sistemagestion.view;
  *
  * @author Maria Cristina
  */
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -31,113 +23,141 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.util.Pair;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import sistemagestion.model.Alerta;
 import sistemagestion.model.EstadoAlerta;
 import sistemagestion.model.Usuario;
+import sistemagestion.service.AdminDashboardStatsService;
 import sistemagestion.service.AlertaService;
 import sistemagestion.service.NotificacionService;
-
 import sistemagestion.service.UsuarioService;
+import static sistemagestion.view.AppColors.BG;
+import static sistemagestion.view.AppColors.BLUE;
+import static sistemagestion.view.AppColors.GRAY_TEXT;
+import static sistemagestion.view.AppColors.RED_LIGHT;
+import static sistemagestion.view.AppColors.ORANGE;
+import static sistemagestion.view.AppColors.GREEN;
+import static sistemagestion.view.AppColors.RED;
+import static sistemagestion.view.AppColors.TEXT_PRIMARY;
+import static sistemagestion.view.AppDimensions.ICON_BOX_SM;
+import static sistemagestion.view.AppDimensions.MAX_ALERTAS_PANEL;
+import static sistemagestion.view.UIFactory.label;
+import static sistemagestion.view.UIFactory.separator;
+import static sistemagestion.view.UIFactory.shadow;
 
+
+
+
+/**
+ * Vista principal del administrador.
+ *
+ * Principio SOLID:
+ *  SRP — solo orquesta el dashboard admin; delega construcción a builders.
+ *  DIP — depende de IDashboardStatsService, no de implementaciones concretas.
+ *  OCP — la navegación se extiende en NavigationRegistry sin tocar este archivo.
+ *
+ * Patrón GRASP:
+ *  Controller — coordina interacción entre servicios y vistas.
+ *  Creator — crea sus dependencias y las inyecta en el registry.
+ */
 public class AdministradorApp {
 
-    // ── Colores principales ───────────────────────────────────────
-    private static final String WHITE = "#ffffff";
-    private static final String BG = "#f8fafc";
-    private static final String RED = "#e53935";
-    private static final String RED_LIGHT = "#fff0f0";
-    private static final String ORANGE = "#fb8c00";
-    private static final String GREEN = "#43a047";
-    private static final String BLUE = "#1565c0";
-    private static final String GRAY_TEXT = "#6b7280";
-    private static final String BORDER = "#e5e7eb";
+    // ── Dependencias ──────────────────────────────────────────────
+    private final Usuario                  usuarioLogueado;
+    private final AlertaService            alertaService;
+    private final UsuarioService           usuarioService;
+    private final NotificacionService      notificacionService;
+    private final AdminDashboardStatsService statsService;
 
-    // ── Colores de texto ──────────────────────────────────────────
-    private static final String TEXT_PRIMARY = "#111827";
-    private static final String TEXT_SECONDARY = "#374151";
-
-    // ── Colores de estado de alerta ───────────────────────────────
-    private static final String COLOR_EN_ATENCION = "#7b1fa2";
-    private static final String COLOR_UNIDAD_ASIGNADA = "#0288d1";
-
-    // ── Colores del sidebar ───────────────────────────────────────
-    private static final String SIDEBAR_BG_START = "#16283d";
-    private static final String SIDEBAR_BG_END = "#1f3a56";
-    private static final String SIDEBAR_AVATAR_BG = "#334155";
-    private static final String SIDEBAR_NAV_TEXT = "#8899bb";
-    private static final String SIDEBAR_HOVER = "#ffffff18";
-    private static final String SIDEBAR_ACTIVE = "#ffffff22";
-    private static final String SIDEBAR_LOGOUT_HOVER = "#ffffff15";
-
-    // ── Sombra ────────────────────────────────────────────────────
-    private static final String SHADOW_COLOR = "#0000001a";
-
-    // ── Dimensiones ───────────────────────────────────────────────
-    private static final double SIDEBAR_WIDTH = 250;
-    private static final double ICON_BOX_SM = 36;
-    private static final double LOGOUT_ICON_SIZE = 70;
-    private static final double PLACEHOLDER_MSG_SIZE = 18;
-    private static final double SEPARATOR_HEIGHT = 1;
-    // ── Nuevos campos de clase ────────────────────────────────────
-    private static final double SIDEBAR_EXPANDED_A = 250;
-    private static final double SIDEBAR_COLLAPSED_A = 60;
-    private VBox sidebarVBox;
-    private VBox logoTextAdminApp;
-    private Label logoutTextAdminApp;
-    private Label bellBadge;
-    private int pendingCount;
-
-    // ── Límites de listas ─────────────────────────────────────────
-    private static final int MAX_ALERTAS_PANEL = 4;
-
-    // ── Servicios ─────────────────────────────────────────────────
+    // ── UI principal ──────────────────────────────────────────────
     private BorderPane root;
-    private VBox nav;
-    private Usuario usuarioLogueado;
 
-    private AlertaService alertaService;
-    private UsuarioService usuarioService;
-    private NotificacionService notificacionService;
+    // ── Registro de navegación (OCP) ──────────────────────────────
+    private NavigationRegistry navRegistry;
 
     public AdministradorApp(Usuario usuario) {
         this.usuarioLogueado = usuario;
-        try {
-            alertaService = new AlertaService();
-            usuarioService = new UsuarioService();
-            notificacionService = new NotificacionService();
-        } catch (Exception e) {
-            mostrarAlerta("Error de conexión", e.getMessage());
-        }
+        AlertaService         tmpAlerta = null;
+        UsuarioService        tmpUsuario = null;
+        NotificacionService   tmpNotif  = null;
+
+        try { tmpAlerta  = new AlertaService();       } catch (Exception e) { showError(e); }
+        try { tmpUsuario = new UsuarioService();       } catch (Exception e) { showError(e); }
+        try { tmpNotif   = new NotificacionService(); } catch (Exception e) { showError(e); }
+
+        this.alertaService       = tmpAlerta;
+        this.usuarioService      = tmpUsuario;
+        this.notificacionService = tmpNotif;
+        this.statsService        = new AdminDashboardStatsService(alertaService, usuarioService);
+    }
+
+    // ── Constructor con inyección de dependencias (DIP) ───────────
+    public AdministradorApp(Usuario usuario,
+                             AlertaService alertaService,
+                             UsuarioService usuarioService,
+                             NotificacionService notificacionService) {
+        this.usuarioLogueado    = usuario;
+        this.alertaService      = alertaService;
+        this.usuarioService     = usuarioService;
+        this.notificacionService = notificacionService;
+        this.statsService       = new AdminDashboardStatsService(alertaService, usuarioService);
     }
 
     public void show(Stage stage) {
         Font.loadFont(getClass().getResourceAsStream("/fa-solid-900.ttf"), 20);
+
         root = new BorderPane();
         root.setPrefSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-        sidebarVBox = buildSidebarInner();
+        // ── Registro de rutas (OCP: agregar sección = 1 línea aquí) ──
+        navRegistry = new NavigationRegistry()
+                .register("Dashboard",      this::buildMainContent)
+                .register("Usuarios",       () -> new UsuariosAdminView().getView())
+                .register("Alertas",        () -> new AlertasAdminView(alertaService).getView())
+                .register("Alarmas",        () -> { new MapaAlarmasRegistradas().mostrar(); return root.getCenter(); })
+                .register("Comunas",        () -> new ComunaAdminView().getView())
+                .register("Barrios",        () -> new BarrioAdminView().getView())
+                .register("Tipos",          () -> new TiposAdminView().getView())
+                .register("Notificaciones", () -> new NotificacionesAdminView(notificacionService).getView())
+                .register("Reportes",       this::buildReportesView)
+                .register("Estadísticas",   () -> new EstadisticasAdminView().getView())
+                .register("Configuración",  () -> new ConfiguracionAdminView(usuarioLogueado).getView());
 
-        ScrollPane sidebarScroll = new ScrollPane(sidebarVBox);
-        sidebarVBox.prefHeightProperty().bind(sidebarScroll.heightProperty());
-        sidebarScroll.setFitToWidth(true);
-        sidebarScroll.setFitToHeight(true);
-        sidebarScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        sidebarScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        sidebarScroll.setStyle(
-                "-fx-background: #16283d;"
-                + "-fx-background-color: #16283d;"
-                + "-fx-border-color: transparent;"
-                + "-fx-padding: 0;");
+        // ── Sidebar (reutilizando SidebarBuilder) ─────────────────
+        List<SidebarConfig.NavEntry> entries = List.of(
+                new SidebarConfig.NavEntry("\uf3fd", "Dashboard",      () -> navigate("Dashboard")),
+                new SidebarConfig.NavEntry("\uf0c0", "Usuarios",       () -> navigate("Usuarios")),
+                new SidebarConfig.NavEntry("\uf0f3", "Alertas",        () -> navigate("Alertas")),
+                new SidebarConfig.NavEntry("\uf0a1", "Alarmas",        () -> navigate("Alarmas")),
+                new SidebarConfig.NavEntry("\uf041", "Comunas",        () -> navigate("Comunas")),
+                new SidebarConfig.NavEntry("\uf015", "Barrios",        () -> navigate("Barrios")),
+                new SidebarConfig.NavEntry("\uf0cb", "Tipos",          () -> navigate("Tipos")),
+                new SidebarConfig.NavEntry("\uf1f6", "Notificaciones", () -> navigate("Notificaciones")),
+                new SidebarConfig.NavEntry("\uf080", "Reportes",       () -> navigate("Reportes")),
+                new SidebarConfig.NavEntry("\uf201", "Estadísticas",   () -> navigate("Estadísticas")),
+                new SidebarConfig.NavEntry("\uf013", "Configuración",  () -> navigate("Configuración"))
+        );
 
-        root.setLeft(sidebarScroll);
+        SidebarConfig sidebarConfig = new SidebarConfig(
+                "Panel Administrativo",
+                "Administrador",
+                "Sistema activo",
+                entries,
+                () -> ((Stage) root.getScene().getWindow()).close()
+        );
+
+        root.setLeft(new SidebarBuilder().build(sidebarConfig, getClass()));
         root.setCenter(buildMainContent());
 
         Screen screen = Screen.getPrimary();
-        double w = screen.getVisualBounds().getWidth();
-        double h = screen.getVisualBounds().getHeight();
-
-        Scene scene = new Scene(root, w * 0.85, h * 0.85);
+        Scene scene = new Scene(root,
+                screen.getVisualBounds().getWidth()  * 0.85,
+                screen.getVisualBounds().getHeight() * 0.85);
         stage.setTitle("WolertApp – Panel Administrativo");
         stage.setScene(scene);
         stage.setResizable(true);
@@ -146,275 +166,16 @@ public class AdministradorApp {
         stage.show();
     }
 
-    public void start(Stage stage) {
-        show(stage);
+    public void start(Stage stage) { show(stage); }
+
+    // ── Navegación centralizada (Controller) ─────────────────────
+    private void navigate(String label) {
+        Node view = navRegistry.navigate(label);
+        if (view != null) root.setCenter(view);
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // SIDEBAR
-    // ═══════════════════════════════════════════════════════════════
-    private VBox buildSidebarInner() {
-        sidebarVBox = new VBox();
-        sidebarVBox.setPrefWidth(SIDEBAR_COLLAPSED_A);
-        sidebarVBox.setMinWidth(SIDEBAR_COLLAPSED_A);
-        sidebarVBox.setMaxWidth(SIDEBAR_COLLAPSED_A);
-        sidebarVBox.setStyle("-fx-background-color: linear-gradient(to right, "
-                + SIDEBAR_BG_START + ", " + SIDEBAR_BG_END + ");");
-
-        // ── Logo ──────────────────────────────────────────────────
-        HBox logoBox = new HBox(10);
-        logoBox.setPadding(new Insets(20, 8, 20, 8));
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        javafx.scene.shape.Rectangle logoClip
-                = new javafx.scene.shape.Rectangle(SIDEBAR_EXPANDED_A, 80);
-        logoBox.setClip(logoClip);
-
-        ImageView logoImg = new ImageView(
-                new Image(getClass().getResourceAsStream("/LogoWolertAPP.png")));
-        logoImg.setFitWidth(44);
-        logoImg.setFitHeight(44);
-        logoImg.setPreserveRatio(true);
-
-        logoTextAdminApp = new VBox(2);
-        logoTextAdminApp.getChildren().addAll(
-                label("WolertApp", 15, WHITE, true),
-                label("Panel Administrativo", 9, SIDEBAR_NAV_TEXT, false));
-        logoTextAdminApp.setVisible(false);
-        logoTextAdminApp.setManaged(false);
-        logoBox.getChildren().addAll(new StackPane(logoImg), logoTextAdminApp);
-
-        // ── Admin card ────────────────────────────────────────────
-        HBox adminCard = new HBox(12);
-        adminCard.setPadding(new Insets(10, 8, 10, 14));
-        adminCard.setAlignment(Pos.CENTER_LEFT);
-        adminCard.setStyle("-fx-background-color: rgba(255,255,255,0.08);"
-                + "-fx-background-radius: 12;");
-
-        Circle avatar = new Circle(18, Color.web(SIDEBAR_AVATAR_BG));
-        Label avatarLbl = new Label("\uf007");
-        avatarLbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:14px; -fx-text-fill:#a8c0dd;");
-        StackPane avatarBox = new StackPane(avatar, avatarLbl);
-        avatarBox.setMinWidth(28);
-        avatarBox.setMaxWidth(28);
-        avatarBox.setPrefWidth(28);
-
-        VBox adminInfo = new VBox(2);
-        HBox statusRow = new HBox(4);
-        statusRow.setAlignment(Pos.CENTER_LEFT);
-        statusRow.getChildren().addAll(
-                new Circle(4, Color.web(GREEN)),
-                label("Sistema activo", 10, GREEN, false));
-        adminInfo.getChildren().addAll(
-                label("Administrador", 12, WHITE, true),
-                statusRow);
-        adminCard.getChildren().addAll(avatarBox, adminInfo);
-
-        // ── Nav ───────────────────────────────────────────────────
-        nav = new VBox(2);
-        nav.setPadding(new Insets(12, 4, 12, 4));
-        nav.getChildren().addAll(
-                navItem("\uf3fd", "Dashboard"),
-                navItem("\uf0c0", "Usuarios"),
-                navItem("\uf0f3", "Alertas"),
-                navItem("\uf0a1", "Alarmas"),
-                navItem("\uf041", "Comunas"),
-                navItem("\uf015", "Barrios"),
-                navItem("\uf0cb", "Tipos"),
-                navItem("\uf1f6", "Notificaciones"),
-                navItem("\uf080", "Reportes"),
-                navItem("\uf201", "Estadísticas"),
-                navItem("\uf013", "Configuración")
-        );
-
-        VBox spacer = new VBox();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-
-        // ── Logout ────────────────────────────────────────────────
-        HBox logout = new HBox(10);
-        logout.setPadding(new Insets(14, 8, 18, 14));
-        logout.setAlignment(Pos.CENTER_LEFT);
-        logout.setCursor(javafx.scene.Cursor.HAND);
-        logout.setStyle("-fx-background-color: transparent;");
-        logout.setOnMouseEntered(e -> logout.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.15); -fx-background-radius: 8;"));
-        logout.setOnMouseExited(e -> logout.setStyle("-fx-background-color: transparent;"));
-        logout.setOnMouseClicked(e -> ((Stage) root.getScene().getWindow()).close());
-
-        Label logoutIcon = new Label("\uf2f5");
-        logoutIcon.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:14px; -fx-text-fill:" + RED + ";");
-        logoutIcon.setMinWidth(28);
-        logoutIcon.setAlignment(Pos.CENTER);
-
-        logoutTextAdminApp = label("Cerrar sesión", 13, WHITE, true);
-        logoutTextAdminApp.setVisible(false);
-        logoutTextAdminApp.setManaged(false);
-        logout.getChildren().addAll(logoutIcon, logoutTextAdminApp);
-
-        sidebarVBox.getChildren().addAll(logoBox, adminCard, nav, spacer, logout);
-
-        // ── Hover ─────────────────────────────────────────────────
-        sidebarVBox.setOnMouseEntered(e -> setSidebarAdminExpanded(true));
-        sidebarVBox.setOnMouseExited(e -> setSidebarAdminExpanded(false));
-
-        return sidebarVBox;
-    }
-
-    private void setSidebarAdminExpanded(boolean expand) {
-        double target = expand ? SIDEBAR_EXPANDED_A : SIDEBAR_COLLAPSED_A;
-        javafx.animation.Timeline tl = new javafx.animation.Timeline(
-                new javafx.animation.KeyFrame(javafx.util.Duration.millis(180),
-                        new javafx.animation.KeyValue(sidebarVBox.prefWidthProperty(), target,
-                                javafx.animation.Interpolator.EASE_BOTH),
-                        new javafx.animation.KeyValue(sidebarVBox.minWidthProperty(), target,
-                                javafx.animation.Interpolator.EASE_BOTH),
-                        new javafx.animation.KeyValue(sidebarVBox.maxWidthProperty(), target,
-                                javafx.animation.Interpolator.EASE_BOTH)));
-        tl.play();
-
-        if (logoTextAdminApp != null) {
-            logoTextAdminApp.setVisible(expand);
-            logoTextAdminApp.setManaged(expand);
-        }
-        if (logoutTextAdminApp != null) {
-            logoutTextAdminApp.setVisible(expand);
-            logoutTextAdminApp.setManaged(expand);
-        }
-        nav.getChildren().forEach(node -> {
-            if (node instanceof HBox hbox) {
-                hbox.getChildren().forEach(child -> {
-                    if (child instanceof Label lbl && !lbl.getStyle().contains("Font Awesome")) {
-                        lbl.setVisible(expand);
-                        lbl.setManaged(expand);
-                    }
-                });
-            }
-        });
-        // Admin card info
-        sidebarVBox.getChildren().forEach(node -> {
-            if (node instanceof HBox card) {
-                card.getChildren().forEach(child -> {
-                    if (child instanceof VBox vb) {
-                        vb.getChildren().forEach(c -> {
-                            if (c instanceof Label lbl && !lbl.getStyle().contains("Font Awesome")) {
-                                lbl.setVisible(expand);
-                                lbl.setManaged(expand);
-                            }
-                            if (c instanceof HBox row) {
-                                row.getChildren().forEach(rc -> {
-                                    if (rc instanceof Label rl && !rl.getStyle().contains("Font Awesome")) {
-                                        rl.setVisible(expand);
-                                        rl.setManaged(expand);
-                                    }
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    private HBox navItem(String icon, String text) {
-        HBox item = new HBox(10);
-        item.setPadding(new Insets(10, 12, 10, 12));
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.setCursor(javafx.scene.Cursor.HAND);
-        item.setMaxWidth(Double.MAX_VALUE);
-        item.setStyle("-fx-background-radius: 8;");
-
-        item.setOnMouseEntered(e -> item.setStyle(
-                "-fx-background-color: " + SIDEBAR_HOVER + "; -fx-background-radius: 8;"));
-        item.setOnMouseExited(e -> item.setStyle("-fx-background-radius: 8;"));
-
-        Label iconLbl = new Label(icon);
-        iconLbl.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 15px;"
-                + "-fx-text-fill: " + SIDEBAR_NAV_TEXT + ";");
-        iconLbl.setMinWidth(28);
-        iconLbl.setPrefWidth(28);
-        iconLbl.setMaxWidth(28);
-        iconLbl.setAlignment(Pos.CENTER);    // ← centrado horizontal y vertical
-
-        Label textLbl = label(text, 13, SIDEBAR_NAV_TEXT, false);
-        textLbl.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(textLbl, Priority.ALWAYS);
-        item.getChildren().addAll(iconLbl, textLbl);
-
-        item.setOnMouseClicked(e -> {
-            // Resetear todos los ítems
-            nav.getChildren().forEach(node -> {
-                if (node instanceof HBox hbox) {
-                    hbox.setStyle("-fx-background-radius: 8;");
-                    hbox.getChildren().forEach(child -> {
-                        if (child instanceof Label lbl) {
-                            if (lbl.getStyle().contains("Font Awesome")) {
-                                lbl.setStyle(
-                                        "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                                        + "-fx-font-size: 15px;"
-                                        + "-fx-text-fill: " + SIDEBAR_NAV_TEXT + ";");
-                            } else {
-                                lbl.setTextFill(Color.web(SIDEBAR_NAV_TEXT));
-                            }
-                        }
-                    });
-                }
-            });
-
-            // Activar ítem clickeado
-            item.setStyle("-fx-background-color: rgba(255,255,255,0.20); -fx-background-radius: 8;");
-            iconLbl.setStyle(
-                    "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                    + "-fx-font-size: 15px;"
-                    + "-fx-text-fill: white;");
-            textLbl.setTextFill(Color.WHITE);
-
-            switch (text) {
-                case "Dashboard" ->
-                    root.setCenter(buildMainContent());
-                case "Usuarios" ->
-                    root.setCenter(new UsuariosAdminView().getView());
-                case "Alertas" ->
-                    root.setCenter(new AlertasAdminView(alertaService).getView());
-                case "Alarmas" -> {
-                    new MapaAlarmasRegistradas().mostrar();
-                }
-                case "Comunas" ->
-                    root.setCenter(new ComunaAdminView().getView());
-                case "Barrios" ->
-                    root.setCenter(new BarrioAdminView().getView());
-                case "Tipos" ->
-                    root.setCenter(new TiposAdminView().getView());
-                case "Notificaciones" ->
-                    root.setCenter(new NotificacionesAdminView(notificacionService).getView());
-                case "Reportes" -> {
-                    try {
-                        root.setCenter(
-                                new ReportesAdminView(
-                                        new sistemagestion.service.UsuarioService(),
-                                        new sistemagestion.service.AlertaService()
-                                ).build()
-                        );
-                    } catch (Exception ex) {
-                        root.setCenter(buildPlaceholderView("Reportes — Error: " + ex.getMessage()));
-                    }
-                }
-                case "Estadísticas" ->
-                    root.setCenter(new EstadisticasAdminView().getView());
-                case "Configuración" ->
-                    root.setCenter(new ConfiguracionAdminView(usuarioLogueado).getView());
-                default ->
-                    root.setCenter(buildPlaceholderView(text));
-            }
-        });
-
-        return item;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // MAIN CONTENT — dashboard inicio
+    // DASHBOARD PRINCIPAL
     // ═══════════════════════════════════════════════════════════════
     private ScrollPane buildMainContent() {
         VBox content = new VBox(20);
@@ -432,366 +193,78 @@ public class AdministradorApp {
         scroll.setFitToWidth(true);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setStyle("-fx-background-color: " + BG + "; -fx-background: " + BG + ";");
+        scroll.setStyle("-fx-background-color:" + BG + ";-fx-background:" + BG + ";");
         return scroll;
     }
 
-    // ── Top bar ───────────────────────────────────────────────────
+    // ── Top bar con campana ───────────────────────────────────────
     private HBox buildTopBar() {
-        HBox bar = new HBox();
-        bar.setAlignment(Pos.CENTER_LEFT);
-
-        VBox greeting = new VBox(4);
-        Label hello = new Label("Dashboard Administrativo");
-        hello.setFont(Font.font("System", FontWeight.BOLD, 28));
-        hello.setTextFill(Color.web(TEXT_PRIMARY));
-        greeting.getChildren().addAll(
-                hello,
-                label("Panel de control y monitoreo del sistema", 13, GRAY_TEXT, false));
-
-        HBox rightBox = new HBox(16);
-        rightBox.setAlignment(Pos.CENTER_RIGHT);
-        HBox.setHgrow(rightBox, Priority.ALWAYS);
-
-        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern(
-                "d 'de' MMMM 'de' yyyy", new Locale("es", "CO"));
-        DateTimeFormatter timeFmt = DateTimeFormatter.ofPattern(
-                "hh:mm:ss a", new Locale("es", "CO"));
-
-        LocalDateTime now0 = LocalDateTime.now(ZoneId.of("America/Bogota"));
-
-        // Icono calendario FA
-        Label calIco = new Label("\uf073");
-        calIco.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:13px;-fx-text-fill:" + BLUE + ";");
-        Label dateLbl = label(now0.format(dateFmt), 13, TEXT_SECONDARY, false);
-
-        // Icono reloj FA
-        Label clockIco = new Label("\uf017");
-        clockIco.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:13px;-fx-text-fill:" + GRAY_TEXT + ";");
-        Label timeLbl = label(now0.format(timeFmt), 13, GRAY_TEXT, false);
-
-        Timeline clock = new Timeline(new KeyFrame(Duration.seconds(1), ev -> {
-            LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Bogota"));
-            dateLbl.setText(now.format(dateFmt));
-            timeLbl.setText(now.format(timeFmt));
-        }));
-        clock.setCycleCount(Timeline.INDEFINITE);
-        clock.play();
-
-        HBox dateRow = new HBox(6);
-        dateRow.setAlignment(Pos.CENTER_RIGHT);
-        dateRow.getChildren().addAll(calIco, dateLbl);
-
-        HBox timeRow = new HBox(6);
-        timeRow.setAlignment(Pos.CENTER_RIGHT);
-        timeRow.getChildren().addAll(clockIco, timeLbl);
-
-        VBox dateBox = new VBox(4);
-        dateBox.setAlignment(Pos.CENTER_RIGHT);
-        dateBox.getChildren().addAll(dateRow, timeRow);
-
-        // ── Campanita ─────────────────────────────────────────────────
-        List<Alerta> alertasActivas = cargarAlertas().stream()
+        // Alertas activas para el popup
+        List<Alerta> alertasActivas = statsService.cargarAlertas().stream()
                 .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                || a.getEstado() == EstadoAlerta.RECIBIDA
-                || a.getEstado() == EstadoAlerta.EN_ATENCION
-                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
+                        || a.getEstado() == EstadoAlerta.RECIBIDA
+                        || a.getEstado() == EstadoAlerta.EN_ATENCION
+                        || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
                 .sorted((a, b) -> b.getFechaHora() != null && a.getFechaHora() != null
-                ? b.getFechaHora().compareTo(a.getFechaHora()) : 0)
-                .limit(4)
+                        ? b.getFechaHora().compareTo(a.getFechaHora()) : 0)
+                .limit(MAX_ALERTAS_PANEL)
                 .collect(Collectors.toList());
 
+        // Notificaciones para el popup
         List<sistemagestion.model.Notificacion> ultimasNotifs = List.of();
         if (notificacionService != null) {
             try {
                 ultimasNotifs = notificacionService.listar().stream()
                         .sorted((a, b) -> b.getFechahora() != null && a.getFechahora() != null
-                        ? b.getFechahora().compareTo(a.getFechahora()) : 0)
-                        .limit(3)
-                        .collect(Collectors.toList());
-            } catch (Exception ignored) {
-            }
+                                ? b.getFechahora().compareTo(a.getFechahora()) : 0)
+                        .limit(3).collect(Collectors.toList());
+            } catch (Exception ignored) {}
         }
 
-        int totalBadge = (int) contarAlertasActivas() + ultimasNotifs.size();
+        // Construir secciones del popup (usando NotificationBellBuilder)
+        List<NotificationBellBuilder.PopupRow> alertRows = alertasActivas.stream()
+                .map(a -> new NotificationBellBuilder.PopupRow(
+                        AlertaColorResolver.getColor(a.getEstado()),
+                        (a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta")
+                                + " — " + (a.getBarrio() != null ? a.getBarrio().getNombre() : "—"),
+                        (a.getEstado() != null ? a.getEstado().name().replace("_", " ") : "—")
+                                + "  ·  " + (a.getFechaHora() != null
+                                ? a.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "—"),
+                        () -> root.setCenter(new AlertasAdminView(alertaService).getView())
+                )).collect(Collectors.toList());
 
-        // Botón campana
-        StackPane bell = new StackPane();
-        bell.setCursor(javafx.scene.Cursor.HAND);
+        final List<sistemagestion.model.Notificacion> notifsFinal = ultimasNotifs;
+        List<NotificationBellBuilder.PopupRow> notifRows = notifsFinal.stream()
+                .map(n -> {
+                    String msg = n.getMensaje() != null
+                            ? (n.getMensaje().length() > 40 ? n.getMensaje().substring(0, 40) + "…" : n.getMensaje())
+                            : "—";
+                    String fecha = n.getFechahora() != null
+                            ? n.getFechahora().format(DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "—";
+                    return new NotificationBellBuilder.PopupRow(
+                            BLUE, msg,
+                            (n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "—") + "  ·  " + fecha,
+                            () -> root.setCenter(new NotificacionesAdminView(notificacionService).getView())
+                    );
+                }).collect(Collectors.toList());
 
-        Region bellBg = new Region();
-        bellBg.setPrefSize(40, 40);
-        bellBg.setStyle(
-                "-fx-background-color:white;"
-                + "-fx-background-radius:50%;"
-                + "-fx-border-color:#e5e7eb;"
-                + "-fx-border-radius:50%;"
-                + "-fx-border-width:1.5;");
+        List<NotificationBellBuilder.PopupSection> sections = List.of(
+                new NotificationBellBuilder.PopupSection("\uf0f3", RED,  "Alertas activas",             alertRows),
+                new NotificationBellBuilder.PopupSection("\uf1f6", BLUE, "Notificaciones de usuarios",  notifRows)
+        );
 
-        Label bellIco = new Label("\uf0f3");
-        bellIco.setStyle(
-                "-fx-font-family:'Font Awesome 6 Free Solid';"
-                + "-fx-font-size:16px;-fx-text-fill:#374151;");
-        pendingCount = totalBadge;
-        bellBadge = new Label(pendingCount > 9 ? "9+" : String.valueOf(pendingCount));
-        bellBadge.setStyle(
-                "-fx-background-color:#e53935;-fx-text-fill:white;"
-                + "-fx-font-size:9px;-fx-font-weight:bold;"
-                + "-fx-background-radius:20;-fx-padding:1 4;");
-        bellBadge.setTranslateX(10);
-        bellBadge.setTranslateY(-10);
-        bellBadge.setVisible(pendingCount > 0);
+        List<Pair<String, Runnable>> footerActions = List.of(
+                new Pair<>("Ver alertas",        () -> root.setCenter(new AlertasAdminView(alertaService).getView())),
+                new Pair<>("Ver notificaciones",  () -> root.setCenter(new NotificacionesAdminView(notificacionService).getView()))
+        );
 
-        bell.getChildren().addAll(bellBg, bellIco, bellBadge);
+        int badge = alertasActivas.size() + notifsFinal.size();
+        javafx.scene.layout.StackPane bell = NotificationBellBuilder.build(badge, sections, footerActions);
 
-        bell.setOnMouseEntered(e -> bellBg.setStyle(
-                "-fx-background-color:#f0f7ff;"
-                + "-fx-background-radius:50%;"
-                + "-fx-border-color:#1565c0;"
-                + "-fx-border-radius:50%;"
-                + "-fx-border-width:1.5;"));
-        bell.setOnMouseExited(e -> bellBg.setStyle(
-                "-fx-background-color:white;"
-                + "-fx-background-radius:50%;"
-                + "-fx-border-color:#e5e7eb;"
-                + "-fx-border-radius:50%;"
-                + "-fx-border-width:1.5;"));
-
-        // Popup
-        javafx.stage.Popup popup = new javafx.stage.Popup();
-        popup.setAutoHide(true);
-
-        VBox popupBox = new VBox(0);
-        popupBox.setPrefWidth(330);
-        popupBox.setStyle(
-                "-fx-background-color:white;"
-                + "-fx-background-radius:14;"
-                + "-fx-border-color:#e5e7eb;"
-                + "-fx-border-radius:14;"
-                + "-fx-border-width:1;"
-                + "-fx-effect:dropshadow(gaussian,rgba(15,23,42,0.18),24,0,0,8);");
-
-        // Header popup
-        HBox popHeader = new HBox(8);
-        popHeader.setPadding(new Insets(14, 16, 12, 16));
-        popHeader.setAlignment(Pos.CENTER_LEFT);
-        popHeader.setStyle(
-                "-fx-background-color:#f8fafc;"
-                + "-fx-background-radius:14 14 0 0;"
-                + "-fx-border-color:transparent transparent #e5e7eb transparent;"
-                + "-fx-border-width:0 0 1 0;");
-
-        Label popTitle = new Label("Notificaciones del sistema");
-        popTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
-        popTitle.setTextFill(Color.web(TEXT_PRIMARY));
-        HBox.setHgrow(popTitle, Priority.ALWAYS);
-
-        Label popBadge = new Label(totalBadge + " nuevas");
-        popBadge.setStyle(
-                "-fx-background-color:#e5393522;"
-                + "-fx-text-fill:#e53935;"
-                + "-fx-font-size:11px;-fx-font-weight:bold;"
-                + "-fx-background-radius:20;-fx-padding:3 8;");
-        popHeader.getChildren().addAll(popTitle, popBadge);
-        popupBox.getChildren().add(popHeader);
-
-        // Sección alertas activas
-        if (!alertasActivas.isEmpty()) {
-            HBox secAlertasBox = new HBox(6);
-            secAlertasBox.setPadding(new Insets(8, 16, 6, 16));
-            secAlertasBox.setAlignment(Pos.CENTER_LEFT);
-            secAlertasBox.setMaxWidth(Double.MAX_VALUE);
-            secAlertasBox.setStyle("-fx-background-color:#f9fafb;");
-            Label secAlertaIco = new Label("\uf0f3");
-            secAlertaIco.setStyle(
-                    "-fx-font-family:'Font Awesome 6 Free Solid';"
-                    + "-fx-font-size:11px;-fx-text-fill:" + RED + ";");
-            Label secAlertaTxt = new Label("Alertas activas");
-            secAlertaTxt.setFont(Font.font("System", FontWeight.BOLD, 11));
-            secAlertaTxt.setTextFill(Color.web(GRAY_TEXT));
-            secAlertasBox.getChildren().addAll(secAlertaIco, secAlertaTxt);
-            popupBox.getChildren().add(secAlertasBox);
-
-            for (Alerta a : alertasActivas) {
-                String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-                String barrio = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
-                String fecha = a.getFechaHora() != null
-                        ? a.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "—";
-                String estadoStr = a.getEstado() != null
-                        ? a.getEstado().name().replace("_", " ") : "—";
-                String dotColor = colorEstado(a.getEstado());
-
-                HBox fila = new HBox(10);
-                fila.setPadding(new Insets(10, 16, 10, 16));
-                fila.setAlignment(Pos.CENTER_LEFT);
-                fila.setStyle("-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;");
-                fila.setOnMouseEntered(e -> fila.setStyle(
-                        "-fx-background-color:#f0f4ff;"
-                        + "-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;-fx-cursor:hand;"));
-                fila.setOnMouseExited(e -> fila.setStyle(
-                        "-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;"));
-                fila.setOnMouseClicked(e -> {
-                    popup.hide();
-                    root.setCenter(new AlertasAdminView(alertaService).getView());
-                });
-
-                Circle dot = new Circle(5, Color.web(dotColor));
-
-                VBox info = new VBox(2);
-                HBox.setHgrow(info, Priority.ALWAYS);
-
-                Label tituloLbl = new Label(tipo + " — " + barrio);
-                tituloLbl.setFont(Font.font("System", FontWeight.BOLD, 12));
-                tituloLbl.setTextFill(Color.web(TEXT_PRIMARY));
-
-                Label subLbl = new Label(estadoStr + "  ·  " + fecha);
-                subLbl.setFont(Font.font("System", 11));
-                subLbl.setTextFill(Color.web(GRAY_TEXT));
-
-                info.getChildren().addAll(tituloLbl, subLbl);
-                fila.getChildren().addAll(dot, info);
-                popupBox.getChildren().add(fila);
-            }
-        }
-
-        // Sección notificaciones de usuarios
-        final List<sistemagestion.model.Notificacion> ultimasNotifsF = ultimasNotifs;
-        if (!ultimasNotifsF.isEmpty()) {
-            HBox secNotifBox = new HBox(6);
-            secNotifBox.setPadding(new Insets(8, 16, 6, 16));
-            secNotifBox.setAlignment(Pos.CENTER_LEFT);
-            secNotifBox.setMaxWidth(Double.MAX_VALUE);
-            secNotifBox.setStyle("-fx-background-color:#f9fafb;");
-            Label secNotifIco = new Label("\uf1f6");
-            secNotifIco.setStyle(
-                    "-fx-font-family:'Font Awesome 6 Free Solid';"
-                    + "-fx-font-size:11px;-fx-text-fill:" + BLUE + ";");
-            Label secNotifTxt = new Label("Notificaciones de usuarios");
-            secNotifTxt.setFont(Font.font("System", FontWeight.BOLD, 11));
-            secNotifTxt.setTextFill(Color.web(GRAY_TEXT));
-            secNotifBox.getChildren().addAll(secNotifIco, secNotifTxt);
-            popupBox.getChildren().add(secNotifBox);
-
-            for (sistemagestion.model.Notificacion n : ultimasNotifsF) {
-                String mensaje = n.getMensaje() != null
-                        ? (n.getMensaje().length() > 40
-                        ? n.getMensaje().substring(0, 40) + "…" : n.getMensaje()) : "—";
-                String dest = n.getCorreodestinatario() != null ? n.getCorreodestinatario() : "—";
-                String fecha = n.getFechahora() != null
-                        ? n.getFechahora().format(DateTimeFormatter.ofPattern("dd/MM HH:mm")) : "—";
-
-                HBox fila = new HBox(10);
-                fila.setPadding(new Insets(10, 16, 10, 16));
-                fila.setAlignment(Pos.CENTER_LEFT);
-                fila.setStyle("-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;");
-                fila.setOnMouseEntered(e -> fila.setStyle(
-                        "-fx-background-color:#f0f4ff;"
-                        + "-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;-fx-cursor:hand;"));
-                fila.setOnMouseExited(e -> fila.setStyle(
-                        "-fx-border-color:transparent transparent #f3f4f6 transparent;"
-                        + "-fx-border-width:0 0 1 0;"));
-                fila.setOnMouseClicked(e -> {
-                    popup.hide();
-                    root.setCenter(new NotificacionesAdminView(notificacionService).getView());
-                });
-
-                Circle dot = new Circle(5, Color.web(BLUE));
-
-                VBox info = new VBox(2);
-                HBox.setHgrow(info, Priority.ALWAYS);
-
-                Label tituloLbl = new Label(mensaje);
-                tituloLbl.setFont(Font.font("System", FontWeight.BOLD, 12));
-                tituloLbl.setTextFill(Color.web(TEXT_PRIMARY));
-
-                Label subLbl = new Label(dest + "  ·  " + fecha);
-                subLbl.setFont(Font.font("System", 11));
-                subLbl.setTextFill(Color.web(GRAY_TEXT));
-
-                info.getChildren().addAll(tituloLbl, subLbl);
-                fila.getChildren().addAll(dot, info);
-                popupBox.getChildren().add(fila);
-            }
-        }
-
-        // Vacío
-        if (alertasActivas.isEmpty() && ultimasNotifs.isEmpty()) {
-            VBox vacio = new VBox(8);
-            vacio.setAlignment(Pos.CENTER);
-            vacio.setPadding(new Insets(28));
-
-            StackPane icoVacioWrap = new StackPane();
-            icoVacioWrap.setPrefSize(56, 56);
-            Region icoVacioBg = new Region();
-            icoVacioBg.setPrefSize(56, 56);
-            icoVacioBg.setStyle("-fx-background-color:#f1f5f9;-fx-background-radius:50%;");
-            Label icoVacio = new Label("\uf1f6");
-            icoVacio.setStyle(
-                    "-fx-font-family:'Font Awesome 6 Free Solid';"
-                    + "-fx-font-size:24px;-fx-text-fill:#94a3b8;");
-            icoVacioWrap.getChildren().addAll(icoVacioBg, icoVacio);
-
-            Label msgVacio = new Label("Sin notificaciones nuevas");
-            msgVacio.setStyle("-fx-font-size:13px;-fx-text-fill:" + GRAY_TEXT + ";");
-            vacio.getChildren().addAll(icoVacioWrap, msgVacio);
-            popupBox.getChildren().add(vacio);
-        }
-
-        // Footer popup
-        HBox popFooter = new HBox(24);
-        popFooter.setPadding(new Insets(10, 16, 12, 16));
-        popFooter.setAlignment(Pos.CENTER);
-        popFooter.setStyle(
-                "-fx-background-color:#f8fafc;"
-                + "-fx-background-radius:0 0 14 14;"
-                + "-fx-border-color:#e5e7eb transparent transparent transparent;"
-                + "-fx-border-width:1 0 0 0;");
-
-        Label verAlertas = new Label("Ver alertas  →");
-        verAlertas.setStyle("-fx-font-size:12px;-fx-font-weight:bold;-fx-text-fill:" + RED + ";");
-        verAlertas.setCursor(javafx.scene.Cursor.HAND);
-        verAlertas.setOnMouseClicked(e -> {
-            popup.hide();
-            root.setCenter(new AlertasAdminView(alertaService).getView());
-        });
-
-        Label verNotifs = new Label("Ver notificaciones  →");
-        verNotifs.setStyle("-fx-font-size:12px;-fx-font-weight:bold;-fx-text-fill:" + BLUE + ";");
-        verNotifs.setCursor(javafx.scene.Cursor.HAND);
-        verNotifs.setOnMouseClicked(e -> {
-            popup.hide();
-            root.setCenter(new NotificacionesAdminView(notificacionService).getView());
-        });
-
-        popFooter.getChildren().addAll(verAlertas, verNotifs);
-        popupBox.getChildren().add(popFooter);
-        popup.getContent().add(popupBox);
-
-        bell.setOnMouseClicked(e -> {
-            if (popup.isShowing()) {
-                popup.hide();
-            } else {
-                // ── Limpiar badge al ver notificaciones ──
-                pendingCount = 0;
-                bellBadge.setVisible(false);
-
-                javafx.geometry.Bounds b = bell.localToScreen(bell.getBoundsInLocal());
-                popup.show(bell, b.getMaxX() - 330, b.getMaxY() + 8);
-            }
-        });
-
-        rightBox.getChildren().addAll(dateBox, bell);
-        bar.getChildren().addAll(greeting, rightBox);
-        return bar;
+        return TopBarBuilder.build(
+                "Dashboard Administrativo",
+                "Panel de control y monitoreo del sistema",
+                bell);
     }
 
     // ── Stats ─────────────────────────────────────────────────────
@@ -800,273 +273,152 @@ public class AdministradorApp {
         row.setFillHeight(true);
         HBox.setHgrow(row, Priority.ALWAYS);
 
-        long totalUsuarios = contarUsuarios();
-        long alertasActivas = contarAlertasActivas();
-        long incidentes = contarIncidentes();
-        long resueltas = contarAlertasResueltas();
-
         row.getChildren().addAll(
-                statCard("#e8f0fe", "#1565c0", "\uf0c0",
-                        "Usuarios registrados", String.valueOf(totalUsuarios), "Total en el sistema"),
-                statCard("#fff0f0", "#e53935", "\uf0f3",
-                        "Alertas activas", String.valueOf(alertasActivas), "En este momento"),
-                statCard("#fff8e1", "#fb8c00", "\uf201",
-                        "Incidentes", String.valueOf(incidentes), "Pendientes de atención"),
-                statCard("#e8f5e9", "#43a047", "\uf058",
-                        "Resueltos", String.valueOf(resueltas), "Total histórico"));
+                statCard("#e8f0fe", BLUE,   "\uf0c0", "Usuarios registrados",
+                        String.valueOf(statsService.getTotalUsuarios()), "Total en el sistema"),
+                statCard(RED_LIGHT, RED,    "\uf0f3", "Alertas activas",
+                        String.valueOf(statsService.getAlertasActivas()), "En este momento"),
+                statCard("#fff8e1", ORANGE, "\uf201", "Incidentes",
+                        String.valueOf(statsService.getIncidentes()), "Pendientes de atención"),
+                statCard("#e8f5e9", GREEN,  "\uf058", "Resueltos",
+                        String.valueOf(statsService.getAlertasResueltas()), "Total histórico")
+        );
         return row;
     }
 
-    // ── Paneles: alertas recientes + actividad reciente ───────────
+    // ── Paneles inferiores ────────────────────────────────────────
     private HBox buildBottomPanels() {
         HBox bottom = new HBox(20);
         HBox.setHgrow(bottom, Priority.ALWAYS);
         bottom.setFillHeight(true);
-
-        // ── Panel izquierdo — Alertas recientes ───────────────────────
-        VBox alertsPanel = new VBox(12);
-        alertsPanel.setPadding(new Insets(20));
-        alertsPanel.setStyle("-fx-background-color: white; -fx-background-radius: 16;");
-        HBox.setHgrow(alertsPanel, Priority.ALWAYS);
-        alertsPanel.setMaxWidth(Double.MAX_VALUE);
-        alertsPanel.setMaxHeight(Double.MAX_VALUE);
-        shadow(alertsPanel);
-
-        HBox headerAlertas = new HBox();
-        headerAlertas.setAlignment(Pos.CENTER_LEFT);
-
-        HBox titleRowAlertas = new HBox(8);
-        titleRowAlertas.setAlignment(Pos.CENTER_LEFT);
-
-        StackPane iconBoxAlertas = new StackPane();
-        iconBoxAlertas.setPrefSize(32, 32);
-        iconBoxAlertas.setMinSize(32, 32);
-        iconBoxAlertas.setMaxSize(32, 32);
-        iconBoxAlertas.setStyle("-fx-background-color: #fff0f0; -fx-background-radius: 8;");
-        Label iconLblAlertas = new Label("\uf0f3");
-        iconLblAlertas.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 16px; -fx-text-fill: #e53935;");
-        iconBoxAlertas.getChildren().add(iconLblAlertas);
-
-        titleRowAlertas.getChildren().addAll(
-                iconBoxAlertas,
-                label("Alertas recientes", 15, TEXT_PRIMARY, true));
-        HBox.setHgrow(titleRowAlertas, Priority.ALWAYS);
-
-        Label verTodas = label("Ver todas  >", 12, BLUE, false);
-        verTodas.setCursor(javafx.scene.Cursor.HAND);
-        verTodas.setOnMouseClicked(e
-                -> root.setCenter(new AlertasAdminView(alertaService).getView()));
-
-        headerAlertas.getChildren().addAll(titleRowAlertas, verTodas);
-        alertsPanel.getChildren().addAll(headerAlertas, separator());
-
-        List<Alerta> alertas = cargarAlertas();
-        List<Alerta> ultimas = alertas.stream()
-                .sorted((a, b) -> {
-                    if (a.getFechaHora() == null || b.getFechaHora() == null) {
-                        return 0;
-                    }
-                    return b.getFechaHora().compareTo(a.getFechaHora());
-                })
-                .limit(MAX_ALERTAS_PANEL)
-                .collect(Collectors.toList());
-
-        if (ultimas.isEmpty()) {
-            alertsPanel.getChildren().add(label("Sin alertas registradas.", 13, GRAY_TEXT, false));
-        } else {
-            boolean primero = true;
-            for (Alerta a : ultimas) {
-                if (!primero) {
-                    alertsPanel.getChildren().add(separator());
-                }
-                primero = false;
-                String titulo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-                String barrio = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
-                String usuario = a.getUsuario() != null ? a.getUsuario().getPrimer_nombre() : "—";
-                alertsPanel.getChildren().add(
-                        alertItem(iconAlerta(a), titulo + " en " + barrio,
-                                "Reportado por " + usuario, colorEstado(a.getEstado())));
-            }
-        }
-
-        // ── Panel derecho — Actividad reciente ────────────────────────
-        VBox actividadPanel = new VBox(12);
-        actividadPanel.setPadding(new Insets(20));
-        actividadPanel.setStyle("-fx-background-color: white; -fx-background-radius: 16;");
-        HBox.setHgrow(actividadPanel, Priority.ALWAYS);
-        actividadPanel.setMaxWidth(Double.MAX_VALUE);
-        actividadPanel.setMaxHeight(Double.MAX_VALUE);
-        shadow(actividadPanel);
-
-        HBox headerActividad = new HBox(8);
-        headerActividad.setAlignment(Pos.CENTER_LEFT);
-
-        StackPane iconBoxAct = new StackPane();
-        iconBoxAct.setPrefSize(32, 32);
-        iconBoxAct.setMinSize(32, 32);
-        iconBoxAct.setMaxSize(32, 32);
-        iconBoxAct.setStyle("-fx-background-color: #e8f0fe; -fx-background-radius: 8;");
-        Label iconLblAct = new Label("\uf017");
-        iconLblAct.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 16px; -fx-text-fill: #1565c0;");
-        iconBoxAct.getChildren().add(iconLblAct);
-
-        headerActividad.getChildren().addAll(
-                iconBoxAct,
-                label("Actividad reciente", 15, TEXT_PRIMARY, true));
-        actividadPanel.getChildren().addAll(headerActividad, separator());
-
-        List<Alerta> recientes = alertas.stream()
-                .sorted((a, b) -> {
-                    if (a.getFechaHora() == null || b.getFechaHora() == null) {
-                        return 0;
-                    }
-                    return b.getFechaHora().compareTo(a.getFechaHora());
-                })
-                .limit(MAX_ALERTAS_PANEL)
-                .collect(Collectors.toList());
-
-        if (recientes.isEmpty()) {
-            actividadPanel.getChildren().add(label("Sin actividad reciente.", 13, GRAY_TEXT, false));
-        } else {
-            boolean primero = true;
-            for (Alerta a : recientes) {
-                if (!primero) {
-                    actividadPanel.getChildren().add(separator());
-                }
-                primero = false;
-                String tipo = a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta";
-                String barrio = a.getBarrio() != null ? a.getBarrio().getNombre() : "—";
-                String fecha = a.getFechaHora() != null ? a.getFechaHora().toLocalDate().toString() : "—";
-                actividadPanel.getChildren().add(
-                        listItem("\uf0f3", tipo + " — " + barrio, fecha, colorEstado(a.getEstado())));
-            }
-        }
-
-        bottom.getChildren().addAll(alertsPanel, actividadPanel);
+        bottom.getChildren().addAll(buildAlertasPanel(), buildActividadPanel());
         return bottom;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // HELPERS — consultas a servicios
-    // ═══════════════════════════════════════════════════════════════
-    private List<Alerta> cargarAlertas() {
-        if (alertaService == null) {
-            return List.of();
+    private VBox buildAlertasPanel() {
+        VBox panel = new VBox(12);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color:white;-fx-background-radius:16;");
+        HBox.setHgrow(panel, Priority.ALWAYS);
+        shadow(panel);
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        HBox titleRow = new HBox(8);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+        StackPane iconBox = iconBox(RED_LIGHT, "\uf0f3", RED, 32);
+        titleRow.getChildren().addAll(iconBox, label("Alertas recientes", 15, TEXT_PRIMARY, true));
+        HBox.setHgrow(titleRow, Priority.ALWAYS);
+
+        Label verTodas = label("Ver todas  >", 12, BLUE, false);
+        verTodas.setCursor(javafx.scene.Cursor.HAND);
+        verTodas.setOnMouseClicked(e -> root.setCenter(new AlertasAdminView(alertaService).getView()));
+
+        header.getChildren().addAll(titleRow, verTodas);
+        panel.getChildren().addAll(header, separator());
+
+        List<Alerta> ultimas = statsService.cargarAlertas().stream()
+                .sorted((a, b) -> a.getFechaHora() != null && b.getFechaHora() != null
+                        ? b.getFechaHora().compareTo(a.getFechaHora()) : 0)
+                .limit(MAX_ALERTAS_PANEL).collect(Collectors.toList());
+
+        if (ultimas.isEmpty()) {
+            panel.getChildren().add(label("Sin alertas registradas.", 13, GRAY_TEXT, false));
+        } else {
+            boolean first = true;
+            for (Alerta a : ultimas) {
+                if (!first) panel.getChildren().add(separator());
+                first = false;
+                String titulo  = (a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta")
+                        + " en " + (a.getBarrio() != null ? a.getBarrio().getNombre() : "—");
+                String sub     = "Reportado por " + (a.getUsuario() != null ? a.getUsuario().getPrimer_nombre() : "—");
+                String color   = AlertaColorResolver.getColor(a.getEstado());
+                panel.getChildren().add(alertItem(AlertaColorResolver.getIcon(a), titulo, sub, color));
+            }
         }
+        return panel;
+    }
+
+    private VBox buildActividadPanel() {
+        VBox panel = new VBox(12);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color:white;-fx-background-radius:16;");
+        HBox.setHgrow(panel, Priority.ALWAYS);
+        shadow(panel);
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+        StackPane iconBox = iconBox("#e8f0fe", "\uf017", BLUE, 32);
+        header.getChildren().addAll(iconBox, label("Actividad reciente", 15, TEXT_PRIMARY, true));
+        panel.getChildren().addAll(header, separator());
+
+        List<Alerta> recientes = statsService.cargarAlertas().stream()
+                .sorted((a, b) -> a.getFechaHora() != null && b.getFechaHora() != null
+                        ? b.getFechaHora().compareTo(a.getFechaHora()) : 0)
+                .limit(MAX_ALERTAS_PANEL).collect(Collectors.toList());
+
+        if (recientes.isEmpty()) {
+            panel.getChildren().add(label("Sin actividad reciente.", 13, GRAY_TEXT, false));
+        } else {
+            boolean first = true;
+            for (Alerta a : recientes) {
+                if (!first) panel.getChildren().add(separator());
+                first = false;
+                String tipo   = (a.getTipoalerta() != null ? a.getTipoalerta().getNombre() : "Alerta")
+                        + " — " + (a.getBarrio() != null ? a.getBarrio().getNombre() : "—");
+                String fecha  = a.getFechaHora() != null ? a.getFechaHora().toLocalDate().toString() : "—";
+                panel.getChildren().add(listItem("\uf0f3", tipo, fecha, AlertaColorResolver.getColor(a.getEstado())));
+            }
+        }
+        return panel;
+    }
+
+    // ── Vista de reportes con manejo de error ─────────────────────
+    private Node buildReportesView() {
         try {
-            return alertaService.listar();
-        } catch (Exception e) {
-            return List.of();
+            return new ReportesAdminView(new UsuarioService(), new AlertaService()).build();
+        } catch (Exception ex) {
+            return buildPlaceholderView("Reportes — Error: " + ex.getMessage());
         }
-    }
-
-    private long contarUsuarios() {
-        if (usuarioService == null) {
-            return 0;
-        }
-        try {
-            return usuarioService.listar().size();
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private long contarAlertasActivas() {
-        return cargarAlertas().stream()
-                .filter(a -> a.getEstado() == EstadoAlerta.PENDIENTE
-                || a.getEstado() == EstadoAlerta.RECIBIDA
-                || a.getEstado() == EstadoAlerta.EN_ATENCION
-                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
-                .count();
-    }
-
-    private long contarIncidentes() {
-        return cargarAlertas().stream()
-                .filter(a -> a.getEstado() == EstadoAlerta.EN_ATENCION
-                || a.getEstado() == EstadoAlerta.UNIDAD_ASIGNADA)
-                .count();
-    }
-
-    private long contarAlertasResueltas() {
-        return cargarAlertas().stream()
-                .filter(a -> a.getEstado() == EstadoAlerta.RESUELTA)
-                .count();
-    }
-
-    // ── Helpers de color/estado ───────────────────────────────────
-    private String colorEstado(EstadoAlerta estado) {
-        if (estado == null) {
-            return GRAY_TEXT;
-        }
-        return switch (estado) {
-            case PENDIENTE ->
-                ORANGE;
-            case RECIBIDA ->
-                BLUE;
-            case EN_ATENCION ->
-                COLOR_EN_ATENCION;
-            case UNIDAD_ASIGNADA ->
-                COLOR_UNIDAD_ASIGNADA;
-            case RESUELTA ->
-                GREEN;
-            case CANCELADA ->
-                GRAY_TEXT;
-        };
-    }
-
-    private String iconAlerta(Alerta a) {
-        if (a.getTipoalerta() == null) {
-            return "🚨";
-        }
-        String tipo = a.getTipoalerta().getNombre().toUpperCase();
-        if (tipo.contains("ROB")) {
-            return "🦹";
-        }
-        if (tipo.contains("PELEA") || tipo.contains("VIOLENCIA")) {
-            return "⚔";
-        }
-        if (tipo.contains("ANIMAL")) {
-            return "🐕";
-        }
-        if (tipo.contains("LUZ") || tipo.contains("INFRA")) {
-            return "💡";
-        }
-        return "🚨";
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HELPERS UI
+    // HELPERS UI LOCALES
     // ═══════════════════════════════════════════════════════════════
+    private StackPane iconBox(String bg, String faIcon, String color, double size) {
+        StackPane box = new StackPane();
+        box.setPrefSize(size, size); box.setMinSize(size, size); box.setMaxSize(size, size);
+        box.setStyle("-fx-background-color:" + bg + ";-fx-background-radius:8;");
+        Label lbl = new Label(faIcon);
+        lbl.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:16px;-fx-text-fill:" + color + ";");
+        box.getChildren().add(lbl);
+        return box;
+    }
+
     private HBox alertItem(String icon, String title, String sub, String dotColor) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(8, 0, 8, 0));
         row.setCursor(javafx.scene.Cursor.HAND);
 
-        Circle dotCircle = new Circle(5, Color.web(dotColor));
-
+        Circle dot = new Circle(5, Color.web(dotColor));
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(ICON_BOX_SM, ICON_BOX_SM);
         iconBox.setMinSize(ICON_BOX_SM, ICON_BOX_SM);
         iconBox.setMaxSize(ICON_BOX_SM, ICON_BOX_SM);
-        iconBox.setStyle("-fx-background-color: " + BG + "; -fx-background-radius: 8;");
+        iconBox.setStyle("-fx-background-color:" + BG + ";-fx-background-radius:8;");
         iconBox.getChildren().add(label(icon, 16, dotColor, false));
 
         VBox text = new VBox(2);
         HBox.setHgrow(text, Priority.ALWAYS);
-        text.getChildren().addAll(
-                label(title, 13, TEXT_PRIMARY, false),
-                label(sub, 11, GRAY_TEXT, false));
-
-        row.getChildren().addAll(dotCircle, iconBox, text, label(">", 14, GRAY_TEXT, false));
+        text.getChildren().addAll(label(title, 13, TEXT_PRIMARY, false), label(sub, 11, GRAY_TEXT, false));
+        row.getChildren().addAll(dot, iconBox, text, label(">", 14, GRAY_TEXT, false));
         return row;
     }
 
-    private HBox listItem(String iconFA, String title, String sub, String iconColor) {
+    private HBox listItem(String faIcon, String title, String sub, String iconColor) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(8, 0, 8, 0));
@@ -1075,65 +427,51 @@ public class AdministradorApp {
         iconBox.setPrefSize(ICON_BOX_SM, ICON_BOX_SM);
         iconBox.setMinSize(ICON_BOX_SM, ICON_BOX_SM);
         iconBox.setMaxSize(ICON_BOX_SM, ICON_BOX_SM);
-        iconBox.setStyle("-fx-background-color: " + BG + "; -fx-background-radius: 8;");
-
-        Label iconLbl = new Label(iconFA);
-        iconLbl.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 16px; -fx-text-fill: " + iconColor + ";");
-        iconBox.getChildren().add(iconLbl);
+        iconBox.setStyle("-fx-background-color:" + BG + ";-fx-background-radius:8;");
+        Label ico = new Label(faIcon);
+        ico.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:16px;-fx-text-fill:" + iconColor + ";");
+        iconBox.getChildren().add(ico);
 
         VBox text = new VBox(2);
         HBox.setHgrow(text, Priority.ALWAYS);
-        text.getChildren().addAll(
-                label(title, 13, TEXT_PRIMARY, false),
-                label(sub, 11, GRAY_TEXT, false));
-
+        text.getChildren().addAll(label(title, 13, TEXT_PRIMARY, false), label(sub, 11, GRAY_TEXT, false));
         row.getChildren().addAll(iconBox, text);
         return row;
     }
 
-    private VBox statCard(String bgIcon, String accentColor, String iconFA,
-            String title, String value, String sub) {
+    private VBox statCard(String bgIcon, String accent, String faIcon,
+                          String title, String value, String sub) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(20, 22, 20, 22));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 18;");
+        card.setStyle("-fx-background-color:white;-fx-background-radius:18;");
         card.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(card, Priority.ALWAYS);
         shadow(card);
 
         StackPane iconWrap = new StackPane();
-        iconWrap.setPrefSize(52, 52);
-        iconWrap.setMinSize(52, 52);
-        iconWrap.setMaxSize(52, 52);
-
+        iconWrap.setPrefSize(52, 52); iconWrap.setMinSize(52, 52); iconWrap.setMaxSize(52, 52);
         Rectangle iconBg = new Rectangle(52, 52);
-        iconBg.setArcWidth(16);
-        iconBg.setArcHeight(16);
+        iconBg.setArcWidth(16); iconBg.setArcHeight(16);
         iconBg.setFill(Color.web(bgIcon));
-
-        Label iconLbl = new Label(iconFA);
-        iconLbl.setStyle(
-                "-fx-font-family: 'Font Awesome 6 Free Solid';"
-                + "-fx-font-size: 22px; -fx-text-fill: " + accentColor + ";");
-        iconWrap.getChildren().addAll(iconBg, iconLbl);
+        Label ico = new Label(faIcon);
+        ico.setStyle("-fx-font-family:'Font Awesome 6 Free Solid';"
+                + "-fx-font-size:22px;-fx-text-fill:" + accent + ";");
+        iconWrap.getChildren().addAll(iconBg, ico);
 
         Label titleLbl = new Label(title);
-        titleLbl.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #374151;");
-
+        titleLbl.setStyle("-fx-font-size:13px;-fx-font-weight:bold;-fx-text-fill:#374151;");
         Label valueLbl = new Label(value);
-        valueLbl.setStyle("-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: " + accentColor + ";");
-
-        Label subLbl = new Label(sub);
-        subLbl.setStyle("-fx-font-size: 11px; -fx-text-fill: " + GRAY_TEXT + ";");
+        valueLbl.setStyle("-fx-font-size:36px;-fx-font-weight:bold;-fx-text-fill:" + accent + ";");
+        Label subLbl   = new Label(sub);
+        subLbl.setStyle("-fx-font-size:11px;-fx-text-fill:" + GRAY_TEXT + ";");
 
         HBox top = new HBox(16);
         top.setAlignment(Pos.CENTER_LEFT);
         top.getChildren().addAll(iconWrap, new VBox(3, titleLbl, valueLbl, subLbl));
         card.getChildren().add(top);
-
         card.setOnMouseEntered(e -> card.setTranslateY(-3));
-        card.setOnMouseExited(e -> card.setTranslateY(0));
+        card.setOnMouseExited(e  -> card.setTranslateY(0));
         return card;
     }
 
@@ -1141,57 +479,29 @@ public class AdministradorApp {
         VBox box = new VBox(20);
         box.setPadding(new Insets(40));
         box.setAlignment(Pos.CENTER);
-        box.setStyle("-fx-background-color: " + BG + ";");
-
-        Label icon = new Label("🚧");
-        icon.setFont(Font.font(LOGOUT_ICON_SIZE));
+        box.setStyle("-fx-background-color:" + BG + ";");
+        Label icon  = new Label("🚧"); icon.setFont(Font.font(70));
         Label title = new Label(nombre);
         title.setFont(Font.font("System", FontWeight.BOLD, 32));
         title.setTextFill(Color.web(TEXT_PRIMARY));
         Label msg = new Label("Pantalla en construcción");
-        msg.setFont(Font.font(PLACEHOLDER_MSG_SIZE));
-        msg.setTextFill(Color.GRAY);
-
+        msg.setFont(Font.font(18)); msg.setTextFill(Color.GRAY);
         Button volver = new Button("Volver al Dashboard");
-        volver.setStyle("-fx-background-color: " + BLUE + "; -fx-text-fill: " + WHITE + ";"
-                + "-fx-font-size: 14px; -fx-background-radius: 10;"
-                + "-fx-padding: 10 20 10 20; -fx-cursor: hand;");
+        volver.setStyle("-fx-background-color:" + BLUE + ";-fx-text-fill:white;"
+                + "-fx-font-size:14px;-fx-background-radius:10;-fx-padding:10 20;-fx-cursor:hand;");
         volver.setOnAction(e -> root.setCenter(buildMainContent()));
         box.getChildren().addAll(icon, title, msg, volver);
-
         ScrollPane scroll = new ScrollPane(box);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background: " + BG + "; -fx-background-color: " + BG + ";");
+        scroll.setStyle("-fx-background:" + BG + ";-fx-background-color:" + BG + ";");
         return scroll;
     }
 
-    private Label label(String text, double size, String color, boolean bold) {
-        Label lbl = new Label(text);
-        lbl.setFont(bold ? Font.font("System", FontWeight.BOLD, size) : Font.font("System", size));
-        lbl.setTextFill(Color.web(color));
-        return lbl;
-    }
-
-    private Region separator() {
-        Region sep = new Region();
-        sep.setPrefHeight(SEPARATOR_HEIGHT);
-        sep.setStyle("-fx-background-color: " + BORDER + ";");
-        return sep;
-    }
-
-    private void shadow(Region node) {
-        DropShadow shadow = new DropShadow();
-        shadow.setRadius(15);
-        shadow.setOffsetY(3);
-        shadow.setColor(Color.rgb(15, 23, 42, 0.08));
-        node.setEffect(shadow);
-    }
-
-    private void mostrarAlerta(String titulo, String msg) {
+    private void showError(Exception e) {
         Alert a = new Alert(Alert.AlertType.ERROR);
-        a.setTitle(titulo);
+        a.setTitle("Error de conexión");
         a.setHeaderText(null);
-        a.setContentText(msg);
+        a.setContentText(e.getMessage());
         a.showAndWait();
     }
 }
