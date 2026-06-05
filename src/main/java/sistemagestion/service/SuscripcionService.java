@@ -82,5 +82,9 @@ public class SuscripcionService {
                 && s.getComuna() == null)
                 .collect(java.util.stream.Collectors.toList());
     }
+    
+    public List<Suscripcion> listar() {
+        return dao.listar();
+    }
 
 }

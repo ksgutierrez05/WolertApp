@@ -59,12 +59,10 @@ public class PoliciaApp {
             notificacionService = new NotificacionService();
             asignacionService = new AsignacionUnidadService();
             policiaService = new PoliciaService();
-<<<<<<< HEAD
             unidadService = new UnidadPolicialService();
             tipoArmaService= new TipoArmaService();
             medioTransporteService=new MedioTransporteService();
-=======
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+
 
             if (usuarioActual != null) {
                 List<Policia> todos = policiaService.listar();
@@ -133,7 +131,7 @@ public class PoliciaApp {
         logoBox.getChildren().addAll(new StackPane(logoImg), logoText);
 
         // Nav
-        VBox nav = new VBox(2);
+        nav = new VBox(2);
         nav.setPadding(new Insets(12, 8, 12, 8));
         nav.getChildren().addAll(
                 navItem("\uf015", "Centro de operaciones"),
@@ -281,10 +279,9 @@ public class PoliciaApp {
                     root.setCenter(new MapaOperaciones(asignacionService, unidadService).build());
                 case "Notificaciones" ->
                     root.setCenter(new NotificacionesPoliciaView(
-<<<<<<< HEAD
+
                             usuarioActual,policiaActual, notificacionService).build());
-=======
-                            usuarioActual, notificacionService).build());
+
                 case "Reportes" -> {
                     try {
                         root.setCenter(
@@ -297,7 +294,7 @@ public class PoliciaApp {
                         mostrarAlerta("Error en Reportes", ex.getMessage());
                     }
                 }
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+
                 case "Mi perfil" ->
                     root.setCenter(new PerfilPoliciaView(
                             usuarioActual, policiaActual).build());

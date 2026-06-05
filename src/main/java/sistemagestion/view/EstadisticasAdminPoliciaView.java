@@ -379,9 +379,6 @@ public class EstadisticasAdminPoliciaView {
         lbl.setTextFill(Color.web(color));
         return lbl;
     }
-<<<<<<< HEAD
-}
-=======
 
     private ScrollPane wrapScroll(VBox content) {
         ScrollPane scroll = new ScrollPane(content);
@@ -402,4 +399,4 @@ public class EstadisticasAdminPoliciaView {
     }
 }
   
->>>>>>> 9c76a9debf73156318495b57769d819b427127ab
+
