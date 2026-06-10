@@ -1,0 +1,2577 @@
+-- ============================================================
+--  WolertApp - Sistema de Alertas Comunitarias
+--  Script completo Oracle - USRWOLERTAPP
+--  Orden: Tablas > Secuencias > Constraints > Vistas > Paquetes > Triggers
+-- ============================================================
+
+-- CONNECT usrwolertapp/usrwolertapp@10.123.30.162:1521/xepdb1;
+
+
+-- ============================================================
+-- 1. TABLAS - Catálogos base (sin dependencias)
+-- ============================================================
+
+CREATE TABLE comunas (
+    id_comuna NUMBER,
+    nombre    VARCHAR2(50 BYTE)
+);
+
+CREATE TABLE roles_usuario (
+    id_rol NUMBER,
+    nombre VARCHAR2(30 BYTE)
+);
+
+CREATE TABLE tipos_alerta (
+    id_tipo_alerta NUMBER,
+    nombre         VARCHAR2(50 BYTE),
+    prioridad      VARCHAR2(10 BYTE)
+);
+
+CREATE TABLE tipos_arma (
+    id_tipo_arma NUMBER,
+    nombre       VARCHAR2(30 BYTE)
+);
+
+CREATE TABLE medios_transporte (
+    id_medio_transporte NUMBER,
+    nombre              VARCHAR2(50 BYTE)
+);
+
+
+-- ============================================================
+-- 2. TABLAS - Primer nivel de dependencias
+-- ============================================================
+
+CREATE TABLE barrios (
+    id_barrio NUMBER,
+    nombre    VARCHAR2(50 BYTE),
+    id_comuna NUMBER
+);
+
+CREATE TABLE usuarios (
+    id_usuario        NUMBER,
+    primer_nombre     VARCHAR2(12 BYTE),
+    segundo_nombre    VARCHAR2(12 BYTE),
+    primer_apellido   VARCHAR2(20 BYTE),
+    segundo_apellido  VARCHAR2(20 BYTE),
+    cedula            VARCHAR2(11 BYTE),
+    telefono          VARCHAR2(10 BYTE),
+    email             VARCHAR2(40 BYTE),
+    username          VARCHAR2(15 BYTE),
+    password          VARCHAR2(30 BYTE),
+    activo            VARCHAR2(15 BYTE),
+    id_rol            NUMBER,
+    id_barrio         NUMBER,
+    calle             VARCHAR2(50 BYTE),
+    carrera           VARCHAR2(50 BYTE),
+    etapa             VARCHAR2(20 BYTE),
+    manzana           VARCHAR2(20 BYTE),
+    casa              VARCHAR2(10 BYTE)
+);
+
+CREATE TABLE unidades_policiales (
+    id_unidad NUMBER,
+    nombre    VARCHAR2(50 BYTE),
+    estado    VARCHAR2(20 BYTE),
+    id_barrio NUMBER,
+    longitud  NUMBER,
+    latitud   NUMBER
+);
+
+
+-- ============================================================
+-- 3. TABLAS - Segundo nivel de dependencias
+-- ============================================================
+
+CREATE TABLE alarmas (
+    id_alarma        NUMBER,
+    nombre           VARCHAR2(30 BYTE),
+    id_barrio        NUMBER,
+    latitud          NUMBER,
+    longitud         NUMBER,
+    radio_cobertura  NUMBER,
+    estado           VARCHAR2(20 BYTE)
+);
+
+CREATE TABLE alertas (
+    id_alerta           NUMBER,
+    id_usuario          NUMBER,
+    id_tipo_alerta      NUMBER,
+    id_barrio           NUMBER,
+    id_tipo_arma        NUMBER,
+    id_medio_transporte NUMBER,
+    estado              VARCHAR2(20 BYTE),
+    etapa               VARCHAR2(20 BYTE),
+    sector              VARCHAR2(30 BYTE),
+    manzana             VARCHAR2(20 BYTE),
+    casa                VARCHAR2(10 BYTE),
+    calle               VARCHAR2(20 BYTE),
+    carrera             VARCHAR2(20 BYTE),
+    referencia          VARCHAR2(100 BYTE),
+    latitud             NUMBER,
+    longitud            NUMBER,
+    descripcion         VARCHAR2(200 BYTE),
+    fecha               TIMESTAMP(6),
+    id_alarma           NUMBER
+);
+
+CREATE TABLE policias (
+    id_usuario NUMBER,
+    placa      VARCHAR2(10 BYTE),
+    rango      VARCHAR2(25 BYTE),
+    estado     VARCHAR2(15 BYTE),
+    id_unidad  NUMBER
+);
+
+CREATE TABLE suscripciones (
+    id_suscripcion  NUMBER,
+    id_usuario      NUMBER,
+    id_tipo_alerta  NUMBER,
+    id_barrio       NUMBER,
+    id_comuna       NUMBER,
+    estado          VARCHAR2(15 BYTE)
+);
+
+
+-- ============================================================
+-- 4. TABLAS - Tercer nivel de dependencias
+-- ============================================================
+
+CREATE TABLE asignaciones_unidad (
+    id_asignacion NUMBER,
+    id_alerta     NUMBER,
+    id_unidad     NUMBER,
+    fecha         TIMESTAMP(6),
+    observacion   VARCHAR2(200 BYTE)
+);
+
+CREATE TABLE atencion_alerta (
+    id_atencion         NUMBER,
+    id_alerta           NUMBER,
+    id_unidad           NUMBER,
+    fecha_atencion      TIMESTAMP(6),
+    estado_final        VARCHAR2(20 BYTE),
+    descripcion         VARCHAR2(300 BYTE),
+    id_tipo_arma        NUMBER,
+    id_medio_transporte NUMBER,
+    observacion         VARCHAR2(200 BYTE),
+    id_policia          NUMBER
+);
+
+CREATE TABLE notificaciones (
+    id_notificacion NUMBER,
+    id_usuario      NUMBER,
+    mensaje         VARCHAR2(150 BYTE),
+    fecha           TIMESTAMP(6),
+    id_alerta       NUMBER,
+    enviada         VARCHAR2(20) DEFAULT 'PENDIENTE'
+);
+
+
+-- ============================================================
+-- 5. SECUENCIAS
+-- ============================================================
+
+CREATE SEQUENCE seq_comuna            START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_rol               START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_tipo_alerta       START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_tipo_arma         START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_medio_transporte  START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_barrio            START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_usuario           START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_unidad_policial   START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_alarmas           START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_alerta            START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_policia           START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_suscripcion       START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_asignacion        START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_atencion_alerta   START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+CREATE SEQUENCE seq_notificacion      START WITH 1 INCREMENT BY 1 NOCACHE NOCYCLE;
+
+
+-- ============================================================
+-- 6. PRIMARY KEYS
+-- ============================================================
+
+ALTER TABLE comunas             ADD CONSTRAINT pk_id_comuna_comunas                   PRIMARY KEY (id_comuna);
+ALTER TABLE roles_usuario       ADD CONSTRAINT pk_id_rol_roles_usuario                PRIMARY KEY (id_rol);
+ALTER TABLE tipos_alerta        ADD CONSTRAINT pk_id_tipo_alerta_tipos_alerta         PRIMARY KEY (id_tipo_alerta);
+ALTER TABLE tipos_arma          ADD CONSTRAINT pk_id_tipo_arma_tipos_arma             PRIMARY KEY (id_tipo_arma);
+ALTER TABLE medios_transporte   ADD CONSTRAINT pk_id_medio_transporte_medios          PRIMARY KEY (id_medio_transporte);
+ALTER TABLE barrios             ADD CONSTRAINT pk_id_barrio_barrios                   PRIMARY KEY (id_barrio);
+ALTER TABLE usuarios            ADD CONSTRAINT pk_id_usuario_usuarios                 PRIMARY KEY (id_usuario);
+ALTER TABLE unidades_policiales ADD CONSTRAINT pk_id_unidad_unidades_policiales       PRIMARY KEY (id_unidad);
+ALTER TABLE alarmas             ADD CONSTRAINT pk_id_alarma_alarmas                   PRIMARY KEY (id_alarma);
+ALTER TABLE alertas             ADD CONSTRAINT pk_id_alerta_alertas                   PRIMARY KEY (id_alerta);
+ALTER TABLE policias            ADD CONSTRAINT pk_id_usuario_policias                 PRIMARY KEY (id_usuario);
+ALTER TABLE suscripciones       ADD CONSTRAINT pk_id_suscripcion_suscripciones        PRIMARY KEY (id_suscripcion);
+ALTER TABLE asignaciones_unidad ADD CONSTRAINT pk_id_asignacion_asignaciones_unidad   PRIMARY KEY (id_asignacion);
+ALTER TABLE atencion_alerta     ADD CONSTRAINT pk_id_atencion_atencion_alerta         PRIMARY KEY (id_atencion);
+ALTER TABLE notificaciones      ADD CONSTRAINT pk_id_notificacion_notificaciones      PRIMARY KEY (id_notificacion);
+
+
+-- ============================================================
+-- 7. FOREIGN KEYS
+-- ============================================================
+
+ALTER TABLE barrios ADD CONSTRAINT fk_id_comuna_barrios
+    FOREIGN KEY (id_comuna) REFERENCES comunas (id_comuna);
+
+ALTER TABLE usuarios ADD CONSTRAINT fk_id_rol_usuarios
+    FOREIGN KEY (id_rol) REFERENCES roles_usuario (id_rol);
+ALTER TABLE usuarios ADD CONSTRAINT fk_id_barrio_usuarios
+    FOREIGN KEY (id_barrio) REFERENCES barrios (id_barrio);
+
+ALTER TABLE unidades_policiales ADD CONSTRAINT fk_id_barrio_unidades_policiales
+    FOREIGN KEY (id_barrio) REFERENCES barrios (id_barrio);
+
+ALTER TABLE alarmas ADD CONSTRAINT fk_id_barrio_alarmas
+    FOREIGN KEY (id_barrio) REFERENCES barrios (id_barrio);
+
+ALTER TABLE alertas ADD CONSTRAINT fk_id_usuario_alertas
+    FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario);
+ALTER TABLE alertas ADD CONSTRAINT fk_id_tipo_alerta_alertas
+    FOREIGN KEY (id_tipo_alerta) REFERENCES tipos_alerta (id_tipo_alerta);
+ALTER TABLE alertas ADD CONSTRAINT fk_id_barrio_alertas
+    FOREIGN KEY (id_barrio) REFERENCES barrios (id_barrio);
+ALTER TABLE alertas ADD CONSTRAINT fk_id_tipo_arma_alertas
+    FOREIGN KEY (id_tipo_arma) REFERENCES tipos_arma (id_tipo_arma);
+ALTER TABLE alertas ADD CONSTRAINT fk_id_medio_transporte_alertas
+    FOREIGN KEY (id_medio_transporte) REFERENCES medios_transporte (id_medio_transporte);
+ALTER TABLE alertas ADD CONSTRAINT fk_id_alarma_alertas
+    FOREIGN KEY (id_alarma) REFERENCES alarmas (id_alarma);
+
+ALTER TABLE policias ADD CONSTRAINT fk_id_usuario_policias
+    FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario);
+ALTER TABLE policias ADD CONSTRAINT fk_id_unidad_policias
+    FOREIGN KEY (id_unidad) REFERENCES unidades_policiales (id_unidad);
+
+ALTER TABLE suscripciones ADD CONSTRAINT fk_id_usuario_suscripciones
+    FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario);
+ALTER TABLE suscripciones ADD CONSTRAINT fk_id_tipo_alerta_suscripciones
+    FOREIGN KEY (id_tipo_alerta) REFERENCES tipos_alerta (id_tipo_alerta);
+ALTER TABLE suscripciones ADD CONSTRAINT fk_id_barrio_suscripciones
+    FOREIGN KEY (id_barrio) REFERENCES barrios (id_barrio);
+ALTER TABLE suscripciones ADD CONSTRAINT fk_id_comuna_suscripciones
+    FOREIGN KEY (id_comuna) REFERENCES comunas (id_comuna);
+
+ALTER TABLE asignaciones_unidad ADD CONSTRAINT fk_id_alerta_asignaciones_unidad
+    FOREIGN KEY (id_alerta) REFERENCES alertas (id_alerta);
+ALTER TABLE asignaciones_unidad ADD CONSTRAINT fk_id_unidad_asignaciones_unidad
+    FOREIGN KEY (id_unidad) REFERENCES unidades_policiales (id_unidad);
+
+ALTER TABLE atencion_alerta ADD CONSTRAINT fk_id_alerta_atencion_alerta
+    FOREIGN KEY (id_alerta) REFERENCES alertas (id_alerta);
+ALTER TABLE atencion_alerta ADD CONSTRAINT fk_id_unidad_atencion_alerta
+    FOREIGN KEY (id_unidad) REFERENCES unidades_policiales (id_unidad);
+ALTER TABLE atencion_alerta ADD CONSTRAINT fk_id_tipo_arma_atencion_alerta
+    FOREIGN KEY (id_tipo_arma) REFERENCES tipos_arma (id_tipo_arma);
+ALTER TABLE atencion_alerta ADD CONSTRAINT fk_id_medio_transporte_atencion_alerta
+    FOREIGN KEY (id_medio_transporte) REFERENCES medios_transporte (id_medio_transporte);
+ALTER TABLE atencion_alerta ADD CONSTRAINT fk_id_policia_atencion_alerta
+    FOREIGN KEY (id_policia) REFERENCES policias (id_usuario);
+
+ALTER TABLE notificaciones ADD CONSTRAINT fk_id_usuario_notificaciones
+    FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario);
+ALTER TABLE notificaciones ADD CONSTRAINT fk_id_alerta_notificaciones
+    FOREIGN KEY (id_alerta) REFERENCES alertas (id_alerta);
+
+
+-- ============================================================
+-- 8. TRIGGERS - Auto-incremento PKs
+-- ============================================================
+
+CREATE OR REPLACE TRIGGER trg_id_comunas
+BEFORE INSERT ON comunas FOR EACH ROW
+BEGIN :NEW.id_comuna := seq_comuna.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_roles_usuario
+BEFORE INSERT ON roles_usuario FOR EACH ROW
+BEGIN :NEW.id_rol := seq_rol.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_tipos_alerta
+BEFORE INSERT ON tipos_alerta FOR EACH ROW
+BEGIN :NEW.id_tipo_alerta := seq_tipo_alerta.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_tipos_arma
+BEFORE INSERT ON tipos_arma FOR EACH ROW
+BEGIN :NEW.id_tipo_arma := seq_tipo_arma.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_medios_transporte
+BEFORE INSERT ON medios_transporte FOR EACH ROW
+BEGIN :NEW.id_medio_transporte := seq_medio_transporte.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_barrios
+BEFORE INSERT ON barrios FOR EACH ROW
+BEGIN :NEW.id_barrio := seq_barrio.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_usuarios
+BEFORE INSERT ON usuarios FOR EACH ROW
+BEGIN :NEW.id_usuario := seq_usuario.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_unidades_policiales
+BEFORE INSERT ON unidades_policiales FOR EACH ROW
+BEGIN :NEW.id_unidad := seq_unidad_policial.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_alarmas
+BEFORE INSERT ON alarmas FOR EACH ROW
+BEGIN :NEW.id_alarma := seq_alarmas.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_alertas
+BEFORE INSERT ON alertas FOR EACH ROW
+BEGIN :NEW.id_alerta := seq_alerta.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_suscripciones
+BEFORE INSERT ON suscripciones FOR EACH ROW
+BEGIN :NEW.id_suscripcion := seq_suscripcion.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_asignaciones_unidad
+BEFORE INSERT ON asignaciones_unidad FOR EACH ROW
+BEGIN :NEW.id_asignacion := seq_asignacion.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_atencion_alerta
+BEFORE INSERT ON atencion_alerta FOR EACH ROW
+BEGIN :NEW.id_atencion := seq_atencion_alerta.NEXTVAL; END;
+/
+
+CREATE OR REPLACE TRIGGER trg_id_notificaciones
+BEFORE INSERT ON notificaciones FOR EACH ROW
+BEGIN :NEW.id_notificacion := seq_notificacion.NEXTVAL; END;
+/
+
+-- Trigger de negocio: actualiza estado de alerta al registrar atención
+CREATE OR REPLACE TRIGGER trg_actualizar_estado_alerta
+AFTER INSERT ON atencion_alerta
+FOR EACH ROW
+BEGIN
+    IF :NEW.estado_final = 'ATENDIDA' THEN
+        UPDATE alertas SET estado = 'CERRADA'     WHERE id_alerta = :NEW.id_alerta;
+    ELSIF :NEW.estado_final = 'EN_PROCESO' THEN
+        UPDATE alertas SET estado = 'EN_ATENCION' WHERE id_alerta = :NEW.id_alerta;
+    ELSIF :NEW.estado_final = 'FALSA_ALARMA' THEN
+        UPDATE alertas SET estado = 'CANCELADA'   WHERE id_alerta = :NEW.id_alerta;
+    END IF;
+END;
+/
+
+
+-- ============================================================
+-- 9. VISTAS
+-- ============================================================
+
+CREATE OR REPLACE VIEW vw_alertas_completa AS
+    SELECT
+        a.id_alerta,
+        a.fecha,
+        a.estado,
+        a.descripcion,
+        a.etapa,
+        a.sector,
+        a.manzana,
+        a.casa,
+        a.calle,
+        a.carrera,
+        a.referencia,
+        a.latitud,
+        a.longitud,
+        u.primer_nombre || ' ' || u.primer_apellido AS nombre_usuario,
+        u.cedula,
+        u.telefono,
+        u.username,
+        ta.nombre    AS tipo_alerta,
+        ta.prioridad,
+        b.nombre     AS barrio,
+        c.nombre     AS comuna,
+        arm.nombre   AS tipo_arma,
+        mt.nombre    AS medio_transporte,
+        al.id_alarma,
+        al.nombre    AS nombre_alarma,
+        al.estado    AS estado_alarma
+    FROM alertas a
+    JOIN usuarios            u   ON a.id_usuario          = u.id_usuario
+    JOIN tipos_alerta        ta  ON a.id_tipo_alerta       = ta.id_tipo_alerta
+    JOIN barrios             b   ON a.id_barrio            = b.id_barrio
+    JOIN comunas             c   ON b.id_comuna            = c.id_comuna
+    LEFT JOIN tipos_arma     arm ON a.id_tipo_arma         = arm.id_tipo_arma
+    LEFT JOIN medios_transporte mt ON a.id_medio_transporte = mt.id_medio_transporte
+    LEFT JOIN alarmas        al  ON a.id_alarma            = al.id_alarma;
+/
+
+CREATE OR REPLACE VIEW vw_atenciones_completa AS
+    SELECT
+        aa.id_atencion,
+        aa.fecha_atencion,
+        aa.estado_final,
+        aa.descripcion,
+        aa.observacion,
+        aa.id_alerta,
+        aa.id_policia,
+        a.estado      AS estado_alerta,
+        a.descripcion AS descripcion_alerta,
+        a.fecha       AS fecha_alerta,
+        up.nombre     AS nombre_unidad,
+        up.estado     AS estado_unidad,
+        b.nombre      AS barrio_unidad,
+        ta.nombre     AS tipo_arma,
+        mt.nombre     AS medio_transporte
+    FROM atencion_alerta aa
+    JOIN alertas             a   ON aa.id_alerta           = a.id_alerta
+    JOIN unidades_policiales up  ON aa.id_unidad           = up.id_unidad
+    JOIN barrios             b   ON up.id_barrio           = b.id_barrio
+    LEFT JOIN tipos_arma     ta  ON aa.id_tipo_arma        = ta.id_tipo_arma
+    LEFT JOIN medios_transporte mt ON aa.id_medio_transporte = mt.id_medio_transporte
+    LEFT JOIN policias       p   ON aa.id_policia          = p.id_usuario;
+/
+
+CREATE OR REPLACE VIEW vw_usuarios AS
+    SELECT
+        u.primer_nombre || ' ' || u.primer_apellido AS nombre_completo,
+        u.segundo_nombre,
+        u.segundo_apellido,
+        u.cedula,
+        u.telefono,
+        u.email,
+        u.username,
+        u.activo,
+        r.nombre AS rol
+    FROM usuarios u
+    JOIN roles_usuario r ON u.id_rol = r.id_rol;
+/
+
+CREATE OR REPLACE VIEW vw_policias AS
+    SELECT
+        u.primer_nombre || ' ' || u.primer_apellido AS nombre_completo,
+        u.cedula,
+        u.telefono,
+        u.email,
+        p.placa,
+        p.rango,
+        p.estado     AS estado_policia,
+        up.nombre    AS nombre_unidad,
+        up.estado    AS estado_unidad,
+        b.nombre     AS barrio_unidad,
+        c.nombre     AS comuna_unidad
+    FROM usuarios u
+    JOIN policias            p  ON u.id_usuario = p.id_usuario
+    JOIN unidades_policiales up ON p.id_unidad  = up.id_unidad
+    JOIN barrios             b  ON up.id_barrio = b.id_barrio
+    JOIN comunas             c  ON b.id_comuna  = c.id_comuna;
+/
+
+CREATE OR REPLACE VIEW vw_barrios AS
+    SELECT
+        b.id_barrio,
+        b.nombre  AS barrio,
+        c.id_comuna,
+        c.nombre  AS comuna
+    FROM barrios b
+    JOIN comunas c ON b.id_comuna = c.id_comuna;
+/
+
+CREATE OR REPLACE VIEW vw_suscripciones AS
+    SELECT
+        s.id_suscripcion,
+        s.estado,
+        u.primer_nombre || ' ' || u.primer_apellido AS nombre_usuario,
+        u.cedula,
+        ta.nombre AS tipo_alerta,
+        c.nombre  AS comuna,
+        b.nombre  AS barrio
+    FROM suscripciones s
+    JOIN usuarios     u  ON s.id_usuario     = u.id_usuario
+    JOIN tipos_alerta ta ON s.id_tipo_alerta = ta.id_tipo_alerta
+    LEFT JOIN comunas c  ON s.id_comuna      = c.id_comuna
+    LEFT JOIN barrios b  ON s.id_barrio      = b.id_barrio;
+/
+
+CREATE OR REPLACE VIEW vw_asignaciones AS
+    SELECT
+        au.id_asignacion,
+        au.fecha,
+        au.observacion,
+        a.estado      AS estado_alerta,
+        a.descripcion AS descripcion_alerta,
+        up.nombre     AS nombre_unidad,
+        up.estado     AS estado_unidad,
+        b.nombre      AS barrio_unidad
+    FROM asignaciones_unidad au
+    JOIN alertas             a  ON au.id_alerta = a.id_alerta
+    JOIN unidades_policiales up ON au.id_unidad = up.id_unidad
+    JOIN barrios             b  ON up.id_barrio = b.id_barrio;
+/
+
+CREATE OR REPLACE VIEW vw_notificaciones AS
+    SELECT
+        n.id_notificacion,
+        n.mensaje,
+        n.fecha,
+        n.enviada,
+        u.primer_nombre || ' ' || u.primer_apellido AS nombre_usuario,
+        u.email,
+        a.descripcion AS descripcion_alerta,
+        a.estado      AS estado_alerta
+    FROM notificaciones n
+    JOIN usuarios u ON n.id_usuario = u.id_usuario
+    JOIN alertas  a ON n.id_alerta  = a.id_alerta;
+/
+
+CREATE OR REPLACE VIEW vw_alarmas AS
+    SELECT
+        a.id_alarma,
+        a.nombre,
+        b.nombre  AS barrio,
+        c.nombre  AS comuna,
+        a.latitud,
+        a.longitud,
+        a.radio_cobertura,
+        a.estado
+    FROM alarmas a
+    JOIN barrios b ON a.id_barrio = b.id_barrio
+    JOIN comunas c ON b.id_comuna = c.id_comuna;
+/
+
+
+-- ============================================================
+-- 10. PAQUETES
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- PKG_CATALOGOS - Spec
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE pkg_catalogos AS
+
+    PROCEDURE pr_insertar_comuna(p_nombre VARCHAR2);
+    PROCEDURE pr_listar_comunas(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_comuna(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_comuna(p_nombre VARCHAR2);
+
+    PROCEDURE pr_insertar_barrio(p_nombre VARCHAR2, p_nombre_comuna VARCHAR2);
+    PROCEDURE pr_listar_barrios(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_barrios_por_comuna(p_nombre_comuna VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_barrio(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_barrio(p_nombre VARCHAR2);
+
+    PROCEDURE pr_insertar_tipo_alerta(p_nombre VARCHAR2);
+    PROCEDURE pr_listar_tipos_alerta(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_tipo_alerta(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_tipo_alerta(p_nombre VARCHAR2);
+
+    PROCEDURE pr_insertar_tipo_arma(p_nombre VARCHAR2);
+    PROCEDURE pr_listar_tipos_arma(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_tipo_arma(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_tipo_arma(p_nombre VARCHAR2);
+
+    PROCEDURE pr_insertar_medio(p_nombre VARCHAR2);
+    PROCEDURE pr_listar_medios(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_medio(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_medio(p_nombre VARCHAR2);
+
+    PROCEDURE pr_buscar_comuna(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_barrio(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_tipo_alerta(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_tipo_arma(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_medio(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_buscar_comuna_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_barrio_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_tipo_alerta_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_tipo_arma_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_medio_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+
+END pkg_catalogos;
+/
+
+-- ------------------------------------------------------------
+-- PKG_CATALOGOS - Body
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE BODY pkg_catalogos AS
+
+    PROCEDURE pr_insertar_comuna(p_nombre VARCHAR2) IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM comunas WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v > 0 THEN RAISE_APPLICATION_ERROR(-20001, 'Error: Comuna ya existe'); END IF;
+        INSERT INTO comunas(nombre) VALUES(p_nombre);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_comunas(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM comunas ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_actualizar_comuna(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+    BEGIN
+        UPDATE comunas SET nombre = p_nombre_nuevo WHERE UPPER(nombre) = UPPER(p_nombre_actual);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_comuna(p_nombre VARCHAR2) IS
+        v_en_uso NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_en_uso
+        FROM barrios b JOIN comunas c ON b.id_comuna = c.id_comuna
+        WHERE UPPER(c.nombre) = UPPER(p_nombre);
+        IF v_en_uso > 0 THEN RAISE_APPLICATION_ERROR(-20002, 'Error: Comuna tiene barrios asociados'); END IF;
+        DELETE FROM comunas WHERE UPPER(nombre) = UPPER(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_insertar_barrio(p_nombre VARCHAR2, p_nombre_comuna VARCHAR2) IS
+        v_id_comuna NUMBER;
+        v_existe    NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_existe FROM barrios WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v_existe > 0 THEN RAISE_APPLICATION_ERROR(-20003, 'Error: Barrio ya existe'); END IF;
+        SELECT id_comuna INTO v_id_comuna FROM comunas WHERE UPPER(nombre) = UPPER(p_nombre_comuna);
+        INSERT INTO barrios(nombre, id_comuna) VALUES(p_nombre, v_id_comuna);
+        COMMIT;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN RAISE_APPLICATION_ERROR(-20004, 'Error: Comuna no encontrada');
+        WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_barrios(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT barrio, comuna FROM vw_barrios;
+    END;
+
+    PROCEDURE pr_buscar_barrios_por_comuna(p_nombre_comuna VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT barrio, comuna FROM vw_barrios
+            WHERE UPPER(comuna) = UPPER(p_nombre_comuna)
+            ORDER BY barrio;
+    END;
+
+    PROCEDURE pr_actualizar_barrio(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+    BEGIN
+        UPDATE barrios SET nombre = p_nombre_nuevo WHERE UPPER(nombre) = UPPER(p_nombre_actual);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_barrio(p_nombre VARCHAR2) IS
+    BEGIN
+        DELETE FROM barrios WHERE UPPER(nombre) = UPPER(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_insertar_tipo_alerta(p_nombre VARCHAR2) IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM tipos_alerta WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v > 0 THEN RAISE_APPLICATION_ERROR(-20005, 'Error: Tipo ya existe'); END IF;
+        INSERT INTO tipos_alerta(nombre) VALUES(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_listar_tipos_alerta(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_alerta ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_actualizar_tipo_alerta(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+    BEGIN
+        UPDATE tipos_alerta SET nombre = p_nombre_nuevo WHERE UPPER(nombre) = UPPER(p_nombre_actual);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_tipo_alerta(p_nombre VARCHAR2) IS
+    BEGIN
+        DELETE FROM tipos_alerta WHERE UPPER(nombre) = UPPER(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_insertar_tipo_arma(p_nombre VARCHAR2) IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM tipos_arma WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v > 0 THEN RAISE_APPLICATION_ERROR(-20006, 'Error: Tipo ya existe'); END IF;
+        INSERT INTO tipos_arma(nombre) VALUES(p_nombre);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_tipos_arma(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_arma ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_actualizar_tipo_arma(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+    BEGIN
+        UPDATE tipos_arma SET nombre = p_nombre_nuevo WHERE UPPER(nombre) = UPPER(p_nombre_actual);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_tipo_arma(p_nombre VARCHAR2) IS
+    BEGIN
+        DELETE FROM tipos_arma WHERE UPPER(nombre) = UPPER(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_insertar_medio(p_nombre VARCHAR2) IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM medios_transporte WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v > 0 THEN RAISE_APPLICATION_ERROR(-20007, 'Error: Medio ya existe'); END IF;
+        INSERT INTO medios_transporte(nombre) VALUES(p_nombre);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_medios(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM medios_transporte ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_actualizar_medio(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+    BEGIN
+        UPDATE medios_transporte SET nombre = p_nombre_nuevo WHERE UPPER(nombre) = UPPER(p_nombre_actual);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_medio(p_nombre VARCHAR2) IS
+    BEGIN
+        DELETE FROM medios_transporte WHERE UPPER(nombre) = UPPER(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_buscar_comuna(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM comunas WHERE UPPER(nombre) LIKE '%' || UPPER(p_nombre) || '%' ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_buscar_barrio(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT barrio, comuna FROM vw_barrios WHERE UPPER(barrio) LIKE '%' || UPPER(p_nombre) || '%' ORDER BY barrio;
+    END;
+
+    PROCEDURE pr_buscar_tipo_alerta(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_alerta WHERE UPPER(nombre) LIKE '%' || UPPER(p_nombre) || '%' ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_buscar_tipo_arma(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_arma WHERE UPPER(nombre) LIKE '%' || UPPER(p_nombre) || '%' ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_buscar_medio(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM medios_transporte WHERE UPPER(nombre) LIKE '%' || UPPER(p_nombre) || '%' ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_buscar_comuna_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM comunas WHERE UPPER(nombre) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_buscar_barrio_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT barrio, comuna FROM vw_barrios WHERE UPPER(barrio) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_buscar_tipo_alerta_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_alerta WHERE UPPER(nombre) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_buscar_tipo_arma_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM tipos_arma WHERE UPPER(nombre) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_buscar_medio_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM medios_transporte WHERE UPPER(nombre) = UPPER(p_nombre);
+    END;
+
+END pkg_catalogos;
+/
+
+
+-- ------------------------------------------------------------
+-- PKG_USUARIOS - Spec
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE pkg_usuarios AS
+
+    PROCEDURE pr_insertar_usuario(
+        p_primer_nombre    VARCHAR2, p_segundo_nombre   VARCHAR2,
+        p_primer_apellido  VARCHAR2, p_segundo_apellido VARCHAR2,
+        p_cedula           VARCHAR2, p_telefono         VARCHAR2,
+        p_email            VARCHAR2, p_username         VARCHAR2,
+        p_password         VARCHAR2, p_nombre_rol       VARCHAR2,
+        p_nombre_barrio    VARCHAR2,
+        p_calle            VARCHAR2, p_carrera          VARCHAR2,
+        p_etapa            VARCHAR2, p_manzana          VARCHAR2,
+        p_casa             VARCHAR2
+    );
+    PROCEDURE pr_actualizar_usuario(
+        p_username         VARCHAR2,
+        p_primer_nombre    VARCHAR2, p_segundo_nombre   VARCHAR2,
+        p_primer_apellido  VARCHAR2, p_segundo_apellido VARCHAR2,
+        p_telefono         VARCHAR2, p_email            VARCHAR2,
+        p_password         VARCHAR2, p_nombre_rol       VARCHAR2,
+        p_nombre_barrio    VARCHAR2,
+        p_calle            VARCHAR2, p_carrera          VARCHAR2,
+        p_etapa            VARCHAR2, p_manzana          VARCHAR2,
+        p_casa             VARCHAR2
+    );
+    PROCEDURE pr_eliminar_usuario(p_cedula VARCHAR2);
+    PROCEDURE pr_consultar_usuario(p_cedula VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_usuarios(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_login_usuario(p_username VARCHAR2, p_password VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_insertar_rol(p_nombre VARCHAR2);
+    PROCEDURE pr_actualizar_rol(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2);
+    PROCEDURE pr_eliminar_rol(p_nombre VARCHAR2);
+    PROCEDURE pr_listar_roles(p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_insertar_policia(
+        p_cedula_usuario VARCHAR2, p_nombre_unidad VARCHAR2,
+        p_placa VARCHAR2, p_rango VARCHAR2, p_estado VARCHAR2
+    );
+    PROCEDURE pr_actualizar_policia(
+        p_cedula_usuario VARCHAR2, p_nombre_unidad VARCHAR2,
+        p_placa VARCHAR2, p_rango VARCHAR2, p_estado VARCHAR2
+    );
+    PROCEDURE pr_eliminar_policia(p_cedula_usuario VARCHAR2);
+    PROCEDURE pr_listar_policias(p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_buscar_usuario(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_policia(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_rol(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_usuario_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_policia_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_rol_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_inactivar_usuario(p_cedula VARCHAR2);
+    PROCEDURE pr_activar_usuario(p_cedula VARCHAR2);
+
+END pkg_usuarios;
+/
+
+-- ------------------------------------------------------------
+-- PKG_USUARIOS - Body
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE BODY pkg_usuarios AS
+
+    FUNCTION fx_obtener_id_usuario_cedula(p_cedula VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_usuario INTO v FROM usuarios WHERE cedula = p_cedula;
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_usuario_username(p_username VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_usuario INTO v FROM usuarios WHERE username = p_username;
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_rol(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_rol INTO v FROM roles_usuario WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_unidad(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_unidad INTO v FROM unidades_policiales WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    PROCEDURE pr_insertar_usuario(
+        p_primer_nombre    VARCHAR2, p_segundo_nombre   VARCHAR2,
+        p_primer_apellido  VARCHAR2, p_segundo_apellido VARCHAR2,
+        p_cedula           VARCHAR2, p_telefono         VARCHAR2,
+        p_email            VARCHAR2, p_username         VARCHAR2,
+        p_password         VARCHAR2, p_nombre_rol       VARCHAR2,
+        p_nombre_barrio    VARCHAR2,
+        p_calle            VARCHAR2, p_carrera          VARCHAR2,
+        p_etapa            VARCHAR2, p_manzana          VARCHAR2,
+        p_casa             VARCHAR2
+    ) IS
+        v_id_rol    NUMBER;
+        v_id_barrio NUMBER;
+        v_existe    NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_existe FROM usuarios WHERE cedula = p_cedula;
+        IF v_existe > 0 THEN RAISE_APPLICATION_ERROR(-20010, 'Error: Ya existe un usuario con esa cédula'); END IF;
+        v_id_rol := fx_obtener_id_rol(p_nombre_rol);
+        IF v_id_rol IS NULL THEN RAISE_APPLICATION_ERROR(-20011, 'Error: El rol no existe'); END IF;
+        IF p_nombre_barrio IS NOT NULL THEN
+            SELECT id_barrio INTO v_id_barrio FROM barrios WHERE UPPER(nombre) = UPPER(p_nombre_barrio);
+        END IF;
+        INSERT INTO usuarios(
+            primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
+            cedula, telefono, email, username, password, activo, id_rol,
+            id_barrio, calle, carrera, etapa, manzana, casa
+        ) VALUES (
+            p_primer_nombre, p_segundo_nombre, p_primer_apellido, p_segundo_apellido,
+            p_cedula, p_telefono, p_email, p_username, p_password, 'ACTIVO', v_id_rol,
+            v_id_barrio, p_calle, p_carrera, p_etapa, p_manzana, p_casa
+        );
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_actualizar_usuario(
+        p_username         VARCHAR2,
+        p_primer_nombre    VARCHAR2, p_segundo_nombre   VARCHAR2,
+        p_primer_apellido  VARCHAR2, p_segundo_apellido VARCHAR2,
+        p_telefono         VARCHAR2, p_email            VARCHAR2,
+        p_password         VARCHAR2, p_nombre_rol       VARCHAR2,
+        p_nombre_barrio    VARCHAR2,
+        p_calle            VARCHAR2, p_carrera          VARCHAR2,
+        p_etapa            VARCHAR2, p_manzana          VARCHAR2,
+        p_casa             VARCHAR2
+    ) IS
+        v_id_rol     NUMBER;
+        v_id_usuario NUMBER;
+        v_id_barrio  NUMBER;
+    BEGIN
+        v_id_usuario := fx_obtener_id_usuario_username(p_username);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20012, 'Error: Usuario no encontrado'); END IF;
+        v_id_rol := fx_obtener_id_rol(p_nombre_rol);
+        IF v_id_rol IS NULL THEN RAISE_APPLICATION_ERROR(-20013, 'Error: Rol no encontrado'); END IF;
+        IF p_nombre_barrio IS NOT NULL THEN
+            SELECT id_barrio INTO v_id_barrio FROM barrios WHERE UPPER(nombre) = UPPER(p_nombre_barrio);
+        END IF;
+        UPDATE usuarios
+        SET primer_nombre    = p_primer_nombre,
+            segundo_nombre   = p_segundo_nombre,
+            primer_apellido  = p_primer_apellido,
+            segundo_apellido = p_segundo_apellido,
+            telefono         = p_telefono,
+            email            = p_email,
+            password         = p_password,
+            id_rol           = v_id_rol,
+            id_barrio        = v_id_barrio,
+            calle            = p_calle,
+            carrera          = p_carrera,
+            etapa            = p_etapa,
+            manzana          = p_manzana,
+            casa             = p_casa
+        WHERE id_usuario = v_id_usuario;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_eliminar_usuario(p_cedula VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_usuario_cedula(p_cedula);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20014, 'Error: Usuario no encontrado'); END IF;
+        DELETE FROM usuarios WHERE id_usuario = v_id;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_consultar_usuario(p_cedula VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido,
+                   u.cedula, u.telefono, u.email, u.username, u.activo, r.nombre AS rol
+            FROM usuarios u JOIN roles_usuario r ON u.id_rol = r.id_rol
+            WHERE u.cedula = p_cedula;
+    END;
+
+    PROCEDURE pr_listar_usuarios(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre, u.segundo_nombre, u.primer_apellido, u.segundo_apellido,
+                   u.cedula, u.telefono, u.email, u.username, u.activo, r.nombre AS rol
+            FROM usuarios u JOIN roles_usuario r ON u.id_rol = r.id_rol
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_login_usuario(p_username VARCHAR2, p_password VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.id_usuario, u.primer_nombre, u.segundo_nombre,
+                   u.primer_apellido, u.segundo_apellido,
+                   u.cedula, u.telefono, u.email,
+                   u.username, u.password, u.activo, u.id_rol,
+                   r.nombre AS rol_nombre
+            FROM usuarios u JOIN roles_usuario r ON u.id_rol = r.id_rol
+            WHERE u.username = p_username AND u.password = p_password;
+    END;
+
+    PROCEDURE pr_insertar_rol(p_nombre VARCHAR2) IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM roles_usuario WHERE UPPER(nombre) = UPPER(p_nombre);
+        IF v > 0 THEN RAISE_APPLICATION_ERROR(-20015, 'Error: Rol ya existe'); END IF;
+        INSERT INTO roles_usuario(nombre) VALUES(p_nombre);
+        COMMIT;
+    END;
+
+    PROCEDURE pr_actualizar_rol(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_rol(p_nombre_actual);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20016, 'Error: Rol no encontrado'); END IF;
+        UPDATE roles_usuario SET nombre = p_nombre_nuevo WHERE id_rol = v_id;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_rol(p_nombre VARCHAR2) IS
+        v_id     NUMBER;
+        v_en_uso NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_rol(p_nombre);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20017, 'Error: Rol no encontrado'); END IF;
+        SELECT COUNT(*) INTO v_en_uso FROM usuarios WHERE id_rol = v_id;
+        IF v_en_uso > 0 THEN RAISE_APPLICATION_ERROR(-20018, 'Error: Rol en uso'); END IF;
+        DELETE FROM roles_usuario WHERE id_rol = v_id;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_listar_roles(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT nombre FROM roles_usuario ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_insertar_policia(
+        p_cedula_usuario VARCHAR2, p_nombre_unidad VARCHAR2,
+        p_placa VARCHAR2, p_rango VARCHAR2, p_estado VARCHAR2
+    ) IS
+        v_id_usuario NUMBER;
+        v_id_unidad  NUMBER;
+        v_existe     NUMBER;
+    BEGIN
+        v_id_usuario := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20019, 'Error: Usuario no encontrado'); END IF;
+        SELECT COUNT(*) INTO v_existe FROM policias WHERE id_usuario = v_id_usuario;
+        IF v_existe > 0 THEN RAISE_APPLICATION_ERROR(-20020, 'Error: El usuario ya es policía'); END IF;
+        IF p_nombre_unidad IS NOT NULL AND p_nombre_unidad != '' THEN
+            v_id_unidad := fx_obtener_id_unidad(p_nombre_unidad);
+        END IF;
+        INSERT INTO policias(id_usuario, id_unidad, placa, rango, estado)
+        VALUES(v_id_usuario, v_id_unidad, p_placa, p_rango, p_estado);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_actualizar_policia(
+        p_cedula_usuario VARCHAR2, p_nombre_unidad VARCHAR2,
+        p_placa VARCHAR2, p_rango VARCHAR2, p_estado VARCHAR2
+    ) IS
+        v_id_usuario NUMBER;
+        v_id_unidad  NUMBER;
+    BEGIN
+        v_id_usuario := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20021, 'Error: Usuario no encontrado'); END IF;
+        IF p_nombre_unidad IS NOT NULL AND p_nombre_unidad != '' THEN
+            v_id_unidad := fx_obtener_id_unidad(p_nombre_unidad);
+        END IF;
+        UPDATE policias
+        SET id_unidad = v_id_unidad, placa = p_placa, rango = p_rango, estado = p_estado
+        WHERE id_usuario = v_id_usuario;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20022, 'Error: Policía no encontrado'); END IF;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_policia(p_cedula_usuario VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20023, 'Error: Usuario no encontrado'); END IF;
+        DELETE FROM policias WHERE id_usuario = v_id;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20024, 'Error: Policía no encontrado'); END IF;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_listar_policias(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre || ' ' || u.primer_apellido AS nombre_completo,
+                   u.cedula, u.telefono, u.email,
+                   p.placa, p.rango, p.estado,
+                   up.nombre AS nombre_unidad
+            FROM usuarios u
+            JOIN policias            p  ON u.id_usuario = p.id_usuario
+            LEFT JOIN unidades_policiales up ON p.id_unidad = up.id_unidad
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_buscar_usuario(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre, u.segundo_nombre,
+                   u.primer_apellido, u.segundo_apellido,
+                   u.cedula, u.telefono, u.email,
+                   u.username, u.activo, r.nombre AS rol
+            FROM usuarios u JOIN roles_usuario r ON u.id_rol = r.id_rol
+            WHERE UPPER(u.primer_nombre)    LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(u.primer_apellido)  LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(u.segundo_apellido) LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(u.username)         LIKE '%' || UPPER(p_nombre) || '%'
+               OR u.cedula                  LIKE '%' || p_nombre        || '%'
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_buscar_usuario_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre, u.segundo_nombre,
+                   u.primer_apellido, u.segundo_apellido,
+                   u.cedula, u.telefono, u.email,
+                   u.username, u.activo, r.nombre AS rol
+            FROM usuarios u JOIN roles_usuario r ON u.id_rol = r.id_rol
+            WHERE UPPER(u.primer_nombre)   = UPPER(p_nombre)
+               OR UPPER(u.primer_apellido) = UPPER(p_nombre)
+               OR UPPER(u.username)        = UPPER(p_nombre)
+               OR u.cedula                 = p_nombre
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_buscar_policia(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre || ' ' || u.primer_apellido AS nombre_completo,
+                   u.cedula, u.telefono, u.email,
+                   p.placa, p.rango, p.estado,
+                   up.nombre AS nombre_unidad
+            FROM usuarios u
+            JOIN policias            p  ON u.id_usuario = p.id_usuario
+            LEFT JOIN unidades_policiales up ON p.id_unidad = up.id_unidad
+            WHERE UPPER(u.primer_nombre)   LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(u.primer_apellido) LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(p.placa)           LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(p.rango)           LIKE '%' || UPPER(p_nombre) || '%'
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_buscar_policia_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.primer_nombre || ' ' || u.primer_apellido AS nombre_completo,
+                   u.cedula, u.telefono, u.email,
+                   p.placa, p.rango, p.estado,
+                   up.nombre AS nombre_unidad
+            FROM usuarios u
+            JOIN policias            p  ON u.id_usuario = p.id_usuario
+            LEFT JOIN unidades_policiales up ON p.id_unidad = up.id_unidad
+            WHERE UPPER(u.primer_nombre)   = UPPER(p_nombre)
+               OR UPPER(u.primer_apellido) = UPPER(p_nombre)
+               OR UPPER(p.placa)           = UPPER(p_nombre)
+               OR UPPER(p.rango)           = UPPER(p_nombre)
+            ORDER BY u.primer_apellido;
+    END;
+
+    PROCEDURE pr_buscar_rol(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT nombre FROM roles_usuario
+            WHERE UPPER(nombre) LIKE '%' || UPPER(p_nombre) || '%'
+            ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_buscar_rol_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT nombre FROM roles_usuario WHERE UPPER(nombre) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_inactivar_usuario(p_cedula VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_usuario_cedula(p_cedula);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20025, 'Error: Usuario no encontrado'); END IF;
+        UPDATE usuarios SET activo = 'INACTIVO' WHERE id_usuario = v_id;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_activar_usuario(p_cedula VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_usuario_cedula(p_cedula);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20026, 'Error: Usuario no encontrado'); END IF;
+        UPDATE usuarios SET activo = 'ACTIVO' WHERE id_usuario = v_id;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+END pkg_usuarios;
+/
+
+
+-- ------------------------------------------------------------
+-- PKG_ALERTAS - Spec
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE pkg_alertas AS
+
+    PROCEDURE pr_insertar_alerta(
+        p_username VARCHAR2, p_tipo_alerta VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2, p_etapa VARCHAR2,
+        p_sector VARCHAR2, p_manzana VARCHAR2, p_casa VARCHAR2,
+        p_calle VARCHAR2, p_carrera VARCHAR2, p_referencia VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER, p_descripcion VARCHAR2
+    );
+    PROCEDURE pr_consultar_alerta(p_id_alerta NUMBER, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_alertas(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_alertas_por_usuario(p_username VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_alertas_por_barrio(p_nombre_barrio VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_estado(p_id_alerta NUMBER, p_estado VARCHAR2);
+    PROCEDURE pr_eliminar_alerta(p_id_alerta NUMBER);
+
+    FUNCTION  fx_atencion_existe(p_id_atencion NUMBER) RETURN NUMBER;
+    PROCEDURE pr_insertar_atencion(
+        p_id_alerta NUMBER, p_nombre_unidad VARCHAR2, p_estado_final VARCHAR2,
+        p_descripcion VARCHAR2, p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2,
+        p_observacion VARCHAR2, p_cedula_policia VARCHAR2
+    );
+    PROCEDURE pr_consultar_atencion(p_id_atencion NUMBER, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_atenciones(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_atenciones_por_alerta(p_id_alerta NUMBER, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_atencion(
+        p_id_atencion NUMBER, p_estado_final VARCHAR2, p_descripcion VARCHAR2,
+        p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2, p_observacion VARCHAR2
+    );
+    PROCEDURE pr_eliminar_atencion(p_id_atencion NUMBER);
+
+    PROCEDURE pr_insertar_notificacion(p_id_alerta NUMBER, p_cedula_usuario VARCHAR2, p_mensaje VARCHAR2);
+    PROCEDURE pr_listar_notificaciones(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_eliminar_notificacion(p_id_notificacion NUMBER);
+
+    PROCEDURE pr_insertar_suscripcion(
+        p_cedula_usuario VARCHAR2, p_tipo_alerta VARCHAR2,
+        p_nombre_comuna VARCHAR2, p_nombre_barrio VARCHAR2, p_estado VARCHAR2
+    );
+    PROCEDURE pr_listar_suscripciones(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_suscripcion(
+        p_id_suscripcion NUMBER, p_cedula_usuario VARCHAR2, p_tipo_alerta VARCHAR2,
+        p_nombre_comuna VARCHAR2, p_nombre_barrio VARCHAR2, p_estado VARCHAR2
+    );
+    PROCEDURE pr_eliminar_suscripcion(p_id_suscripcion NUMBER);
+
+    PROCEDURE pr_insertar_unidad(p_nombre VARCHAR2, p_estado VARCHAR2, p_nombre_barrio VARCHAR2, p_latitud NUMBER, p_longitud NUMBER);
+    PROCEDURE pr_listar_unidades(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_unidad(p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2, p_estado VARCHAR2, p_nombre_barrio VARCHAR2, p_latitud NUMBER, p_longitud NUMBER);
+    PROCEDURE pr_eliminar_unidad(p_nombre VARCHAR2);
+
+    PROCEDURE pr_asignar_unidad_cercana(p_id_alerta NUMBER);
+    PROCEDURE pr_insertar_asignacion(p_id_alerta NUMBER, p_nombre_unidad VARCHAR2, p_observacion VARCHAR2, p_fecha TIMESTAMP);
+    PROCEDURE pr_listar_asignaciones(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_asignacion(p_id_asignacion NUMBER, p_id_alerta NUMBER, p_nombre_unidad VARCHAR2, p_observacion VARCHAR2, p_fecha TIMESTAMP);
+    PROCEDURE pr_eliminar_asignacion(p_id_asignacion NUMBER);
+
+    PROCEDURE pr_buscar_alerta_por_tipo(p_tipo_alerta VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_alerta_por_descripcion(p_texto VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_unidad(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_atencion_por_estado(p_estado VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_alerta_por_tipo_exacto(p_tipo_alerta VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_unidad_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_buscar_atencion_por_estado_exacto(p_estado VARCHAR2, p_cursor OUT SYS_REFCURSOR);
+
+    PROCEDURE pr_insertar_alarma(
+        p_nombre VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER,
+        p_radio_cobertura NUMBER, p_estado VARCHAR2
+    );
+    PROCEDURE pr_consultar_alarma(p_id_alarma NUMBER, p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_listar_alarmas(p_cursor OUT SYS_REFCURSOR);
+    PROCEDURE pr_actualizar_alarma(
+        p_id_alarma NUMBER, p_nombre VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER,
+        p_radio_cobertura NUMBER, p_estado VARCHAR2
+    );
+    PROCEDURE pr_eliminar_alarma(p_id_alarma NUMBER);
+
+END pkg_alertas;
+/
+
+-- ------------------------------------------------------------
+-- PKG_ALERTAS - Body
+-- ------------------------------------------------------------
+CREATE OR REPLACE PACKAGE BODY pkg_alertas AS
+
+    FUNCTION fx_obtener_id_usuario(p_username VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_usuario INTO v FROM usuarios WHERE username = p_username;
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_usuario_cedula(p_cedula VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_usuario INTO v FROM usuarios WHERE cedula = p_cedula;
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_tipo_alerta(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_tipo_alerta INTO v FROM tipos_alerta WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_barrio(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_barrio INTO v FROM barrios WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_tipo_arma(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_tipo_arma INTO v FROM tipos_arma WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_medio(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_medio_transporte INTO v FROM medios_transporte WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_unidad(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_unidad INTO v FROM unidades_policiales WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_comuna(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_comuna INTO v FROM comunas WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_alerta_existe(p_id NUMBER) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM alertas WHERE id_alerta = p_id; RETURN v;
+    END;
+
+    FUNCTION fx_alarma_mas_cercana(p_latitud NUMBER, p_longitud NUMBER) RETURN NUMBER IS
+        v_id_alarma NUMBER;
+    BEGIN
+        SELECT id_alarma INTO v_id_alarma
+        FROM (
+            SELECT id_alarma,
+                   SQRT(POWER(latitud - p_latitud, 2) + POWER(longitud - p_longitud, 2)) distancia
+            FROM alarmas WHERE estado = 'ACTIVA'
+            ORDER BY distancia
+        ) WHERE ROWNUM = 1;
+        RETURN v_id_alarma;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_unidad_mas_cercana(p_latitud NUMBER, p_longitud NUMBER) RETURN NUMBER IS
+        v_id_unidad NUMBER;
+    BEGIN
+        SELECT id_unidad INTO v_id_unidad
+        FROM (
+            SELECT id_unidad,
+                   SQRT(POWER(latitud - p_latitud, 2) + POWER(longitud - p_longitud, 2)) distancia
+            FROM unidades_policiales
+            WHERE estado = 'ACTIVA' AND latitud IS NOT NULL AND longitud IS NOT NULL
+            ORDER BY distancia
+        ) WHERE ROWNUM = 1;
+        RETURN v_id_unidad;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    FUNCTION fx_obtener_id_alarma(p_nombre VARCHAR2) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT id_alarma INTO v FROM alarmas WHERE UPPER(nombre) = UPPER(p_nombre);
+        RETURN v;
+    EXCEPTION WHEN NO_DATA_FOUND THEN RETURN NULL;
+    END;
+
+    -- Alertas
+    PROCEDURE pr_insertar_alerta(
+        p_username VARCHAR2, p_tipo_alerta VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2, p_etapa VARCHAR2,
+        p_sector VARCHAR2, p_manzana VARCHAR2, p_casa VARCHAR2,
+        p_calle VARCHAR2, p_carrera VARCHAR2, p_referencia VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER, p_descripcion VARCHAR2
+    ) IS
+        v_id_usuario     NUMBER;
+        v_id_tipo_alerta NUMBER;
+        v_id_barrio      NUMBER;
+        v_id_tipo_arma   NUMBER;
+        v_id_medio       NUMBER;
+        v_id_alarma      NUMBER;
+    BEGIN
+        v_id_usuario := fx_obtener_id_usuario(p_username);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20030, 'Error: Usuario no encontrado'); END IF;
+        v_id_tipo_alerta := fx_obtener_id_tipo_alerta(p_tipo_alerta);
+        IF v_id_tipo_alerta IS NULL THEN RAISE_APPLICATION_ERROR(-20031, 'Error: Tipo de alerta no encontrado'); END IF;
+        v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio);
+        IF v_id_barrio IS NULL THEN RAISE_APPLICATION_ERROR(-20032, 'Error: Barrio no encontrado'); END IF;
+        IF p_tipo_arma IS NOT NULL THEN
+            v_id_tipo_arma := fx_obtener_id_tipo_arma(p_tipo_arma);
+            IF v_id_tipo_arma IS NULL THEN RAISE_APPLICATION_ERROR(-20033, 'Error: Tipo de arma no encontrado'); END IF;
+        END IF;
+        IF p_medio_transporte IS NOT NULL THEN
+            v_id_medio := fx_obtener_id_medio(p_medio_transporte);
+            IF v_id_medio IS NULL THEN RAISE_APPLICATION_ERROR(-20034, 'Error: Medio de transporte no encontrado'); END IF;
+        END IF;
+        v_id_alarma := fx_alarma_mas_cercana(p_latitud, p_longitud);
+        INSERT INTO alertas(
+            id_usuario, id_tipo_alerta, id_barrio, id_tipo_arma,
+            id_medio_transporte, id_alarma, estado, etapa, sector, manzana,
+            casa, calle, carrera, referencia, latitud, longitud, descripcion, fecha
+        ) VALUES (
+            v_id_usuario, v_id_tipo_alerta, v_id_barrio, v_id_tipo_arma,
+            v_id_medio, v_id_alarma, 'PENDIENTE', p_etapa, p_sector, p_manzana,
+            p_casa, p_calle, p_carrera, p_referencia, p_latitud, p_longitud, p_descripcion, SYSTIMESTAMP
+        );
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_consultar_alerta(p_id_alerta NUMBER, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_alertas_completa WHERE id_alerta = p_id_alerta;
+    END;
+
+    PROCEDURE pr_listar_alertas(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_alertas_completa ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_listar_alertas_por_usuario(p_username VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_alertas_completa WHERE username = p_username ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_listar_alertas_por_barrio(p_nombre_barrio VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_alertas_completa
+            WHERE UPPER(barrio) = UPPER(p_nombre_barrio) ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_actualizar_estado(p_id_alerta NUMBER, p_estado VARCHAR2) IS
+    BEGIN
+        UPDATE alertas SET estado = p_estado WHERE id_alerta = p_id_alerta;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20035, 'Alerta no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_alerta(p_id_alerta NUMBER) IS
+    BEGIN
+        DELETE FROM alertas WHERE id_alerta = p_id_alerta;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20036, 'Alerta no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    -- Atención
+    FUNCTION fx_atencion_existe(p_id_atencion NUMBER) RETURN NUMBER IS
+        v NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v FROM atencion_alerta WHERE id_atencion = p_id_atencion; RETURN v;
+    END;
+
+    PROCEDURE pr_insertar_atencion(
+        p_id_alerta NUMBER, p_nombre_unidad VARCHAR2, p_estado_final VARCHAR2,
+        p_descripcion VARCHAR2, p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2,
+        p_observacion VARCHAR2, p_cedula_policia VARCHAR2
+    ) IS
+        v_id_unidad  NUMBER;
+        v_id_arma    NUMBER;
+        v_id_medio   NUMBER;
+        v_id_policia NUMBER;
+    BEGIN
+        IF fx_alerta_existe(p_id_alerta) = 0 THEN RAISE_APPLICATION_ERROR(-20037, 'Error: Alerta no encontrada'); END IF;
+        v_id_unidad := fx_obtener_id_unidad(p_nombre_unidad);
+        IF v_id_unidad IS NULL THEN RAISE_APPLICATION_ERROR(-20038, 'Error: Unidad no encontrada'); END IF;
+        IF p_tipo_arma IS NOT NULL THEN
+            v_id_arma := fx_obtener_id_tipo_arma(p_tipo_arma);
+            IF v_id_arma IS NULL THEN RAISE_APPLICATION_ERROR(-20039, 'Error: Tipo de arma no encontrado'); END IF;
+        END IF;
+        IF p_medio_transporte IS NOT NULL THEN
+            v_id_medio := fx_obtener_id_medio(p_medio_transporte);
+            IF v_id_medio IS NULL THEN RAISE_APPLICATION_ERROR(-20040, 'Error: Medio de transporte no encontrado'); END IF;
+        END IF;
+        IF p_cedula_policia IS NOT NULL THEN
+            v_id_policia := fx_obtener_id_usuario_cedula(p_cedula_policia);
+        END IF;
+        INSERT INTO atencion_alerta(
+            id_alerta, id_unidad, fecha_atencion, estado_final,
+            descripcion, id_tipo_arma, id_medio_transporte, observacion, id_policia
+        ) VALUES (
+            p_id_alerta, v_id_unidad, SYSTIMESTAMP, p_estado_final,
+            p_descripcion, v_id_arma, v_id_medio, p_observacion, v_id_policia
+        );
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_consultar_atencion(p_id_atencion NUMBER, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_atenciones_completa WHERE id_atencion = p_id_atencion;
+    END;
+
+    PROCEDURE pr_listar_atenciones(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_atenciones_completa ORDER BY fecha_atencion DESC;
+    END;
+
+    PROCEDURE pr_listar_atenciones_por_alerta(p_id_alerta NUMBER, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_atenciones_completa
+            WHERE id_alerta = p_id_alerta ORDER BY fecha_atencion DESC;
+    END;
+
+    PROCEDURE pr_actualizar_atencion(
+        p_id_atencion NUMBER, p_estado_final VARCHAR2, p_descripcion VARCHAR2,
+        p_tipo_arma VARCHAR2, p_medio_transporte VARCHAR2, p_observacion VARCHAR2
+    ) IS
+        v_id_arma  NUMBER;
+        v_id_medio NUMBER;
+    BEGIN
+        IF fx_atencion_existe(p_id_atencion) = 0 THEN RAISE_APPLICATION_ERROR(-20041, 'Error: Atención no encontrada'); END IF;
+        IF p_tipo_arma IS NOT NULL THEN
+            v_id_arma := fx_obtener_id_tipo_arma(p_tipo_arma);
+            IF v_id_arma IS NULL THEN RAISE_APPLICATION_ERROR(-20042, 'Error: Tipo de arma no encontrado'); END IF;
+        END IF;
+        IF p_medio_transporte IS NOT NULL THEN
+            v_id_medio := fx_obtener_id_medio(p_medio_transporte);
+            IF v_id_medio IS NULL THEN RAISE_APPLICATION_ERROR(-20043, 'Error: Medio no encontrado'); END IF;
+        END IF;
+        UPDATE atencion_alerta
+        SET estado_final         = p_estado_final,
+            descripcion          = p_descripcion,
+            id_tipo_arma         = v_id_arma,
+            id_medio_transporte  = v_id_medio,
+            observacion          = p_observacion
+        WHERE id_atencion = p_id_atencion;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_eliminar_atencion(p_id_atencion NUMBER) IS
+    BEGIN
+        DELETE FROM atencion_alerta WHERE id_atencion = p_id_atencion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20044, 'Atención no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    -- Notificaciones
+    PROCEDURE pr_insertar_notificacion(p_id_alerta NUMBER, p_cedula_usuario VARCHAR2, p_mensaje VARCHAR2) IS
+        v_id_usuario NUMBER;
+    BEGIN
+        IF fx_alerta_existe(p_id_alerta) = 0 THEN RAISE_APPLICATION_ERROR(-20045, 'Error: Alerta no encontrada'); END IF;
+        v_id_usuario := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20046, 'Error: Usuario no encontrado'); END IF;
+        INSERT INTO notificaciones(id_alerta, id_usuario, mensaje, fecha)
+        VALUES(p_id_alerta, v_id_usuario, p_mensaje, SYSTIMESTAMP);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_notificaciones(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_notificaciones;
+    END;
+
+    PROCEDURE pr_eliminar_notificacion(p_id_notificacion NUMBER) IS
+    BEGIN
+        DELETE FROM notificaciones WHERE id_notificacion = p_id_notificacion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20047, 'Notificación no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    -- Suscripciones
+    PROCEDURE pr_insertar_suscripcion(
+        p_cedula_usuario VARCHAR2, p_tipo_alerta VARCHAR2,
+        p_nombre_comuna VARCHAR2, p_nombre_barrio VARCHAR2, p_estado VARCHAR2
+    ) IS
+        v_id_usuario     NUMBER;
+        v_id_tipo_alerta NUMBER;
+        v_id_comuna      NUMBER;
+        v_id_barrio      NUMBER;
+    BEGIN
+        v_id_usuario := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        IF v_id_usuario IS NULL THEN RAISE_APPLICATION_ERROR(-20048, 'Error: Usuario no encontrado'); END IF;
+        v_id_tipo_alerta := fx_obtener_id_tipo_alerta(p_tipo_alerta);
+        IF v_id_tipo_alerta IS NULL THEN RAISE_APPLICATION_ERROR(-20049, 'Error: Tipo alerta no encontrado'); END IF;
+        IF p_nombre_comuna IS NOT NULL THEN v_id_comuna := fx_obtener_id_comuna(p_nombre_comuna); END IF;
+        IF p_nombre_barrio IS NOT NULL THEN v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio); END IF;
+        INSERT INTO suscripciones(id_usuario, id_tipo_alerta, id_comuna, id_barrio, estado)
+        VALUES(v_id_usuario, v_id_tipo_alerta, v_id_comuna, v_id_barrio, p_estado);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_suscripciones(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_suscripciones;
+    END;
+
+    PROCEDURE pr_actualizar_suscripcion(
+        p_id_suscripcion NUMBER, p_cedula_usuario VARCHAR2, p_tipo_alerta VARCHAR2,
+        p_nombre_comuna VARCHAR2, p_nombre_barrio VARCHAR2, p_estado VARCHAR2
+    ) IS
+        v_id_usuario     NUMBER;
+        v_id_tipo_alerta NUMBER;
+        v_id_comuna      NUMBER;
+        v_id_barrio      NUMBER;
+    BEGIN
+        v_id_usuario     := fx_obtener_id_usuario_cedula(p_cedula_usuario);
+        v_id_tipo_alerta := fx_obtener_id_tipo_alerta(p_tipo_alerta);
+        IF p_nombre_comuna IS NOT NULL THEN v_id_comuna := fx_obtener_id_comuna(p_nombre_comuna); END IF;
+        IF p_nombre_barrio IS NOT NULL THEN v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio); END IF;
+        UPDATE suscripciones
+        SET id_usuario = v_id_usuario, id_tipo_alerta = v_id_tipo_alerta,
+            id_comuna = v_id_comuna, id_barrio = v_id_barrio, estado = p_estado
+        WHERE id_suscripcion = p_id_suscripcion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20050, 'Suscripción no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_suscripcion(p_id_suscripcion NUMBER) IS
+    BEGIN
+        DELETE FROM suscripciones WHERE id_suscripcion = p_id_suscripcion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20051, 'Suscripción no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    -- Unidades policiales
+    PROCEDURE pr_insertar_unidad(
+        p_nombre VARCHAR2, p_estado VARCHAR2,
+        p_nombre_barrio VARCHAR2, p_latitud NUMBER, p_longitud NUMBER
+    ) IS
+        v_id_barrio NUMBER;
+    BEGIN
+        v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio);
+        IF v_id_barrio IS NULL THEN RAISE_APPLICATION_ERROR(-20052, 'Error: Barrio no encontrado'); END IF;
+        INSERT INTO unidades_policiales(nombre, estado, id_barrio, latitud, longitud)
+        VALUES(p_nombre, p_estado, v_id_barrio, p_latitud, p_longitud);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_unidades(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.nombre, u.estado, u.latitud, u.longitud,
+                   b.nombre AS barrio, c.nombre AS comuna
+            FROM unidades_policiales u
+            JOIN barrios b ON u.id_barrio = b.id_barrio
+            JOIN comunas c ON b.id_comuna = c.id_comuna
+            ORDER BY u.nombre;
+    END;
+
+    PROCEDURE pr_actualizar_unidad(
+        p_nombre_actual VARCHAR2, p_nombre_nuevo VARCHAR2,
+        p_estado VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER
+    ) IS
+        v_id_unidad NUMBER;
+        v_id_barrio NUMBER;
+    BEGIN
+        v_id_unidad := fx_obtener_id_unidad(p_nombre_actual);
+        IF v_id_unidad IS NULL THEN RAISE_APPLICATION_ERROR(-20053, 'Error: Unidad no encontrada'); END IF;
+        v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio);
+        IF v_id_barrio IS NULL THEN RAISE_APPLICATION_ERROR(-20054, 'Error: Barrio no encontrado'); END IF;
+        UPDATE unidades_policiales
+        SET nombre    = p_nombre_nuevo,
+            estado    = p_estado,
+            id_barrio = v_id_barrio,
+            latitud   = p_latitud,
+            longitud  = p_longitud
+        WHERE id_unidad = v_id_unidad;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_eliminar_unidad(p_nombre VARCHAR2) IS
+        v_id NUMBER;
+    BEGIN
+        v_id := fx_obtener_id_unidad(p_nombre);
+        IF v_id IS NULL THEN RAISE_APPLICATION_ERROR(-20055, 'Error: Unidad no encontrada'); END IF;
+        DELETE FROM unidades_policiales WHERE id_unidad = v_id;
+        COMMIT;
+    END;
+
+    -- Asignaciones
+    PROCEDURE pr_asignar_unidad_cercana(p_id_alerta NUMBER) IS
+        v_id_unidad NUMBER;
+        v_latitud   NUMBER;
+        v_longitud  NUMBER;
+    BEGIN
+        SELECT latitud, longitud INTO v_latitud, v_longitud
+        FROM alertas WHERE id_alerta = p_id_alerta;
+        v_id_unidad := fx_unidad_mas_cercana(v_latitud, v_longitud);
+        IF v_id_unidad IS NULL THEN
+            RAISE_APPLICATION_ERROR(-20056, 'Error: No hay unidades activas disponibles');
+        END IF;
+        INSERT INTO asignaciones_unidad(id_alerta, id_unidad, observacion, fecha)
+        VALUES(p_id_alerta, v_id_unidad, 'Asignación automática por proximidad', SYSTIMESTAMP);
+        UPDATE alertas SET estado = 'EN_ATENCION' WHERE id_alerta = p_id_alerta;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_insertar_asignacion(p_id_alerta NUMBER, p_nombre_unidad VARCHAR2, p_observacion VARCHAR2, p_fecha TIMESTAMP) IS
+        v_id_unidad NUMBER;
+    BEGIN
+        IF fx_alerta_existe(p_id_alerta) = 0 THEN RAISE_APPLICATION_ERROR(-20057, 'Error: Alerta no encontrada'); END IF;
+        v_id_unidad := fx_obtener_id_unidad(p_nombre_unidad);
+        IF v_id_unidad IS NULL THEN RAISE_APPLICATION_ERROR(-20058, 'Error: Unidad no encontrada'); END IF;
+        INSERT INTO asignaciones_unidad(id_alerta, id_unidad, observacion, fecha)
+        VALUES(p_id_alerta, v_id_unidad, p_observacion, p_fecha);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_listar_asignaciones(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_asignaciones;
+    END;
+
+    PROCEDURE pr_actualizar_asignacion(
+        p_id_asignacion NUMBER, p_id_alerta NUMBER,
+        p_nombre_unidad VARCHAR2, p_observacion VARCHAR2, p_fecha TIMESTAMP
+    ) IS
+        v_id_unidad NUMBER;
+    BEGIN
+        v_id_unidad := fx_obtener_id_unidad(p_nombre_unidad);
+        IF v_id_unidad IS NULL THEN RAISE_APPLICATION_ERROR(-20059, 'Error: Unidad no encontrada'); END IF;
+        UPDATE asignaciones_unidad
+        SET id_alerta = p_id_alerta, id_unidad = v_id_unidad,
+            observacion = p_observacion, fecha = p_fecha
+        WHERE id_asignacion = p_id_asignacion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20060, 'Asignación no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    PROCEDURE pr_eliminar_asignacion(p_id_asignacion NUMBER) IS
+    BEGIN
+        DELETE FROM asignaciones_unidad WHERE id_asignacion = p_id_asignacion;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20061, 'Asignación no encontrada'); END IF;
+        COMMIT;
+    END;
+
+    -- Búsquedas
+    PROCEDURE pr_buscar_alerta_por_tipo(p_tipo_alerta VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_alertas_completa
+            WHERE UPPER(tipo_alerta) LIKE '%' || UPPER(p_tipo_alerta) || '%'
+            ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_buscar_alerta_por_tipo_exacto(p_tipo_alerta VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_alertas_completa
+            WHERE UPPER(tipo_alerta) = UPPER(p_tipo_alerta)
+            ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_buscar_alerta_por_descripcion(p_texto VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_alertas_completa
+            WHERE UPPER(descripcion) LIKE '%' || UPPER(p_texto) || '%'
+               OR UPPER(barrio)      LIKE '%' || UPPER(p_texto) || '%'
+               OR UPPER(sector)      LIKE '%' || UPPER(p_texto) || '%'
+               OR UPPER(referencia)  LIKE '%' || UPPER(p_texto) || '%'
+            ORDER BY fecha DESC;
+    END;
+
+    PROCEDURE pr_buscar_unidad(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.nombre, u.estado, b.nombre AS barrio, c.nombre AS comuna
+            FROM unidades_policiales u
+            JOIN barrios b ON u.id_barrio = b.id_barrio
+            JOIN comunas c ON b.id_comuna = c.id_comuna
+            WHERE UPPER(u.nombre) LIKE '%' || UPPER(p_nombre) || '%'
+               OR UPPER(b.nombre) LIKE '%' || UPPER(p_nombre) || '%'
+            ORDER BY u.nombre;
+    END;
+
+    PROCEDURE pr_buscar_unidad_exacto(p_nombre VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT u.nombre, u.estado, b.nombre AS barrio, c.nombre AS comuna
+            FROM unidades_policiales u
+            JOIN barrios b ON u.id_barrio = b.id_barrio
+            JOIN comunas c ON b.id_comuna = c.id_comuna
+            WHERE UPPER(u.nombre) = UPPER(p_nombre);
+    END;
+
+    PROCEDURE pr_buscar_atencion_por_estado(p_estado VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_atenciones_completa
+            WHERE UPPER(estado_final) LIKE '%' || UPPER(p_estado) || '%'
+            ORDER BY fecha_atencion DESC;
+    END;
+
+    PROCEDURE pr_buscar_atencion_por_estado_exacto(p_estado VARCHAR2, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR
+            SELECT * FROM vw_atenciones_completa
+            WHERE UPPER(estado_final) = UPPER(p_estado)
+            ORDER BY fecha_atencion DESC;
+    END;
+
+    -- Alarmas
+    PROCEDURE pr_insertar_alarma(
+        p_nombre VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER,
+        p_radio_cobertura NUMBER, p_estado VARCHAR2
+    ) IS
+        v_id_barrio NUMBER;
+    BEGIN
+        v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio);
+        IF v_id_barrio IS NULL THEN RAISE_APPLICATION_ERROR(-20062, 'Error: Barrio no encontrado'); END IF;
+        INSERT INTO alarmas(nombre, id_barrio, latitud, longitud, radio_cobertura, estado)
+        VALUES(p_nombre, v_id_barrio, p_latitud, p_longitud, p_radio_cobertura, p_estado);
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_consultar_alarma(p_id_alarma NUMBER, p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_alarmas WHERE id_alarma = p_id_alarma;
+    END;
+
+    PROCEDURE pr_listar_alarmas(p_cursor OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN p_cursor FOR SELECT * FROM vw_alarmas ORDER BY nombre;
+    END;
+
+    PROCEDURE pr_actualizar_alarma(
+        p_id_alarma NUMBER, p_nombre VARCHAR2, p_nombre_barrio VARCHAR2,
+        p_latitud NUMBER, p_longitud NUMBER,
+        p_radio_cobertura NUMBER, p_estado VARCHAR2
+    ) IS
+        v_id_barrio NUMBER;
+    BEGIN
+        v_id_barrio := fx_obtener_id_barrio(p_nombre_barrio);
+        IF v_id_barrio IS NULL THEN RAISE_APPLICATION_ERROR(-20063, 'Error: Barrio no encontrado'); END IF;
+        UPDATE alarmas
+        SET nombre = p_nombre, id_barrio = v_id_barrio,
+            latitud = p_latitud, longitud = p_longitud,
+            radio_cobertura = p_radio_cobertura, estado = p_estado
+        WHERE id_alarma = p_id_alarma;
+        COMMIT;
+    EXCEPTION WHEN OTHERS THEN RAISE;
+    END;
+
+    PROCEDURE pr_eliminar_alarma(p_id_alarma NUMBER) IS
+    BEGIN
+        DELETE FROM alarmas WHERE id_alarma = p_id_alarma;
+        IF SQL%NOTFOUND THEN RAISE_APPLICATION_ERROR(-20064, 'Alarma no encontrada'); END IF;
+        COMMIT;
+    END;
+
+END pkg_alertas;
+/
+
+
+-- ============================================================
+-- 11. DATOS DE PRUEBA
+-- ============================================================
+
+-- ============================================================
+--  WolertApp - Datos de prueba
+--  Orden de inserción respeta las FK
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- 1. COMUNAS
+-- ------------------------------------------------------------
+
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('1','COMUNA 1');
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('2','COMUNA 2');
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('3','COMUNA 3');
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('4','COMUNA 4');
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('5','COMUNA 5');
+INSERT INTO COMUNAS (ID_COMUNA,NOMBRE) values ('6','COMUNA 6');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 2. ROLES_USUARIO
+-- ------------------------------------------------------------
+
+INSERT INTO ROLES_USUARIO (ID_ROL,NOMBRE) values ('1','ADMIN');
+INSERT INTO ROLES_USUARIO (ID_ROL,NOMBRE) values ('2','CIUDADANO');
+INSERT INTO ROLES_USUARIO (ID_ROL,NOMBRE) values ('4','ADMIN_POLICIA');
+INSERT INTO ROLES_USUARIO (ID_ROL,NOMBRE) values ('5','POLICIA');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 3. TIPOS_ALERTA
+-- ------------------------------------------------------------
+
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('18','Hello','BAJA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('3','ROBO','MEDIA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('4','HOMICIDIO','ALTA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('5','PERSONA_SOSPECHOSA','BAJA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('6','INCENDIO','ALTA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('7','EMERGENCIA_MEDICA','ALTA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('8','ACCIDENTE','MEDIA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('9','RUIDO','BAJA');
+INSERT INTO TIPOS_ALERTA (ID_TIPO_ALERTA,NOMBRE,PRIORIDAD) values ('17','GENERAL','BAJA');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 4. TIPOS_ARMA
+-- ------------------------------------------------------------
+
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('2','Arma de fuego');
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('4','Sin arma');
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('5','Explosivo');
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('6','Agresion fisica');
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('7','Desconocido');
+INSERT INTO TIPOS_ARMA (ID_TIPO_ARMA,NOMBRE) values ('1','Arma blanca');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 5. MEDIOS_TRANSPORTE
+-- ------------------------------------------------------------
+
+INSERT INTO MEDIOS_TRANSPORTE (ID_MEDIO_TRANSPORTE,NOMBRE) values ('2','Motocicleta');
+INSERT INTO MEDIOS_TRANSPORTE (ID_MEDIO_TRANSPORTE,NOMBRE) values ('3','Automovil');
+INSERT INTO MEDIOS_TRANSPORTE (ID_MEDIO_TRANSPORTE,NOMBRE) values ('4','A pie');
+INSERT INTO MEDIOS_TRANSPORTE (ID_MEDIO_TRANSPORTE,NOMBRE) values ('5','Bus/Colectivo');
+INSERT INTO MEDIOS_TRANSPORTE (ID_MEDIO_TRANSPORTE,NOMBRE) values ('1','Moto');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 6. BARRIOS
+-- ------------------------------------------------------------
+
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('1','11 DE NOVIEMBRE','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('2','9 DE MARZO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('3','ALTA GRACIA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('4','CENTRO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('5','EL CARMEN','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('6','GAITAN','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('7','GUATAPURI','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('8','KENEDY','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('9','LA ESPERANZA ORIENTE','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('10','LA GARITA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('11','LA GRANJA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('12','LAS DELICIAS','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('13','LAS PALMAS','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('14','LOPERENA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('15','NUEVA COLOMBIA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('16','PABLO VI','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('17','PARAISO I','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('18','PARAISO II','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('19','PESCADITO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('20','SAN ANTONIO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('21','SAN JORGE','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('22','SAN VICENTE','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('23','SANTA ANA','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('24','SANTO  DOMINGO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('25','SICARARE','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('26','ZAPATO EN MANO','1');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('27','12 DE OCTUBRE','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('28','5 DE NOVIEMBRE','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('29','AMANECERES DEL VALLE','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('30','ARGENTINA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('31','BARILOCHE','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('32','BRASIL','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('33','CANDELARIA SUR','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('34','CHILE','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('35','COLOMBIA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('36','CONJUNTO SAN FRANCISCO DE ASIS','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('37','DOÑA CLARA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('38','FLORENCIA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('39','LA RIVERA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('40','LOS COCOS','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('41','LOS MILAGROS','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('42','MAR DEL PATA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('43','MAYALES ETAPA I','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('44','MONTECARLO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('45','PALMARES I','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('46','PALMARES II','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('47','PANAMA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('48','PANAMA II','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('49','SAN FERNANDO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('50','SAN JUAN','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('51','SANTA RITA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('52','SANTA ROSA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('53','SIMON BOLIVAR','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('54','TOSCANA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('55','URB MAYALES','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('56','URB. GEORGE DANGOND','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('57','URB. LUIS CARLOS GALAN','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('58','URB. ROSAMERY','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('59','VALPARAISO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('60','VILLA CASTRO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('61','VILLA CLARA','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('62','VILLA DEL ROSARIO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('63','VIVE ALTO','2');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('64','1 DE MAYO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('65','20 DE MARZO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('66','25 DE DICIEMBRE','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('67','7 DE AGOSTO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('68','ALTOS DE ZIRUMA I','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('69','ALTOS DE ZIRUMA II','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('70','ALTOS DE ZIRUMA III','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('71','ALTOS DE ZIRUMA IV','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('72','CHIRIQUI NORTE','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('73','CONJUNTO ARMONIA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('74','CONJUNTO LOS GUAYACANES ALCALA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('75','DON CARMELO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('76','DON FELIPE','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('77','EFRAIN QUINTERO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('78','EL EDEN','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('79','EL OASIS','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('80','EL PARAMO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('81','EL PRADO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('82','EMANUEL','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('83','ENTRESIERRAS','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('84','LA FELICIDAD','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('85','LA PRIMAVERA 1','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('86','LAS MANUELITAS','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('87','LEANDRO DIAZ','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('88','LOS ALAMOS','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('89','MAREIGUA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('90','MAYALES AEROPUERTO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('91','NUEVO MILENIO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('92','OGB','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('93','PARQUE LA PRIMAVERA LA PRIMAVERA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('94','RINCON DE ZIRUMA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('95','RUEDA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('96','SAN ANTONIO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('97','SAN FRANCISCO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('98','SAN MARTIN','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('99','TERRAZZA 64','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('100','TIERRA PROMETIDA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('101','TORRES DE VILLA DEL ROSARIO','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('102','URB. LORENZO MORALES','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('103','URB. NANDO MARIN','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('104','VALLE MEZA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('105','VILLA FUENTE','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('106','VILLA HAYDITH','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('107','VILLA LEONOR','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('108','VILLA OLGA','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('109','VILLA URIBE','3');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('110','8 DE DICIEMBRE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('111','9 DE ABRIL','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('112','ACACIAS','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('113','ALAMOS II','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('114','ALAMOS III','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('115','ALTOS DEL VALLE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('116','BUENA VISTA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('117','CASAS DE LA PRADERA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('118','CASIMIRO RAUL MAESTRE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('119','CICERON MAESTRE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('120','CIUDADELA 450 AÑOS','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('121','CIUDADELA COMFACESAR','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('122','CONJUNTO RESIDENCIAL EL CERRITO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('123','EDGARDO PUPO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('124','EL CERRITO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('125','EL HOGAR','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('126','EL PROGRESO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('127','EL ROCIO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('128','FLORES DE MARIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('129','FRANCISCO PAULA SANTANDER','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('130','FUNDADORES','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('131','GALAN','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('132','GERIZIM','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('133','JORGE DANGOND','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('134','LA FLORESTA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('135','LA FONTANA URB LA FONTANA II','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('136','LA VICTORIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('137','LAS CABAÑAS','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('138','LAS PALMERAS','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('139','LIMONAR','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('140','LOS CACIQUES','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('141','MANANTIAL','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('142','MARIA CAMILA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('143','MARIA VALERIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('144','POPULANDIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('145','PORTAL DEL CERRITO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('146','RAFAEL ESCALONA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('147','SABANAS DEL VALLE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('148','SAN JERONIMO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('149','SAN MARINO','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('150','TOBIAS DAZA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('151','TORRES DON JOSE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('152','URB MIRAFLORES','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('153','URB. MARIA PAULA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('154','URBANIZACION LINDARAJA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('155','VILLA ALGENIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('156','VILLA ARCADIA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('157','VILLA CORELCA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('158','VILLA DARIANA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('159','VILLA LUZ','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('160','VILLA MAGDALA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('161','VILLA MARUAMAKE','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('162','VILLA MIRIAN','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('163','VILLA TAXI','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('164','VILLAS DE CATALINA','4');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('165','20 DE JULIO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('166','5 DE ENERO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('167','6 DE ENERO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('168','ACUARELAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('169','ALTA VISTA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('170','ALTOS DE COMFACESAR','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('171','ALTOS DE DON ALBERTO VIII','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('172','ALTOS DE PIMIENTO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('173','ALTOS DEL ROSARIO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('174','ANA MARIA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('175','APARTAMENTOS LOFT38','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('176','ARIZONA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('177','ATLANTIS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('178','AZUCAR BUENA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('179','BALCONES DE SANTA HELENA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('180','BALI','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('181','BAMBU','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('182','BAMBU','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('183','BAMBUTERRA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('184','BARCELONA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('185','BARCELONA II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('186','BELLA VISTA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('187','BELLO HORIZONTE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('188','BILBAO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('189','BRISAS DE LA POPA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('190','CALLEJAS DEL NORTE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('191','CAMPO ROMERO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('192','CANDELARIA NORTE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('193','CANTAGIRON','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('194','CEIBA ALTA GRACIA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('195','CITARINGA CLUB HOUSE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('196','CIUDAD TAYRONA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('197','CIUDADELA ROSARIO REAL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('198','CLUB  HOUSE II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('199','CLUB HOUSE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('200','CONJUNTO ARIZONA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('201','CONJUNTO CALLEJAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('202','CONJUNTO CITARINGA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('203','CONJUNTO GRANADILLO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('204','CONJUNTO LAS MARGARITAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('205','CONJUNTO LAS ORQUIDEAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('206','CONJUNTO LOS ROSALES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('207','CONJUNTO LOS ROSALES I','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('208','CONJUNTO LOS ROSALES II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('209','CONJUNTO MARCELLA REAL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('210','CONJUNTO MARIA ISABELLA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('211','CONJUNTO QUINTAS DEL COUNTRY','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('212','CONJUNTO SAN PEDRO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('213','CONJUNTO SANTILLANA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('214','DIOMEDEZ DAZA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('215','DIVINO NIÑO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('216','DON ALBERTO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('217','DON ALBERTO V','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('218','DON ALBERTO VI','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('219','DON ALBERTO VII','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('220','DON MIGUEL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('221','DOÑA FINA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('222','DUNDAKARE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('223','EL AMPARO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('224','EL REFUGIO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('225','ENEAL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('226','ENRIQUE PUPO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('227','FRANCISCO EL HOMBRE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('228','FRANCISCO JAVIER','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('229','FUTURO DE LOS NIÑOS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('230','GARUPAL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('231','ICHAGUA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('232','IRACAL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('233','LA CASTELLANA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('234','LA CEIBA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('235','LA ESPERANZA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('236','LA FORTUNA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('237','LA NEVADA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('238','LA POPA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('239','LA RIOJA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('240','LAS CAYENAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('241','LAS FLORES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('242','LAS TRINITARIAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('243','LOS CAÑAGUATES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('244','LOS CORALES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('245','LOS CORTIJOS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('246','LOS GUASIMALES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('247','LOS MUSICOS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('248','MARIA CAMILA NORTE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('249','MIRADOR DE LA SIERRA I','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('250','MIRADOR DE LA SIERRA II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('251','MIRADOR DE LA SIERRA III','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('252','MIRADOR DE LA SIERRA IV','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('253','NORTE DE DON ALBERTO IX','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('254','NUEVA ESPERANZA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('255','NUEVO AMANECER','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('256','ORIENTE  DE CALLEJAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('257','PALMETO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('258','PORTAL DEL ROSARIO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('259','PORTOBELO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('260','QUINTAS DEL ROSARIO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('261','RESERVA UPAR','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('262','ROCAS DEL VALLE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('263','ROSARIO NORTE I','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('264','ROSARIO NORTE II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('265','SAN ISIDRO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('266','TERRANOVA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('267','TORRES DEL NORTE','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('268','URB CASA BLANCA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('269','URB LA SABANA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('270','URB LAS MARIAS','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('271','URB. SANTA ROSA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('272','VILLA ANDRES','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('273','VILLA CAREL','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('274','VILLA CONCHA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('275','VILLA CONSUELO','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('276','VILLA ELVIA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('277','VILLA ERIKA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('278','VILLA FANNY','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('279','VILLA JANETH','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('280','VILLA LIGIA I','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('281','VILLA LIGIA II','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('282','VILLA LIGIA III','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('283','VILLA LIGIA IV','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('284','VILLA LUCY','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('285','VILLA MONICA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('286','VILLA ROSA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('287','VILLA TAYRONA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('288','VILLA VALERIA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('289','VILLALBA','5');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('290','ALFONZO LOPEZ','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('291','CAÑAGUATE','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('292','CHIMILA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('293','CIUDAD JARDIN','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('294','CONJUNTO AREMASAIN','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('295','CONJUNTO PASADENA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('296','CONJUNTO RESIDENCIAL DEL NORTE','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('297','CONJUNTO ROSAS DEL ATENEO','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('298','GUAJIRA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('299','LOS  CAMPANOS','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('300','LOS ANGELES','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('301','MARIA DANIELA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('302','NOVALITO','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('303','OBRERO','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('304','PONTEVEDRA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('305','SAN CARLOS','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('306','SAN CLEMENTE','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('307','SAN JOAQUIN','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('308','SANTA ROSALIA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('309','SERRANILLA','6');
+INSERT INTO BARRIOS (ID_BARRIO,NOMBRE,ID_COMUNA) values ('310','VILLA DEL ROSARIO NORTE','6');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 7. USUARIOS
+-- ------------------------------------------------------------
+
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('5','SOFIA',null,'BARLIZA','GUTIERREZ','4444555666','5555777444','sofia@gmail.com','Sofia123','Sofia12345','ACTIVO','2','87',null,'8 # 570',null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('6','MARGARITA',null,'DAZA','JIMENEZ','8888999777','4552214463','margarita@gmail.com','Margarita123','Margarita1234','ACTIVO','2','4',null,null,'1','48',null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('10','YAMIL','DAVID','BUSTILLO','MOLINA','1055200333','3157859745','yamil@gmail.com','Yamil123','Yamil1234','ACTIVO','2','16','7B #14',null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('11','MARIA','CRISTINA','MARTINEZ','HINOJOSA','1065616702','3174061936','mariamartinez.joseumar@gmail.com','Mariac','Maria1234','ACTIVO','1',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('12','ADRIANA','CRISTINA ','HINOJOSA','MAZA','1065604320','3174061936','crisshinojosamaza@gmail.com','AdrianaC','Adriana1234','ACTIVO','2','118',null,null,null,'19','18');
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('20','LUIS','DAVID','LOPEZ','ARIAS','888855447','5555547744','luis01@gmail,com','luis01','Luis1234','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('23','MARIANA',null,'MANJARREZ','MOLINA','2224445714','4447889665','mariana012@gmail.com','Mariana01','Mariana01','ACTIVO','2','130',null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('24','MOISES',null,'JACOME',null,'10022769890','8888888888','mosesdasanmo@gmail.com','moisescosta','Moises1234','ACTIVO','2','235',null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('25','LUIS',null,'GARCIA','DAZA','8888888888','888888888','kuis01@gmail.com','luis012','Luis0123','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('7','MARTIN','DAVID','MANJARREZ','OSPINO','7778885524','1111111111','martinospi@gmail.com','Martin123','Martin123456','ACTIVO','2','28','8# 23',null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('8','ADMIN',null,'SISTEMA',null,'1000000001','3000000000','admin@wolertapp.com','admin','Admin1234','ACTIVO','1','1','Principal','1','A','1','1');
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('9','MARIA','FERNANDA','GOMEZ','LOPEZ','1098765432','3105556677','maria.gomez@test.com','mgomez','Maria2025','ACTIVO','1','1',null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('15','MATEO',null,'HERNANDEZ','DAZA','888889999','7777777777','policiamateo@gmail.com','mateo123','Mateo1234','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('17','DAVID','MIGUEL','GUTIERRREZ','BARLIZA','8888889999','8888888887','david01@gmail.com','david05','David12345','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('21','HERNANDO','LUIS','GARCIA','RODRIGUEZ','55112236','4445558552','hernan01@gmail.com','hernan01','Hernan01','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('14','SOFIA',null,'GUTIERREZ','BARLIZA','558888888','2222222222','admin@gmail.com','adminpolicia1','Admin1234','ACTIVO','4',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('18','TEST',null,'PRUEBA',null,'9999999999',null,null,'testuni','1234','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('1000','MARIA','FERNANDA','LOPEZ','RAMIREZ','987654321','3109876543','maria@email.com','mariaf','1234','ACTIVO','1','1','calle 10',null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('19','MIGUEL',null,'RODRIGUEZ','RIOS','77788444125','7888889999','miigue05@gmail.com','migue05','Migue1234','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('22','LUCAS',null,'RODRIGUEZ','GARCIA','888888888','225413685','luis01@gmail.com','lucas01','Lucas01','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('1','JUAN','DAVID','PEREZ','LOPEZ','1234567890','3001234567','juan@email.com','juan01','1234','ACTIVO','5',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('2','JUAN',null,'PEREZ',null,'99999999','3001234567','juan@test.com','juantest99','1234','ACTIVO','2',null,null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('3','LAURA','SOFIA','DAZA','LEONIDAS','444','555','lau@gmail.com','lauf','123','ACTIVO','2','4',null,null,null,null,null);
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('4','KATHERINE','SOFIA','GUTIERREZ','BARLIZA','106620','3052514781','gutierrezkatherine015@gmail.com','Kathe123','Kathe12345','ACTIVO','2','118',null,null,null,'19','18');
+INSERT INTO USUARIOS (ID_USUARIO,PRIMER_NOMBRE,SEGUNDO_NOMBRE,PRIMER_APELLIDO,SEGUNDO_APELLIDO,CEDULA,TELEFONO,EMAIL,USERNAME,PASSWORD,ACTIVO,ID_ROL,ID_BARRIO,CALLE,CARRERA,ETAPA,MANZANA,CASA) values ('16','JUAN','ANDRES','MU OZ','DIAZ','88889999999','5555555554','juanmu oz5@gmail.com','juanMu','Juan1234','ACTIVO','5',null,null,null,null,null,null);
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 8. UNIDADES_POLICIALES
+-- ------------------------------------------------------------
+
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('3','CAI 450 A OS','ACTIVA','120','10,462660623228386','-73,26953887939453');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('5','CAI NEVADA','ACTIVA','237','10,488824641652126','-73,27812194824219');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('4','CAI ESPERANZA','ACTIVA','235','10,482769133913939','-73,2613205909729');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('6','CAI CENTRO','ACTIVA','4','10,4631','-73,2534');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('7','CAI 9 DE MARZO','ACTIVA','103','10,49','-73,248');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('8','CAI GAITAN','ACTIVA','6','10,448','-73,2601');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('9','CAI GUATAPURI','ACTIVA','129','10,468','-73,243');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('10','CAI KENEDY','ACTIVA','8','10,452','-73,268');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('11','CAI LOPERENA','ACTIVA','129','10,472','-73,265');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('12','CAI ALTA GRACIA','ACTIVA','3','10,485','-73,251');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('1','CAI DON CARMELO','ACTIVA','75','10,442403093289457','-73,26078414916992');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('2','CAI PARQUE DE LA VIDA','ACTIVA','162','10,474160403416159','-73,26112747192383');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('13','CAI GARITA','ACTIVA','10','10,455950462801992','-73,24992656707764');
+INSERT INTO UNIDADES_POLICIALES (ID_UNIDAD,NOMBRE,ESTADO,ID_BARRIO,LATITUD,LONGITUD) values ('14','CAI NEVADA 2','ACTIVA','237','10,479203291726671','-73,28842163085938');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 9. ALARMAS
+-- ------------------------------------------------------------
+
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('18','ALARMA FUNDADORES','130','10,456499097716103','-73,26363801956177','313,51351351351354','ACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('16','ALARMA CASIMIRO MAESTRE','118','10,452236600969139','-73,26582670211792','194,93243243243245','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('17','ALARMA VILLA MIRIAN','162','10,451540246931007','-73,27069759368896','353,0405405405406','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('19','ALARMA FRANCISCO PAULA','129','10,452363210626526','-73,27528953552246','168,5810810810811','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('5','ALARMA ESPERANZA','254','10,47949868849701','-73,26850891113281','500','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('12','ALARMA CIUDAD TAYRONA','196','10,473042094891063','-73,26550483703613','585,7143061501639','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('9','ALARMA DEL NEVADA','237','10,491187734485601','-73,26818704605103','660,7142857142857','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('10','ALARMA LA POPA','238','10,467387190006193','-73,26511859893799','757,1428571428569','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('13','ALARMA 12 DE OCTUBRE','27','10,456815617417824','-73,24454069137573','628,5713570458547','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('14','ALARMA 450 A OS','120','10,446539112977401','-73,27777862548828','500','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('15','ALARMA PARQEU DE LA VIDA','245','10,473843901412797','-73,26256513595581','821,428520338876','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('3','ALARMA NANDO MARIN','103','10,435861317163445','-73,26419591903687','500','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('4','ALARMA DON CARMELO','75','10,442107661205892','-73,26039791107178','500','ACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('20','ALARMA VILLA CONSUELO','275','10,481397661008229','-73,28533172607422','721,9594594594594','INACTIVA');
+INSERT INTO ALARMAS (ID_ALARMA,NOMBRE,ID_BARRIO,LATITUD,LONGITUD,RADIO_COBERTURA,ESTADO) values ('21','ALARMA MAYALES','90','10,448649305897874','-73,23838233947754','500','INACTIVA');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 10. ALERTAS
+-- ------------------------------------------------------------
+
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('31','24','5','235',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,476671307855176','-73,2568359375','Persona sospechosa: Sujeto encapuchado y vestido de negro',to_timestamp('05/06/26 08:55:39,755000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('39','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test A','10,4631','-73,2534','Test alerta A',to_timestamp('10/06/26 05:39:00,725000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('40','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test B','10,4632','-73,2535','Test alerta B',to_timestamp('10/06/26 05:39:00,783000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('41','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test C','10,4631','-73,2534','Test alerta C',to_timestamp('10/06/26 05:43:26,250000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('42','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test D','10,4632','-73,2535','Test alerta D',to_timestamp('10/06/26 05:43:27,253000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('43','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test E','10,4631','-73,2534','Test alerta E',to_timestamp('10/06/26 05:44:30,516000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('44','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test F','10,4631','-73,2534','Test alerta F',to_timestamp('10/06/26 05:45:08,377000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('45','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test H','10,4631','-73,2534','Test alerta H',to_timestamp('10/06/26 05:53:03,875000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('46','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test G','10,4631','-73,2534','Test alerta G',to_timestamp('10/06/26 05:54:05,664000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('47','5','3','4',null,null,'RESUELTA',null,null,null,null,null,null,'Test G','10,4631','-73,2534','Test alerta G',to_timestamp('10/06/26 05:55:20,714000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('48','5','3','4',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,'Test H','10,4631','-73,2534','Test alerta H',to_timestamp('10/06/26 05:55:21,611000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('26','4','5','237',null,null,'RESUELTA',null,null,'19','18',null,null,null,'10,478528098050996','-73,27812194824219',null,to_timestamp('05/06/26 07:21:57,490000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),null);
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('38','4','3','118','2','2','RESUELTA',null,null,'19','18',null,null,null,'10,456921123913354','-73,26147079467773',null,to_timestamp('05/06/26 12:03:39,814000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('33','4','4','118','1',null,'RESUELTA',null,null,'19','18',null,null,null,'10,454388958124841','-73,26507568359375',null,to_timestamp('05/06/26 10:05:42,849000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('34','4','4','118','2',null,'RESUELTA',null,null,'19','18',null,null,null,'10,453376086027454','-73,26421737670898','Mataron alguien',to_timestamp('05/06/26 10:17:35,067000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('35','4','3','118','2','2','RESUELTA',null,null,'19','18',null,null,null,'10,45354489827311','-73,26387405395508','..',to_timestamp('05/06/26 10:43:21,931000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('36','4','3','118','2','2','RESUELTA',null,null,'19','18',null,null,null,'10,449155750066296','-73,26507568359375',null,to_timestamp('05/06/26 10:55:41,548000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('37','4','3','118','2','2','UNIDAD_ASIGNADA',null,null,'19','18',null,null,null,'10,45995969559619','-73,2571792602539',null,to_timestamp('05/06/26 11:31:03,277000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('32','4','3','118','2','2','UNIDAD_ASIGNADA',null,null,'19','18',null,null,null,'10,449831007673284','-73,2564926147461','Robaron a un joven estudiante blanco',to_timestamp('05/06/26 09:19:12,368000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('27','4','3','6',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,448','-73,26','Prueba trigger corregido',to_timestamp('05/06/26 07:29:34,903000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),null);
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('28','4','3','75',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,442','-73,2605','Prueba 1 - robo cerca CAI Don Carmelo',to_timestamp('05/06/26 07:32:01,367000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),null);
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('29','4','4','75',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4425','-73,261','Prueba 2 - homicidio cerca CAI Don Carmelo',to_timestamp('05/06/26 07:32:02,058000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),null);
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('30','4','6','75',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4418','-73,26','Prueba 3 - incendio cerca CAI Don Carmelo',to_timestamp('05/06/26 07:32:02,063000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),null);
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('1','4','3','118','2','2','RESUELTA',null,null,null,null,null,null,null,'10,4527','-73,2658','Robo a mano armada frente a tienda de barrio',to_timestamp('01/06/26 08:15:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'16');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('2','5','4','130','2',null,'RESUELTA',null,null,null,null,null,null,null,'10,4565','-73,2637','Homicidio reportado en via publica, un herido de bala',to_timestamp('01/06/26 09:30:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('3','6','8','75',null,'3','RESUELTA',null,null,null,null,null,null,null,'10,4421','-73,2604','Accidente de transito entre moto y carro, dos heridos leves',to_timestamp('01/06/26 10:45:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('4','7','6','129',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4524','-73,2753','Incendio en vivienda, familia atrapada en segundo piso',to_timestamp('01/06/26 11:20:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('5','10','7','162',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4515','-73,2707','Persona con paro cardiaco en via publica, necesita ambulancia urgente',to_timestamp('01/06/26 12:00:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'17');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('6','11','3','103','1','2','RESUELTA',null,null,null,null,null,null,null,'10,4359','-73,2642','Robo de motocicleta a mano armada frente a colegio',to_timestamp('01/06/26 02:10:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'3');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('7','12','9','118',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,453','-73,266','Fiesta con musica a alto volumen, vecinos afectados',to_timestamp('01/06/26 03:30:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'16');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('8','2','4','130','2',null,'RESUELTA',null,null,null,null,null,null,null,'10,4568','-73,264','Rina con arma de fuego, un muerto en el lugar',to_timestamp('02/06/26 07:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('9','3','8','254',null,'3','RESUELTA',null,null,null,null,null,null,null,'10,4795','-73,2685','Choque multiple en avenida principal, tres vehiculos involucrados',to_timestamp('02/06/26 08:45:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'5');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('10','4','5','162',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4516','-73,2709','Persona sospechosa merodeando casas del sector, camisa roja',to_timestamp('02/06/26 10:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'17');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('11','5','6','129',null,null,'EN_ATENCION',null,null,null,null,null,null,null,'10,4525','-73,2751','Incendio en local comercial, humo visible desde lejos',to_timestamp('03/06/26 09:15:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('12','6','7','118',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4528','-73,2655','Persona desmayada en via publica, no responde',to_timestamp('03/06/26 11:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'16');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('13','7','3','75','2','2','RESUELTA',null,null,null,null,null,null,null,'10,4423','-73,2601','Robo con intimidacion en supermercado, delincuente armado',to_timestamp('03/06/26 01:30:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('14','10','4','130','2',null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4566','-73,2638','Homicidio en residencia, vecinos reportan disparos',to_timestamp('04/06/26 06:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('15','11','8','162',null,'3','RESUELTA',null,null,null,null,null,null,null,'10,4514','-73,2706','Accidente de transito con heridos, moto contra poste',to_timestamp('04/06/26 07:15:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'17');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('16','12','5','254',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4796','-73,2683','Grupo sospechoso frente a colegio, comportamiento extranio',to_timestamp('04/06/26 08:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'5');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('17','2','9','103',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,436','-73,264','Escandalo publico con agresiones verbales y fisicas',to_timestamp('04/06/26 08:45:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'3');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('18','3','6','129',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4522','-73,2754','Incendio en deposito, fuego se extiende rapidamente',to_timestamp('04/06/26 09:10:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('19','4','3','118','1','2','UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4529','-73,2657','Robo de celular a estudiante frente a universidad',to_timestamp('05/06/26 06:30:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'16');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('20','5','7','162',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4513','-73,2708','Persona herida de gravedad, posible atropello',to_timestamp('05/06/26 07:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'17');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('21','6','8','75',null,'3','RESUELTA',null,null,null,null,null,null,null,'10,442','-73,2603','Accidente de bus, varios pasajeros con heridas leves',to_timestamp('05/06/26 07:30:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'4');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('22','7','5','130',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4563','-73,2639','Individuo sospechoso con casco puesto entrando a edificio',to_timestamp('05/06/26 08:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'18');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('23','10','9','254',null,null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4793','-73,2687','Ruido excesivo de maquinaria en horas de la madrugada',to_timestamp('05/06/26 08:20:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'5');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('24','11','4','103','2',null,'UNIDAD_ASIGNADA',null,null,null,null,null,null,null,'10,4357','-73,2644','Disparos escuchados en el sector, posible homicidio',to_timestamp('05/06/26 08:45:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'3');
+INSERT INTO ALERTAS (ID_ALERTA,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,ESTADO,ETAPA,SECTOR,MANZANA,CASA,CALLE,CARRERA,REFERENCIA,LATITUD,LONGITUD,DESCRIPCION,FECHA,ID_ALARMA) values ('25','12','6','129',null,null,'RESUELTA',null,null,null,null,null,null,null,'10,4526','-73,2752','Explosion en transformador electrico, riesgo de incendio',to_timestamp('05/06/26 09:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 11. POLICIAS
+-- ------------------------------------------------------------
+
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('20','DDC123','Cadete','DISPONIBLE','8');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('25','ABV777','CADETE','DISPONIBLE','11');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('15','BBB5555','CADETE','DISPONIBLE','5');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('17','ABC12349','TENIENTE','DISPONIBLE','2');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('21','EUD145','CORONEL','DISPONIBLE','13');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('19','BDC1245','CORONEL','DISPONIBLE','1');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('22','UIK123','CADETE','DISPONIBLE','10');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('1','ABC123','TENIENTE','DISPONIBLE','2');
+INSERT INTO POLICIAS (ID_USUARIO,PLACA,RANGO,ESTADO,ID_UNIDAD) values ('16','ATC5558','Coronel','DISPONIBLE','6');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 12. SUSCRIPCIONES
+-- ------------------------------------------------------------
+
+INSERT INTO SUSCRIPCIONES (ID_SUSCRIPCION,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_COMUNA,ESTADO) values ('5','12','17','118',null,'ACTIVA');
+INSERT INTO SUSCRIPCIONES (ID_SUSCRIPCION,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_COMUNA,ESTADO) values ('8','24',null,'235',null,'ACTIVA');
+INSERT INTO SUSCRIPCIONES (ID_SUSCRIPCION,ID_USUARIO,ID_TIPO_ALERTA,ID_BARRIO,ID_COMUNA,ESTADO) values ('7','4','17','118',null,'ACTIVA');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 13. ASIGNACIONES_UNIDAD
+-- ------------------------------------------------------------
+
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('20','31','11',to_timestamp('05/06/26 08:55:39,768000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('28','29','1',to_timestamp('10/06/26 05:35:08,310000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('29','30','14',to_timestamp('10/06/26 05:35:08,382000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('30','39','1',to_timestamp('10/06/26 05:42:32,968000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('31','40','1',to_timestamp('10/06/26 05:42:32,977000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('32','43','1',to_timestamp('10/06/26 05:44:30,520000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('33','41','1',to_timestamp('10/06/26 05:45:36,528000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('34','42','1',to_timestamp('10/06/26 05:49:05,791000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('35','47','1',to_timestamp('10/06/26 05:55:20,716000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('36','48','1',to_timestamp('10/06/26 05:55:51,124000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('16','26','14',to_timestamp('05/06/26 07:21:57,500000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('17','26','11',to_timestamp('05/06/26 07:21:57,956000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('27','38','11',to_timestamp('05/06/26 12:03:39,821000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('23','34','11',to_timestamp('05/06/26 10:17:35,070000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('24','35','11',to_timestamp('05/06/26 10:43:21,938000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('25','36','11',to_timestamp('05/06/26 10:55:41,556000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('26','37','11',to_timestamp('05/06/26 11:31:03,288000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('21','32','9',to_timestamp('05/06/26 09:19:12,381000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('22','33','11',to_timestamp('05/06/26 10:05:42,861000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('10','22','6',to_timestamp('05/06/26 06:43:47,206000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('1','11','3',to_timestamp('03/06/26 09:20:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('2','12','8',to_timestamp('03/06/26 11:05:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('3','13','1',to_timestamp('03/06/26 01:35:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('4','14','13',to_timestamp('04/06/26 06:05:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('5','15','1',to_timestamp('04/06/26 07:20:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('6','16','4',to_timestamp('04/06/26 08:05:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('7','17','1',to_timestamp('04/06/26 08:50:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('8','18','3',to_timestamp('04/06/26 09:15:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('9','23','5',to_timestamp('05/06/26 06:43:47,071000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('11','19','10',to_timestamp('05/06/26 06:43:47,207000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('12','20','7',to_timestamp('05/06/26 06:50:42,497000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('13','21','9',to_timestamp('05/06/26 06:50:42,499000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('14','25','11',to_timestamp('05/06/26 06:50:42,499000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('15','24','12',to_timestamp('05/06/26 06:50:42,501000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignaci n autom tica al liberar unidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('18','27','2',to_timestamp('05/06/26 07:29:34,917000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+INSERT INTO ASIGNACIONES_UNIDAD (ID_ASIGNACION,ID_ALERTA,ID_UNIDAD,FECHA,OBSERVACION) values ('19','28','8',to_timestamp('05/06/26 07:32:01,373000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'Asignacion automatica por proximidad');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 14. ATENCION_ALERTA
+-- ------------------------------------------------------------
+
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('15','38','11',to_timestamp('05/06/26 12:08:44,708000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','...','2','1','..','25');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('14','31','11',to_timestamp('05/06/26 09:05:42,256000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Resuleta sospechoso capturado',null,null,'..','25');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('1','1','8',to_timestamp('01/06/26 09:00:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Delincuente capturado, recuperados objetos robados','2','2','Registrado por: luis01','20');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('2','2','13',to_timestamp('01/06/26 10:15:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Victima trasladada a hospital, sospechoso detenido','2',null,'Registrado por: hernan01','21');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('3','3','1',to_timestamp('01/06/26 11:30:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Accidente atendido, ambulancia en escena',null,'3','Registrado por: migue05','19');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('4','4','3',to_timestamp('01/06/26 12:10:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Incendio controlado, familia rescatada sin victimas',null,null,'Registrado por: hernan01','21');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('5','5','1',to_timestamp('01/06/26 12:45:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Paciente estabilizado y trasladado en ambulancia',null,null,'Registrado por: migue05','19');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('6','6','1',to_timestamp('01/06/26 02:50:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Motocicleta recuperada, ladron capturado en el lugar','1','2','Registrado por: migue05','19');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('7','7','8',to_timestamp('01/06/26 04:00:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Fiesta intervenida, multa impuesta por ruido excesivo',null,null,'Registrado por: luis01','20');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('8','8','13',to_timestamp('02/06/26 07:45:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Escena asegurada, cuerpo entregado a medicina legal','2',null,'Registrado por: hernan01','21');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('9','9','4',to_timestamp('02/06/26 09:30:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Heridos trasladados, via despejada en 30 minutos',null,'3','Registrado por: migue05','19');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('10','10','1',to_timestamp('02/06/26 10:40:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Persona identificada y retenida para verificacion',null,null,'Registrado por: migue05','19');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('11','11','3',to_timestamp('03/06/26 09:50:00,000000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'EN_PROCESO','Bomberos en escena, incendio parcialmente controlado',null,null,'Registrado por: hernan01','21');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('12','12','8',to_timestamp('05/06/26 07:30:38,611000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'FINALIZADA','Paramedicos atendiendola, signos vitales estables',null,null,'Registrado por: luis01','20');
+INSERT INTO ATENCION_ALERTA (ID_ATENCION,ID_ALERTA,ID_UNIDAD,FECHA_ATENCION,ESTADO_FINAL,DESCRIPCION,ID_TIPO_ARMA,ID_MEDIO_TRANSPORTE,OBSERVACION,ID_POLICIA) values ('13','13','1',to_timestamp('03/06/26 01:50:00,000000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'EN_PROCESO','Unidad en negociacion con delincuente armado','2','2','Registrado por: migue05','19');
+
+COMMIT;
+
+-- ------------------------------------------------------------
+-- 15. NOTIFICACIONES
+-- ------------------------------------------------------------
+
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('84','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:42:32,979000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'40','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('85','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:44:30,521000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'43','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('86','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:44:30,525000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'43','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('87','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:45:36,529000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'41','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('88','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:45:36,531000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'41','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('89','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:49:05,795000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'42','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('90','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:49:05,797000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'42','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('91','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:55:20,719000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'47','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('92','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:55:20,722000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'47','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('93','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:55:51,127000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'48','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('94','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:55:51,129000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'48','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('80','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:35:08,352000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'29','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('81','19','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('10/06/26 05:35:08,363000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'29','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('82','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:35:08,383000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'30','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('83','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('10/06/26 05:42:32,975000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'39','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('79','4','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 12:03:40,547000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'38','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('77','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 12:03:39,822000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'38','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('78','12','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 12:03:40,541000000 PM','DD/MM/RR HH12:MI:SSXFF AM'),'38','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('61','4','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('62','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 10:05:42,861000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'33','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('63','12','? Nueva alerta de HOMICIDIO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 10:05:43,578000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'33','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('64','4','? Nueva alerta de HOMICIDIO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 10:05:43,584000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'33','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('65','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 10:17:35,070000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'34','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('66','12','? Nueva alerta de HOMICIDIO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('67','4','? Nueva alerta de HOMICIDIO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('59','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 09:19:12,382000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'32','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('60','12','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('68','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 10:43:21,939000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'35','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('69','12','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('70','4','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.;
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('71','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 10:55:41,557000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'36','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('72','12','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 10:55:42,274000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'36','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('73','4','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 10:55:42,281000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'36','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('74','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 11:31:03,288000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'37','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('75','12','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 11:31:04,011000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'37','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('76','4','? Nueva alerta de ROBO reportada en el barrio CASIMIRO RAUL MAESTRE.',to_timestamp('05/06/26 11:31:04,019000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'37','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('51','6','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:50:42,499000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'21','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('52','12','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:50:42,500000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'25','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('53','11','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:50:42,501000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'24','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('54','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 07:29:34,919000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'27','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('55','17','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 07:29:34,921000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'27','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('56','1','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 07:29:34,921000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'27','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('57','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 07:32:01,373000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'28','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('58','20','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 07:32:01,374000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'28','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('45','10','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:43:47,079000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'23','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('46','15','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 06:43:47,205000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'23','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('47','16','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 06:43:47,206000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'22','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('48','4','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:43:47,207000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19','N');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('49','22','Nueva alerta asignada a tu unidad. Revisa el centro de operaciones.',to_timestamp('05/06/26 06:43:47,208000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'19','PENDIENTE');
+INSERT INTO NOTIFICACIONES (ID_NOTIFICACION,ID_USUARIO,MENSAJE,FECHA,ID_ALERTA,ENVIADA) values ('50','5','Una unidad policial ha sido asignada a tu alerta. Estamos en camino.',to_timestamp('05/06/26 06:50:42,498000000 AM','DD/MM/RR HH12:MI:SSXFF AM'),'20','N');
+
+COMMIT;
